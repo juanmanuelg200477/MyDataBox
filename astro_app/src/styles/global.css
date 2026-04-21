@@ -1216,22 +1216,24 @@ tbody tr:last-child td {
 }
 
 /* ── Modo solo lectura (viewer) ─────────────────────────────── */
-body.viewer-mode .page-header-actions,
-body.viewer-mode [class*="btn-edit"],
-body.viewer-mode [class*="btn-del"],
-body.viewer-mode [id^="btn-add"],
-body.viewer-mode #btn-save-rd,
-body.viewer-mode #btn-delete-rd,
-body.viewer-mode #btn-manage-types,
-body.viewer-mode #btn-add-category,
-body.viewer-mode #btn-add-incident,
-body.viewer-mode #isp-add-btn,
-body.viewer-mode .btn-toggle-port,
-body.viewer-mode .btn-config-port,
-body.viewer-mode .rack-u-slot.empty a {
+/* html.viewer-mode is applied synchronously before render;
+   body.viewer-mode is applied later by JS. :is() matches both. */
+:is(html, body).viewer-mode .page-header-actions,
+:is(html, body).viewer-mode [class*="btn-edit"],
+:is(html, body).viewer-mode [class*="btn-del"],
+:is(html, body).viewer-mode [id^="btn-add"],
+:is(html, body).viewer-mode #btn-save-rd,
+:is(html, body).viewer-mode #btn-delete-rd,
+:is(html, body).viewer-mode #btn-manage-types,
+:is(html, body).viewer-mode #btn-add-category,
+:is(html, body).viewer-mode #btn-add-incident,
+:is(html, body).viewer-mode #isp-add-btn,
+:is(html, body).viewer-mode .btn-toggle-port,
+:is(html, body).viewer-mode .btn-config-port,
+:is(html, body).viewer-mode .rack-u-slot.empty a {
     display: none !important;
 }
-body.viewer-mode .rack-u-slot.empty {
+:is(html, body).viewer-mode .rack-u-slot.empty {
     pointer-events: none;
     cursor: default;
 }

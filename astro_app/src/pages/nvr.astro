@@ -6,6 +6,8 @@ import Layout from '../layouts/Layout.astro';
         import { load } from '../scripts/store.js';
         import { initNvrProfile } from '../scripts/views/nvrLogic.js';
         document.addEventListener('astro:page-load', async () => {
+            // Guard: only run on /nvr page
+            if (!window.location.pathname.startsWith('/nvr')) return;
             await load();
             const container = document.getElementById('app');
             if (container) initNvrProfile(container);

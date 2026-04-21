@@ -37,17 +37,22 @@ const { title } = Astro.props;
 		</script>
 	</head>
 	<body>
-		<!-- Auth Guard Overlay: Bloquea visualmente hasta que Supabase devuelva la sesión -->
+		<!-- Page Loading Overlay: Actúa como transición entre páginas -->
 		<script is:inline>
-			if (!sessionStorage.getItem('auth_cleared')) {
-				document.documentElement.classList.add('auth-loading');
+			// Se activa inmediatamente para enmascarar transiciones
+			document.documentElement.classList.add('page-loading');
+			// Aplicar viewer-mode SINCRÓNICAMENTE en <html> para que el CSS
+			// oculte botones de edición antes de que se renderice nada.
+			if (sessionStorage.getItem('databox_role') === 'viewer') {
+				document.documentElement.classList.add('viewer-mode');
 			}
 		</script>
 		<style is:global>
-			#auth-guard-overlay { display: none; }
-			html.auth-loading #auth-guard-overlay { display: flex !important; }
+			#page-loading-overlay { display: none; }
+			html.page-loading #page-loading-overlay { display: flex !important; }
+			html.page-loading body { overflow: hidden; }
 		</style>
-		<div id="auth-guard-overlay" style="position:fixed;inset:0;background:#0D0716;z-index:999999;flex-direction:column;gap:24px;align-items:center;justify-content:center;transition:opacity 0.4s ease, visibility 0.4s ease;">
+		<div id="page-loading-overlay" style="position:fixed;inset:0;background:#0D0716;z-index:999999;flex-direction:column;gap:24px;align-items:center;justify-content:center;transition:opacity 0.3s ease, visibility 0.3s ease;">
 			<div style="position:relative;width:64px;height:64px;display:flex;align-items:center;justify-content:center;">
 				<div style="position:absolute;width:100%;height:100%;border-radius:50%;border:2px solid transparent;border-top-color:#3b82f6;border-left-color:rgba(59,130,246,0.3);animation:a-orb 1.2s linear infinite;"></div>
 				<div style="position:absolute;width:100%;height:100%;border-radius:50%;border:2px solid transparent;border-top-color:#14b8a6;border-left-color:rgba(20,184,166,0.3);animation:a-orb2 1.4s linear infinite;"></div>
@@ -112,7 +117,19 @@ const { title } = Astro.props;
 				}
 			})();
 
-			// ── Guard de sesión ────────────────────────────────
+			// ── Hook de Navegación ─────────────────────────────
+			// Dispara el overlay inmediatamente antes de buscar la nueva página
+			document.addEventListener('astro:before-preparation', () => {
+				document.documentElement.classList.add('page-loading');
+				const overlay = document.getElementById('page-loading-overlay');
+				if (overlay) {
+					overlay.style.transition = 'none';
+					overlay.style.opacity = '1';
+					overlay.style.pointerEvents = 'all';
+				}
+			});
+
+			// ── Guard de sesión y Fin de Carga ──────────────────
 			// Corre en cada navegación (incluidas view transitions).
 			// Si no hay sesión activa redirige al login.
 			document.addEventListener('astro:page-load', async () => {
@@ -125,22 +142,21 @@ const { title } = Astro.props;
 				}
 
 				const { data: { session } } = await supabase.auth.getSession();
-				const authOverlay = document.getElementById('auth-guard-overlay');
 				
 				if (!session) {
 					window.location.href = '/login';
 					return;
 				}
 
-				// Sesión validada: Retirar el overlay de seguridad
-				if (authOverlay) {
-					authOverlay.style.pointerEvents = 'none';
-					authOverlay.style.opacity = '0';
+				// Sesión validada e inicialización lista: Retirar overlay global
+				const loadingOverlay = document.getElementById('page-loading-overlay');
+				if (loadingOverlay) {
+					loadingOverlay.style.transition = 'opacity 0.3s ease';
+					loadingOverlay.style.pointerEvents = 'none';
+					loadingOverlay.style.opacity = '0';
 					setTimeout(() => { 
-						authOverlay.style.display = 'none'; 
-						document.documentElement.classList.remove('auth-loading');
-					}, 400);
-					sessionStorage.setItem('auth_cleared', 'true');
+						document.documentElement.classList.remove('page-loading');
+					}, 300);
 				}
 
 				// ── Rol: refrescar desde sesión activa ─────────
@@ -148,17 +164,70 @@ const { title } = Astro.props;
 				sessionStorage.setItem('databox_role', role);
 				if (role === 'viewer') {
 					document.body.classList.add('viewer-mode');
-					const topbar = document.querySelector('.topbar');
-					if (topbar && !topbar.querySelector('.viewer-badge')) {
-						const badge = document.createElement('span');
-						badge.className = 'viewer-badge';
-						badge.innerHTML = `<svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Solo lectura`;
-						const logoutBtn = document.getElementById('btn-logout');
-						if (logoutBtn) topbar.insertBefore(badge, logoutBtn);
-						else topbar.appendChild(badge);
-					}
 				} else {
 					document.body.classList.remove('viewer-mode');
+				}
+
+				// Animación de bienvenida especial (para ambos roles)
+				const welcomeKey = role === 'viewer' ? 'viewer_welcomed' : 'admin_welcomed';
+				if (!sessionStorage.getItem(welcomeKey)) {
+					sessionStorage.setItem(welcomeKey, 'true');
+					const subText = role === 'viewer' ? 'Solo Lectura' : 'Modo Administrador';
+					const subColor = role === 'viewer' ? '#f59e0b' : '#10b981'; // Ambar para viewer, Esmeralda para admin
+					const shadowColor = role === 'viewer' ? 'rgba(245,158,11,0.5)' : 'rgba(16,185,129,0.5)';
+
+					const vw = document.createElement('div');
+					vw.id = 'role-welcome-overlay';
+					vw.innerHTML = `
+						<style>
+							#role-welcome-overlay {
+								position: fixed; inset: 0; background: #0D0716; z-index: 9999999;
+								display: flex; flex-direction: column; align-items: center; justify-content: center;
+								opacity: 1; transition: opacity 0.8s ease;
+							}
+							.vw-atom {
+								position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; margin-bottom: 35px;
+							}
+							.vw-orb {
+								position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 4px solid transparent;
+								mix-blend-mode: screen; filter: drop-shadow(0 0 15px currentColor);
+							}
+							.vw-orb-1 { border-top-color: #3b82f6; border-left-color: rgba(59,130,246,0.6); color: #3b82f6; animation: vw-spin1 1.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite; }
+							.vw-orb-2 { border-top-color: #14b8a6; border-left-color: rgba(20,184,166,0.6); color: #14b8a6; animation: vw-spin2 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite; }
+							.vw-orb-3 { border-top-color: #f59e0b; border-left-color: rgba(245,158,11,0.6); color: #f59e0b; animation: vw-spin3 1.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite; }
+							.vw-core {
+								width: 30px; height: 30px; background: #fff; border-radius: 50%;
+								box-shadow: 0 0 35px 12px rgba(255,255,255,1), 0 0 70px 25px #3b82f6;
+								animation: vw-pulse 1s ease-in-out infinite alternate;
+							}
+							.vw-text-title {
+								color: #ffffff; font-size: 32px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase;
+								text-shadow: 0 0 25px rgba(255,255,255,0.5); animation: vw-fadein 1s ease forwards;
+							}
+							.vw-text-sub {
+								color: ${subText === 'Solo Lectura' ? '#f59e0b' : '#10b981'}; font-size: 15px; font-weight: 700; letter-spacing: 5px; text-transform: uppercase; 
+								margin-top: 10px; animation: vw-fadein 1.5s ease forwards; text-shadow: 0 0 15px ${subText === 'Solo Lectura' ? 'rgba(245,158,11,0.5)' : 'rgba(16,185,129,0.5)'};
+							}
+							@keyframes vw-spin1 { 0% { transform: rotateZ(0deg) rotateX(70deg) rotateZ(0deg); } 100% { transform: rotateZ(360deg) rotateX(70deg) rotateZ(360deg); } }
+							@keyframes vw-spin2 { 0% { transform: rotateZ(120deg) rotateX(70deg) rotateZ(0deg); } 100% { transform: rotateZ(480deg) rotateX(70deg) rotateZ(360deg); } }
+							@keyframes vw-spin3 { 0% { transform: rotateZ(240deg) rotateX(70deg) rotateZ(0deg); } 100% { transform: rotateZ(600deg) rotateX(70deg) rotateZ(360deg); } }
+							@keyframes vw-pulse { 0% { transform: scale(0.85); box-shadow: 0 0 30px 10px rgba(255,255,255,0.8), 0 0 50px 15px #3b82f6; } 100% { transform: scale(1.3); box-shadow: 0 0 45px 15px rgba(255,255,255,1), 0 0 80px 30px #14b8a6; } }
+							@keyframes vw-fadein { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: translateY(0); } }
+						</style>
+						<div class="vw-atom">
+							<div class="vw-orb vw-orb-1"></div>
+							<div class="vw-orb vw-orb-2"></div>
+							<div class="vw-orb vw-orb-3"></div>
+							<div class="vw-core"></div>
+						</div>
+						<div class="vw-text-title">Bienvenido</div>
+						<div class="vw-text-sub">${subText}</div>
+					`;
+					document.body.appendChild(vw);
+					setTimeout(() => {
+						vw.style.opacity = '0';
+						setTimeout(() => vw.remove(), 800);
+					}, 3600); // Muestra la animación por 3.6 segundos
 				}
 
 				// ── Sidebar Hamburguesa ────────────────────────
@@ -184,6 +253,10 @@ const { title } = Astro.props;
 				if (logoutBtn) {
 					logoutBtn.onclick = async () => {
 						await supabase.auth.signOut();
+						sessionStorage.removeItem('auth_cleared');
+						sessionStorage.removeItem('databox_role');
+						sessionStorage.removeItem('viewer_welcomed');
+						sessionStorage.removeItem('admin_welcomed');
 						window.location.href = '/login';
 					};
 				}

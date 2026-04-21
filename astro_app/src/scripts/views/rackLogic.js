@@ -64,7 +64,8 @@ function renderRackView(app, rackId) {
             min-width: 300px;
         }
         .rack-digital-twin {
-            width: 380px;
+            width: 100%;
+            max-width: 380px;
             background: #1a1a24;
             border-radius: 12px;
             padding: 24px 16px;
@@ -106,6 +107,7 @@ function renderRackView(app, rackId) {
 
         .dt-rack-table {
             width: 100%;
+            table-layout: fixed;
             border-collapse: collapse;
             position: relative;
             z-index: 2;
@@ -128,8 +130,11 @@ function renderRackView(app, rackId) {
         }
         .mobile-plus-btn-container {
             display: flex;
-            width: 100%;
-            height: 37px;
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
             text-decoration: none;
             background: rgba(255, 255, 255, 0.001); /* iOS WebKit click target fix */
             align-items: center;
@@ -160,11 +165,20 @@ function renderRackView(app, rackId) {
             background: rgba(59, 130, 246, 0.1);
             box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.3);
         }
+        .rack-u-slot {
+            width: 100%;
+        }
         .rack-u-slot.occupied a {
             display: flex;
+            position: absolute;
+            left: 2px;
+            right: 2px;
+            top: 1px;
+            bottom: 1px;
             align-items: center;
             justify-content: center;
             color: #fff;
+            text-decoration: none !important;
             font-size: 12px;
             font-weight: 600;
             text-shadow: 0 1px 2px rgba(0,0,0,0.8);
@@ -172,8 +186,7 @@ function renderRackView(app, rackId) {
             border: 1px solid rgba(0,0,0,0.8);
             border-top: 1px solid rgba(255,255,255,0.4);
             border-radius: 3px;
-            margin: 1px 2px;
-            height: calc(100% - 2px);
+            box-sizing: border-box;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -234,10 +247,10 @@ function renderRackView(app, rackId) {
 }
 
 function renderRackDevice(app, rackId, unit) {
-    if (isViewer()) { window.location.href = `/rack?id=${rackId}`; return; }
     const rack = store.racks.find(r => String(r.id) === String(rackId));
     if (!rack) { window.location.href = '/bastidores'; return; }
     const existing  = rack.slots && rack.slots[unit];
+    if (isViewer() && !existing) { window.location.href = `/rack?id=${rackId}`; return; }
     const rackAreaName = store.areas.find(a => a.id === rack.areaId)?.name || '';
 
     document.getElementById('breadcrumb').innerHTML = `<span>DataBox IT</span><span class="sep">›</span><span>Bastidores</span><span class="sep">›</span><span>${rack.name}</span><span class="sep">›</span><span class="current">U${unit}</span>`;
@@ -372,10 +385,10 @@ function renderRackDevice(app, rackId, unit) {
 
         <div class="card">
             <div class="card-header">
-                <h2>${existing ? 'Editar Dispositivo Montado' : 'Asignar Dispositivo Físico'}</h2>
+                <h2>${existing ? (isViewer() ? 'Detalles del Dispositivo' : 'Editar Dispositivo Montado') : 'Asignar Dispositivo Físico'}</h2>
             </div>
             <div style="padding:20px">
-                <div class="form-row">
+                <div class="form-row" style="${isViewer() ? 'display:none;' : ''}">
                     <div class="form-group">
                         <label>Categoría (Tipo)</label>
                         <select id="fd-category">
@@ -644,7 +657,7 @@ function renderRackDevice(app, rackId, unit) {
         }
 
         // ── Color picker ───────────────────────────────────────
-        const colorRow = `
+        const colorRow = isViewer() ? '' : `
             <div class="rd-color-row">
                 <input type="color" id="fd-color" value="${color}"
                     style="width:36px;height:36px;border:none;background:none;cursor:pointer;padding:0;border-radius:6px;overflow:hidden;">

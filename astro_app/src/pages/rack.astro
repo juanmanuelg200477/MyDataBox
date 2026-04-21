@@ -6,6 +6,10 @@ import Layout from '../layouts/Layout.astro';
         import { load } from '../scripts/store.js';
         import { renderRackRoute } from '../scripts/views/rackLogic.js';
         document.addEventListener('astro:page-load', async () => {
+            // Guard: only run this logic when we are actually on the /rack page.
+            // Without this, Astro's ClientRouter keeps this listener alive across
+            // all navigations, causing a redirect to /bastidores when leaving this page.
+            if (!window.location.pathname.startsWith('/rack')) return;
             await load();
             const container = document.getElementById('app');
             if(container) renderRackRoute(container);

@@ -234,6 +234,8 @@
         import { supabase } from '../scripts/supabase.js';
 
         document.addEventListener('DOMContentLoaded', async () => {
+			sessionStorage.removeItem('auth_cleared');
+			sessionStorage.removeItem('databox_role');
             // Si ya hay sesión activa, ir directo al dashboard
             const { data: { session } } = await supabase.auth.getSession();
             if (session) { window.location.href = '/'; return; }

@@ -6,6 +6,8 @@ import Layout from '../layouts/Layout.astro';
         import { load } from '../scripts/store.js';
         import { initDeviceProfile } from '../scripts/views/deviceLogic.js';
         document.addEventListener('astro:page-load', async () => {
+            // Guard: only run on /device page
+            if (!window.location.pathname.startsWith('/device')) return;
             await load();
             const container = document.getElementById('app');
             if(container) initDeviceProfile(container);

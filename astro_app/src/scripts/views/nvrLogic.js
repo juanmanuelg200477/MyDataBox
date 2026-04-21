@@ -1,4 +1,4 @@
-import { store, save, genId, logHistory } from '../store.js';
+import { store, save, genId, logHistory, isViewer } from '../store.js';
 
 // ─────────────────────────────────────────────────────────────
 // NVR PROFILE — Vista de perfil completo + hoja de credenciales
@@ -188,13 +188,13 @@ function renderNvrProfile(app, nvr, editMode) {
                         <td style="color:var(--text-muted);font-size:13px;">Contraseña</td>
                         <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">
                             ${nvr.password
-                                ? `<span style="display:inline-flex;align-items:center;gap:8px;">
+            ? `<span style="display:inline-flex;align-items:center;gap:8px;">
                                        <span id="nvr-pass-val" style="letter-spacing:2px;">••••••••</span>
                                        <button id="nvr-pass-toggle" title="Mostrar/ocultar" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:0;display:flex;align-items:center;">
                                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                                        </button>
                                    </span>`
-                                : '—'}
+            : '—'}
                         </td></tr>
                 </table>
             </div>
@@ -206,16 +206,16 @@ function renderNvrProfile(app, nvr, editMode) {
                 <h2>Credenciales de Acceso</h2>
                 <div style="display:flex;gap:8px;align-items:center;">
                     ${editMode
-                        ? `<button class="btn btn-outline" id="btn-cancel-creds" style="font-size:13px;">Cancelar</button>
+            ? `<button class="btn btn-outline" id="btn-cancel-creds" style="font-size:13px;">Cancelar</button>
                            <button class="btn btn-success" id="btn-save-creds" style="font-size:13px;">
                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                                Guardar
                            </button>`
-                        : `<button class="btn btn-outline" id="btn-edit-creds" style="font-size:13px;">
+            : (isViewer() ? '' : `<button class="btn btn-outline" id="btn-edit-creds" style="font-size:13px;">
                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                Editar
-                           </button>`
-                    }
+                           </button>`)
+        }
                 </div>
             </div>
 
@@ -243,14 +243,14 @@ function renderNvrProfile(app, nvr, editMode) {
                 </div>
 
                 ${editMode
-                    ? `<button class="btn-add-row" id="btn-add-row">
+            ? `<button class="btn-add-row" id="btn-add-row">
                            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                            Añadir fila
                        </button>`
-                    : nvr.credentials.length === 0
-                        ? `<p style="text-align:center;color:var(--text-muted);font-size:13px;padding:24px 0;">Sin credenciales registradas. Haz clic en <strong>Editar</strong> para agregar.</p>`
-                        : ''
-                }
+            : nvr.credentials.length === 0
+                ? `<p style="text-align:center;color:var(--text-muted);font-size:13px;padding:24px 0;">Sin credenciales registradas.${isViewer() ? '' : ' Haz clic en <strong>Editar</strong> para agregar.'}</p>`
+                : ''
+        }
             </div>
         </div>
     </div>`;
@@ -259,7 +259,7 @@ function renderNvrProfile(app, nvr, editMode) {
 
     // Toggle contraseña NVR
     const passToggle = document.getElementById('nvr-pass-toggle');
-    const passVal    = document.getElementById('nvr-pass-val');
+    const passVal = document.getElementById('nvr-pass-val');
     if (passToggle && passVal) {
         let visible = false;
         passToggle.addEventListener('click', () => {
@@ -271,7 +271,7 @@ function renderNvrProfile(app, nvr, editMode) {
 
     if (!editMode) {
         document.getElementById('btn-edit-creds')?.addEventListener('click', () => {
-            renderNvrProfile(app, nvr, true);
+            if (!isViewer()) renderNvrProfile(app, nvr, true);
         });
         return;
     }
@@ -349,10 +349,10 @@ function collectCredsFromDOM() {
         const inputs = row.querySelectorAll('.cell-input');
         const cred = {
             id: row.dataset.credId,
-            userIvms:    inputs[0]?.value.trim() || '',
-            passIvms:    inputs[1]?.value.trim() || '',
-            userAccess:  inputs[2]?.value.trim() || '',
-            passAccess:  inputs[3]?.value.trim() || '',
+            userIvms: inputs[0]?.value.trim() || '',
+            passIvms: inputs[1]?.value.trim() || '',
+            userAccess: inputs[2]?.value.trim() || '',
+            passAccess: inputs[3]?.value.trim() || '',
         };
         result.push(cred);
     });
