@@ -16,7 +16,7 @@ export function renderRackRoute(app) {
 }
 
 function renderRackView(app, rackId) {
-    const rack = store.racks.find(r => r.id === rackId);
+    const rack = store.racks.find(r => String(r.id) === String(rackId));
     if (!rack) { window.location.href='/bastidores'; return; }
     
     logHistory('rack', rack.id, rack.name);
@@ -41,10 +41,12 @@ function renderRackView(app, rackId) {
                 </td>
             </tr>`;
         } else {
-            rackRows += `<tr>
+            rackRows += `<tr onclick="this.querySelector('a').click()" style="cursor:pointer;">
                 <td class="rack-u-num">${u}U</td>
                 <td class="rack-u-slot empty">
-                    <a href="/rack?id=${rack.id}&u=${u}"></a>
+                    <a href="/rack?id=${rack.id}&u=${u}" class="mobile-plus-btn-container">
+                        <span class="mobile-plus-btn">+</span>
+                    </a>
                 </td>
             </tr>`;
         }
@@ -97,6 +99,7 @@ function renderRackView(app, rackId) {
             background-image: radial-gradient(circle, #09090b 45%, transparent 55%);
             background-size: 100% 38px; /* cada U mide 38px */
             background-position: center 10px;
+            pointer-events: none;
         }
         .rack-rails::before { left: -16px; }
         .rack-rails::after { right: -16px; }
@@ -112,6 +115,7 @@ function renderRackView(app, rackId) {
             padding: 0;
             border-bottom: 1px solid rgba(255,255,255,0.03);
             box-sizing: border-box;
+            position: relative;
         }
         .rack-u-num {
             width: 32px;
@@ -122,15 +126,38 @@ function renderRackView(app, rackId) {
             font-family: 'JetBrains Mono', monospace;
             border-right: 2px solid #000;
         }
-        .rack-u-slot a {
-            display: block;
+        .mobile-plus-btn-container {
+            display: flex;
             width: 100%;
-            height: 100%;
+            height: 37px;
             text-decoration: none;
-            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.001); /* iOS WebKit click target fix */
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 12px;
+            box-sizing: border-box;
+            cursor: pointer;
         }
-        .rack-u-slot.empty a:hover {
-            background: rgba(59, 130, 246, 0.1) !important;
+        .mobile-plus-btn {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .mobile-plus-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 18px;
+                height: 18px;
+                background-color: #475569; /* Gris */
+                color: #ffffff;
+                font-size: 14px;
+                font-weight: bold;
+                border-radius: 4px; /* Un cuadrado redondito en vez de circulo, lucira mas DCIM */
+                opacity: 0.8;
+            }
+        }
+        .rack-u-slot.empty a:hover, tr:hover .rack-u-slot.empty a {
+            background: rgba(59, 130, 246, 0.1);
             box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.3);
         }
         .rack-u-slot.occupied a {
@@ -208,7 +235,7 @@ function renderRackView(app, rackId) {
 
 function renderRackDevice(app, rackId, unit) {
     if (isViewer()) { window.location.href = `/rack?id=${rackId}`; return; }
-    const rack = store.racks.find(r => r.id === rackId);
+    const rack = store.racks.find(r => String(r.id) === String(rackId));
     if (!rack) { window.location.href = '/bastidores'; return; }
     const existing  = rack.slots && rack.slots[unit];
     const rackAreaName = store.areas.find(a => a.id === rack.areaId)?.name || '';
@@ -313,6 +340,26 @@ function renderRackDevice(app, rackId, unit) {
             transition: transform 0.15s;
         }
         .rd-color-swatch:hover { transform: scale(1.08); }
+        .rd-actions-container {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+        @media (max-width: 768px) {
+            .rd-actions-container {
+                flex-direction: column-reverse;
+                align-items: stretch;
+                padding-bottom: 80px; /* Space for the floating nav menu on mobile */
+            }
+            .rd-actions-container .btn {
+                width: 100%;
+                justify-content: center;
+                padding: 12px;
+            }
+        }
     </style>
 
     <div class="view-transition">
@@ -348,12 +395,12 @@ function renderRackDevice(app, rackId, unit) {
 
                 <div id="rd-detail-panel"></div>
 
-                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+                <div class="rd-actions-container">
                     ${existing
                         ? `<button class="btn btn-danger" id="btn-delete-rd">${icons.trash} Retirar del Rack</button>`
                         : ''}
                     <a href="/rack?id=${rack.id}" class="btn btn-outline">Cancelar</a>
-                    <button class="btn btn-success" id="btn-save-rd" style="display:none">${icons.save} Guardar en Rack</button>
+                    <button class="btn btn-success" id="btn-save-rd" style="display:none; justify-content: center;">${icons.save} Guardar en Rack</button>
                 </div>
             </div>
         </div>

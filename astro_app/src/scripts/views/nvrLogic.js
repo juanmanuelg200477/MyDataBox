@@ -7,7 +7,7 @@ import { store, save, genId, logHistory } from '../store.js';
 export function initNvrProfile(app) {
     const params = new URLSearchParams(window.location.search);
     const nvrId = params.get('id');
-    const nvr = store.devices.find(d => d.id === nvrId && (d.device || '').toLowerCase() === 'nvr');
+    const nvr = store.devices.find(d => String(d.id) === String(nvrId) && (d.device || '').toLowerCase() === 'nvr');
 
     if (!nvr) { window.location.href = '/dispositivos'; return; }
 
@@ -152,7 +152,7 @@ function renderNvrProfile(app, nvr, editMode) {
                 <span class="badge badge-info" style="font-size:13px;margin-left:6px;">NVR</span>
             </div>
             <div class="page-header-actions">
-                <a href="/dispositivos" style="color:var(--text-muted);text-decoration:none;font-weight:500;font-size:14px;">← Volver a Dispositivos</a>
+                <button onclick="window.history.back()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-weight:500;font-size:14px;padding:0;transition:color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">← Volver Atrás</button>
             </div>
         </div>
 

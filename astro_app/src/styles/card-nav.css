@@ -215,36 +215,103 @@
 
 @media (max-width: 768px) {
     .card-nav-container {
-        width: 92%;
-        top: 1.2em;
+        top: auto;
+        left: auto;
+        bottom: 24px;
+        right: 24px;
+        transform: none;
+        width: 60px; /* Tamaño del FAB cerrado */
+        transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .card-nav-container.open {
+        width: 270px; /* Ancho extendido al abrir */
+    }
+
+    .card-nav {
+        /* Permite que GSAP administre el alto base=60 */
+        width: 100%;
+        border-radius: 30px; /* Forma de botón circular cerrado */
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(24px) saturate(150%);
+        -webkit-backdrop-filter: blur(24px) saturate(150%);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        box-shadow: 0 10px 40px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255,255,255,0.4);
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        transition: border-radius 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s;
+    }
+    
+    .card-nav.open {
+        border-radius: 24px; /* Menos redondo al abrirse */
+        background: rgba(255, 255, 255, 0.85); /* Un poco más opaco para que se lean las tarjetas */
     }
 
     .card-nav-top {
-        padding: 0.5rem 1rem;
-        justify-content: space-between;
+        height: 60px;
+        position: absolute;
+        bottom: 0; /* Anclado al fondo de la burbuja */
+        top: auto;
+        width: 100%;
+        padding: 0;
+        justify-content: flex-end; /* Alinear a la derecha */
+        background: transparent;
     }
 
     .hamburger-menu-cn {
-        order: 2;
+        width: 60px;
+        height: 60px;
+        padding: 0;
+        margin: 0;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border-radius: 50%;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.45);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s;
+        z-index: 10;
+        position: relative;
     }
 
-    .logo-container-cn {
-        position: static;
-        transform: none;
-        order: 1;
+    .hamburger-menu-cn:hover, .hamburger-menu-cn:active {
+        transform: scale(0.95);
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.5);
+    }
+    
+    /* El icono de Hamburguesa (líneas) animadas en una X */
+    .hamburger-line-cn {
+        background-color: white;
+        width: 22px;
+        height: 2px;
+        border-radius: 2px;
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s;
+        transform-origin: center;
     }
 
-    .card-nav-cta-button {
-        display: none;
+    .card-nav-container.open .hamburger-line-cn:first-child {
+        transform: translateY(4px) rotate(45deg);
+    }
+    
+    .card-nav-container.open .hamburger-line-cn:last-child {
+        transform: translateY(-4px) rotate(-45deg);
+    }
+
+    .logo-container-cn, .card-nav-cta-button {
+        display: none; /* Escondemos todo texto extra */
     }
 
     .card-nav-content {
-        flex-direction: column;
+        top: auto;
+        bottom: 60px; /* Posicionado por encima del FAB */
+        flex-direction: column-reverse; /* Las ramas apiladas de abajo hacia arriba */
         align-items: stretch;
-        gap: 8px;
-        padding: 0.5rem;
-        bottom: 0;
-        justify-content: flex-start;
+        gap: 10px;
+        padding: 14px;
     }
 
     .nav-card {

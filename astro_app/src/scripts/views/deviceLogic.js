@@ -6,16 +6,16 @@ export function initDeviceProfile(app, activeTab = 'dt-details') {
     const params = new URLSearchParams(window.location.search);
     const devId = params.get('id');
     const allDevs = getAllDevices();
-    const dev = allDevs.find(d => d.id === devId);
+    const dev = allDevs.find(d => String(d.id) === String(devId));
 
     if (!dev) { window.location.href = '/dispositivos'; return; }
 
     // Resolver dependencias del rack y área si aplica
     let realObj;
     if (dev.rackId) {
-        realObj = store.racks.find(r => r.id === dev.rackId)?.slots[dev.rackUnit];
+        realObj = store.racks.find(r => String(r.id) === String(dev.rackId))?.slots[dev.rackUnit];
     } else {
-        realObj = store.devices.find(d => d.id === dev.id);
+        realObj = store.devices.find(d => String(d.id) === String(dev.id));
     }
 
     if (!realObj) { window.location.href = '/dispositivos'; return; }

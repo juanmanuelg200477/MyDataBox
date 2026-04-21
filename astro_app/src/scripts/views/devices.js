@@ -1730,7 +1730,7 @@ function renderReportesView() {
         <div style="padding:4px 0 24px;">
 
             <!-- KPI row -->
-            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(min(100%, 140px), 1fr));gap:12px;margin-bottom:22px;">
                 <div style="background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.2);border-radius:12px;padding:16px 18px;">
                     <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--primary);margin-bottom:6px;">Total Registros</div>
                     <div style="font-size:32px;font-weight:900;color:var(--text);line-height:1;">${total}</div>
@@ -2253,13 +2253,9 @@ function _renderIspRegionGrid(container) {
         </div>`;
     }).join('');
 
-    // Dynamically choose columns based on count: ≤3 → 3cols, 4 → 4cols, 5+ → 3cols (wraps nicely)
-    const cols = regions.length <= 4 ? regions.length : Math.ceil(regions.length / 2);
-    const colTemplate = `repeat(${Math.min(cols, 4)}, 1fr)`;
-
     container.innerHTML = `
     <div style="padding:4px 0 24px;">
-        <div style="display:grid;grid-template-columns:${colTemplate};gap:20px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(min(100%, 280px), 1fr));gap:20px;">
             ${cards}
         </div>
     </div>`;
@@ -2392,8 +2388,8 @@ function _renderIspListForRegion(container, regionId) {
             </div>
             <button id="isp-add-btn" class="btn btn-primary" style="display:flex;align-items:center;gap:6px;">${addIcon} Añadir ISP</button>
         </div>
-        <!-- ISP cards — 2 columns for a nice wide layout -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(480px,1fr));gap:18px;">
+        <!-- ISP cards — Responsive layout -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%, 340px),1fr));gap:18px;">
             ${ispCards}
         </div>
     </div>`;

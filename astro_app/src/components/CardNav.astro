@@ -79,18 +79,18 @@ const items = [
 <script>
   // Vanilla JS + GSAP translation for CardNav
   document.addEventListener('astro:page-load', () => {
-    // Only run if gsap window object is available and elements exist
     if (!window.gsap) {
         console.warn('GSAP is missing. Navigation animations will not work.');
         return;
     }
 
+    const navContainer = document.querySelector('.card-nav-container');
     const navEl = document.getElementById('card-nav');
     const hamburger = document.getElementById('hamburger-menu-cn');
     const contentEl = document.getElementById('card-nav-content');
     const cards = document.querySelectorAll('.nav-card-item');
 
-    if (!navEl || !hamburger || !contentEl) return;
+    if (!navEl || !hamburger || !contentEl || !navContainer) return;
 
     let isExpanded = false;
     let tl = null;
@@ -105,25 +105,30 @@ const items = [
         contentEl.style.visibility = 'visible';
         contentEl.style.position = 'static';
         contentEl.style.height = 'auto';
-
+        contentEl.style.width = '240px'; // Simular ancho expandido para medición exacta
         contentEl.offsetHeight; // force reflow
 
-        const topBar = 44;
-        const padding = 16;
+        const baseHeight = 60; // Mobile FAB height
+        const padding = 12;
         const contentHeight = contentEl.scrollHeight;
 
         contentEl.style.visibility = wasVisible;
         contentEl.style.position = wasPosition;
         contentEl.style.height = wasHeight;
+        contentEl.style.width = ''; // Limpiar wrap forzado
 
-        return topBar + contentHeight + padding;
+        return baseHeight + contentHeight + padding;
       }
       return 220; // Default height for desktop cards
     };
 
     const createTimeline = () => {
-      gsap.set(navEl, { height: 44, overflow: 'hidden' });
-      gsap.set(cards, { y: 50, opacity: 0 });
+      const isMobile = window.matchMedia('(max-width: 768px)').matches;
+      const baseHeight = isMobile ? 60 : 46;
+      
+      gsap.set(navEl, { height: baseHeight, overflow: 'hidden' });
+      // Si es móvil, expanden desde abajo hacia arriba (y positivos significa empujar hacia abajo, entonces al invertir crecen de arriba hacia abajo. Oh wait, GSAP "from" means start offset.)
+      gsap.set(cards, { y: isMobile ? 15 : 50, opacity: 0 });
 
       const timeline = gsap.timeline({ paused: true });
 
@@ -163,6 +168,7 @@ const items = [
       if (!isExpanded) {
         hamburger.classList.add('open');
         navEl.classList.add('open');
+        navContainer.classList.add('open'); // Expand container width
         contentEl.setAttribute('aria-hidden', 'false');
         isExpanded = true;
         tl.play(0);
@@ -170,6 +176,7 @@ const items = [
         hamburger.classList.remove('open');
         tl.eventCallback('onReverseComplete', () => {
             navEl.classList.remove('open');
+            navContainer.classList.remove('open');
             contentEl.setAttribute('aria-hidden', 'true');
             isExpanded = false;
         });

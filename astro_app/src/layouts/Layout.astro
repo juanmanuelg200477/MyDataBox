@@ -21,8 +21,48 @@ const { title } = Astro.props;
 		<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" is:inline></script>
 		<ClientRouter />
+		<script is:inline>
+			// Bloqueo síncrono ultra-rápido para prevenir flash de UI
+			(() => {
+				let hasToken = false;
+				try {
+					for(let i=0; i<localStorage.length; i++) {
+						if(localStorage.key(i).endsWith('auth-token')) { hasToken = true; break; }
+					}
+				} catch(e) {}
+				if(!hasToken && !window.location.pathname.includes('/login')) {
+					window.location.replace('/login');
+				}
+			})();
+		</script>
 	</head>
 	<body>
+		<!-- Auth Guard Overlay: Bloquea visualmente hasta que Supabase devuelva la sesión -->
+		<script is:inline>
+			if (!sessionStorage.getItem('auth_cleared')) {
+				document.documentElement.classList.add('auth-loading');
+			}
+		</script>
+		<style is:global>
+			#auth-guard-overlay { display: none; }
+			html.auth-loading #auth-guard-overlay { display: flex !important; }
+		</style>
+		<div id="auth-guard-overlay" style="position:fixed;inset:0;background:#0D0716;z-index:999999;flex-direction:column;gap:24px;align-items:center;justify-content:center;transition:opacity 0.4s ease, visibility 0.4s ease;">
+			<div style="position:relative;width:64px;height:64px;display:flex;align-items:center;justify-content:center;">
+				<div style="position:absolute;width:100%;height:100%;border-radius:50%;border:2px solid transparent;border-top-color:#3b82f6;border-left-color:rgba(59,130,246,0.3);animation:a-orb 1.2s linear infinite;"></div>
+				<div style="position:absolute;width:100%;height:100%;border-radius:50%;border:2px solid transparent;border-top-color:#14b8a6;border-left-color:rgba(20,184,166,0.3);animation:a-orb2 1.4s linear infinite;"></div>
+				<div style="position:absolute;width:100%;height:100%;border-radius:50%;border:2px solid transparent;border-top-color:#8b5cf6;border-left-color:rgba(139,92,246,0.3);animation:a-orb3 1.6s linear infinite;"></div>
+				<div style="width:12px;height:12px;background:#3b82f6;border-radius:50%;box-shadow:0 0 15px #3b82f6;animation:a-pulse 1.5s ease-in-out infinite;"></div>
+			</div>
+			<div style="color:rgba(255,255,255,0.7);font-size:12px;font-weight:600;letter-spacing:3px;text-transform:uppercase;animation:txt-pulse 1.5s ease-in-out infinite;">Un momento...</div>
+			<style>
+				@keyframes a-orb { 0% { transform: rotateZ(0deg) rotateX(66deg) rotateZ(0deg); } 100% { transform: rotateZ(0deg) rotateX(66deg) rotateZ(360deg); } }
+				@keyframes a-orb2 { 0% { transform: rotateZ(60deg) rotateX(66deg) rotateZ(0deg); } 100% { transform: rotateZ(60deg) rotateX(66deg) rotateZ(360deg); } }
+				@keyframes a-orb3 { 0% { transform: rotateZ(120deg) rotateX(66deg) rotateZ(0deg); } 100% { transform: rotateZ(120deg) rotateX(66deg) rotateZ(360deg); } }
+				@keyframes a-pulse { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(0.85);opacity:0.75;} }
+				@keyframes txt-pulse { 0%,100%{opacity:0.4;} 50%{opacity:0.9;} }
+			</style>
+		</div>
 		<div class="sidebar-overlay" id="sidebar-overlay"></div>
 		<Sidebar />
 		<CardNav />
@@ -85,9 +125,22 @@ const { title } = Astro.props;
 				}
 
 				const { data: { session } } = await supabase.auth.getSession();
+				const authOverlay = document.getElementById('auth-guard-overlay');
+				
 				if (!session) {
 					window.location.href = '/login';
 					return;
+				}
+
+				// Sesión validada: Retirar el overlay de seguridad
+				if (authOverlay) {
+					authOverlay.style.pointerEvents = 'none';
+					authOverlay.style.opacity = '0';
+					setTimeout(() => { 
+						authOverlay.style.display = 'none'; 
+						document.documentElement.classList.remove('auth-loading');
+					}, 400);
+					sessionStorage.setItem('auth_cleared', 'true');
 				}
 
 				// ── Rol: refrescar desde sesión activa ─────────
