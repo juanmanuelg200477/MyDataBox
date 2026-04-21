@@ -1,0 +1,314 @@
+---
+import { icons } from '../scripts/icons.js';
+import MagicBento from '../components/MagicBento.jsx';
+---
+
+<div class="view-transition" id="devices-module" style="visibility:hidden;opacity:0;transition:opacity 0.12s ease;">
+
+    <!-- ── HEADER ─────────────────────────────────────────── -->
+    <div class="page-header" id="dev-header">
+        <div style="min-width:0">
+            <nav class="dev-breadcrumb" id="dev-breadcrumb" style="display:none"></nav>
+            <h1 id="dev-page-title">Dispositivos</h1>
+        </div>
+        <div class="page-header-actions">
+            <button class="btn btn-outline btn-sm" id="btn-manage-types">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.07 4.93a10 10 0 0 1 2.16 3.26M4.93 4.93a10 10 0 0 0-2.16 3.26M19.07 19.07a10 10 0 0 1-3.26 2.16M4.93 19.07a10 10 0 0 0 3.26 2.16M2 12h1M21 12h1M12 2v1M12 21v1"/>
+                </svg>
+                Gestionar Tipos
+            </button>
+            <button class="btn btn-primary" id="btn-add-device" style="display:none" set:html={icons.plus + ' Añadir'}></button>
+        </div>
+    </div>
+
+    <!-- ── VIEW 1: Category Grid ──────────────────────────── -->
+    <div id="view-categories" class="dev-view">
+        <div style="padding-top: 10px;">
+            <MagicBento client:only="react" />
+        </div>
+    </div>
+
+    <!-- ── VIEW 2: Subcategory Grid ───────────────────────── -->
+    <div id="view-subcategories" class="dev-view" style="display:none">
+        <div style="padding-top: 10px;">
+            <MagicBento client:only="react" mode="subcategories" />
+        </div>
+    </div>
+
+    <!-- ── VIEW 3: Devices Table ──────────────────────────── -->
+    <div id="view-devices" class="dev-view" style="display:none">
+        <div class="card" id="dev-main-card">
+            <div class="card-header" style="flex-wrap:wrap;row-gap:10px;">
+                <h2>
+                    Resultados
+                    <span id="devices-count" style="background:var(--primary);color:#fff;padding:1px 8px;border-radius:10px;font-size:11px;margin-left:6px;vertical-align:middle">0</span>
+                </h2>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    <div class="search-box">
+                        <span set:html={icons.search}></span>
+                        <input type="text" placeholder="Buscar dispositivo..." id="search-devices">
+                    </div>
+                    <select id="dev-region-filter" class="dev-filter-select">
+                        <option value="">Todas las regiones</option>
+                    </select>
+                    <select id="dev-area-filter" class="dev-filter-select">
+                        <option value="">Todas las áreas</option>
+                    </select>
+                    <select id="dev-status-filter" class="dev-filter-select">
+                        <option value="">Cualquier estado</option>
+                        <option value="Disponible">Disponible</option>
+                        <option value="Stock">Stock</option>
+                        <option value="En reposo">En reposo</option>
+                        <option value="Nuevo">Nuevo</option>
+                        <option value="Desuso">Desuso</option>
+                        <option value="Activo">Activo</option>
+                        <option value="Inactivo">Inactivo</option>
+                    </select>
+                </div>
+            </div>
+            <div id="devices-table-container" style="display:none">
+                <div style="overflow-x:auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nombre</th><th>Estado</th><th>Región</th><th>Área</th>
+                                <th>Rack</th><th>Categoría</th><th>Marca</th><th>Modelo</th>
+                                <th>Serie</th><th>IP</th><th>MAC</th><th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="devices-tbody"></tbody>
+                    </table>
+                </div>
+                <div class="table-count">
+                    Mostrando <span id="dev-showing">0</span> de <span id="devices-total">0</span>
+                </div>
+            </div>
+            <div id="devices-empty-state" class="empty-state" style="display:none">
+                <div set:html={icons.server}></div>
+                <p>No hay dispositivos en esta categoría</p>
+                <small>Añade dispositivos usando el botón de arriba</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── VIEW 4: Manage Types ────────────────────────────── -->
+    <div id="view-manage-types" class="dev-view" style="display:none">
+        <div class="card">
+            <div class="card-header">
+                <h2>Tipos de Dispositivo</h2>
+                <button class="btn btn-primary btn-sm" id="btn-add-category" set:html={icons.plus + ' Nuevo Tipo'}></button>
+            </div>
+            <div id="cats-table-container" style="display:none">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre del Tipo (Ej: Switch, NVR, Cámaras…)</th>
+                            <th style="width:100px;text-align:right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cats-tbody"></tbody>
+                </table>
+            </div>
+            <div id="cats-empty-state" class="empty-state" style="display:none">
+                <div set:html={icons.server}></div>
+                <p>No hay tipos creados</p>
+                <small>Crea tipos para clasificar tus dispositivos</small>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ── STYLES ───────────────────────────────────────────────── -->
+<style>
+/* Breadcrumb */
+.dev-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 5px;
+    font-size: 13px;
+    flex-wrap: wrap;
+}
+.dev-bc-btn {
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0;
+    font-family: inherit;
+    transition: opacity 0.15s;
+}
+.dev-bc-btn:hover { opacity: 0.7; }
+.dev-bc-sep { color: #cbd5e1; font-size: 15px; font-weight: 300; }
+.dev-bc-current { color: var(--text-muted); font-size: 13px; font-weight: 500; }
+
+/* ── CATEGORY GRID ─────────────────────────── */
+.dev-cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.dev-cat-card {
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    border-top: 4px solid;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 220px;
+}
+.dev-cat-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    filter: brightness(1.1);
+}
+
+.dev-cat-card-watermark {
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    opacity: 0.15;
+    transform: rotate(-15deg);
+    transition: transform 0.5s ease, opacity 0.5s ease;
+    pointer-events: none;
+}
+.dev-cat-card-watermark svg {
+    width: 200px;
+    height: 200px;
+    color: #fff;
+}
+.dev-cat-card:hover .dev-cat-card-watermark {
+    transform: rotate(0) scale(1.1);
+    opacity: 0.25;
+}
+
+.dev-cat-card-content {
+    position: relative;
+    padding: 30px;
+    z-index: 2;
+}
+
+.dev-cat-card-name {
+    font-size: 38px;
+    font-family: inherit;
+    font-weight: 900;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+    line-height: 1.1;
+}
+.dev-cat-card-meta {
+    font-size: 15px;
+    color: rgba(255,255,255,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 500;
+}
+.dev-cat-card-arrow {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.25s;
+    flex-shrink: 0;
+}
+.dev-cat-card:hover .dev-cat-card-arrow {
+    background: rgba(255,255,255,0.2) !important;
+    transform: translateX(5px);
+}
+.dev-cat-card-arrow svg {
+    width: 16px; height: 16px;
+    color: #fff;
+}
+
+/* ── SUBCATEGORY GRID ──────────────────────── */
+.dev-subcat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.dev-subcat-card {
+    border-radius: 16px;
+    padding: 30px 24px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 140px;
+}
+.dev-subcat-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.3); filter: brightness(1.1); }
+
+
+.dev-subcat-card-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.3px;
+    margin-bottom: 8px;
+}
+.dev-subcat-card-count {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+.dev-subcat-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 7px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* Filter selects */
+.dev-filter-select {
+    padding: 8px 11px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 12.5px;
+    font-family: inherit;
+    background: var(--bg);
+    color: var(--text);
+    transition: var(--transition);
+    cursor: pointer;
+}
+.dev-filter-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+}
+
+/* View animation */
+.dev-view { animation: fadeIn 0.22s ease; }
+</style>
+
+<script>
+    import { load } from '../scripts/store.js';
+    import { initDevices } from '../scripts/views/devices.js';
+    document.addEventListener('astro:page-load', async () => {
+        await load();
+        initDevices();
+    });
+</script>

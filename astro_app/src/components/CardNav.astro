@@ -1,0 +1,180 @@
+---
+import '../styles/card-nav.css';
+
+const currentPath = Astro.url.pathname;
+let activeBranch = "infra";
+if (currentPath.startsWith('/support')) activeBranch = "support";
+if (currentPath.startsWith('/servers')) activeBranch = "servers";
+
+const items = [
+  {
+    label: "Branch Infrastructure",
+    bgColor: "#0D0716",
+    textColor: "#fff",
+    onClick: "window.location.href='/login?branch=infra'",
+    isActive: activeBranch === "infra",
+    people: ["Juan Manuel García"]
+  },
+  {
+    label: "Branch Support", 
+    bgColor: "#170D27",
+    textColor: "#fff",
+    onClick: "window.location.href='/login?branch=support'",
+    isActive: activeBranch === "support",
+    people: ["Adriana González", "Luz Morales"]
+  },
+  {
+    label: "Branch Servers",
+    bgColor: "#271E37", 
+    textColor: "#fff",
+    onClick: "window.location.href='/login?branch=servers'",
+    isActive: activeBranch === "servers",
+    people: ["Bryan Hernández"]
+  }
+];
+---
+
+<div class="card-nav-container">
+  <nav id="card-nav" class="card-nav">
+    <div class="card-nav-top">
+      <div id="hamburger-menu-cn" class="hamburger-menu-cn" role="button" aria-label="Open menu" tabindex="0">
+        <div class="hamburger-line-cn"></div>
+        <div class="hamburger-line-cn"></div>
+      </div>
+
+      <div class="logo-container-cn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="2" width="20" height="20" rx="3" />
+            <line x1="2" y1="8" x2="22" y2="8" />
+            <line x1="8" y1="2" x2="8" y2="8" />
+        </svg>
+        DataBox IT
+      </div>
+    </div>
+
+    <div id="card-nav-content" class="card-nav-content" aria-hidden="true">
+      {items.map((item, idx) => (
+        <div
+          class={`nav-card nav-card-item ${item.isActive ? 'active-branch' : 'clickable'}`}
+          style={`background-color: ${item.bgColor}; color: ${item.textColor}`}
+          onclick={!item.isActive ? item.onClick : undefined}
+        >
+          <div class="nav-card-label">
+            {item.label}
+          </div>
+          <div class="nav-card-links">
+            {item.people.map(person => (
+              <div class="nav-card-person">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="opacity:0.6"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                {person}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </nav>
+</div>
+
+<script>
+  // Vanilla JS + GSAP translation for CardNav
+  document.addEventListener('astro:page-load', () => {
+    // Only run if gsap window object is available and elements exist
+    if (!window.gsap) {
+        console.warn('GSAP is missing. Navigation animations will not work.');
+        return;
+    }
+
+    const navEl = document.getElementById('card-nav');
+    const hamburger = document.getElementById('hamburger-menu-cn');
+    const contentEl = document.getElementById('card-nav-content');
+    const cards = document.querySelectorAll('.nav-card-item');
+
+    if (!navEl || !hamburger || !contentEl) return;
+
+    let isExpanded = false;
+    let tl = null;
+
+    const calculateHeight = () => {
+      const isMobile = window.matchMedia('(max-width: 768px)').matches;
+      if (isMobile) {
+        const wasVisible = contentEl.style.visibility;
+        const wasPosition = contentEl.style.position;
+        const wasHeight = contentEl.style.height;
+
+        contentEl.style.visibility = 'visible';
+        contentEl.style.position = 'static';
+        contentEl.style.height = 'auto';
+
+        contentEl.offsetHeight; // force reflow
+
+        const topBar = 44;
+        const padding = 16;
+        const contentHeight = contentEl.scrollHeight;
+
+        contentEl.style.visibility = wasVisible;
+        contentEl.style.position = wasPosition;
+        contentEl.style.height = wasHeight;
+
+        return topBar + contentHeight + padding;
+      }
+      return 220; // Default height for desktop cards
+    };
+
+    const createTimeline = () => {
+      gsap.set(navEl, { height: 44, overflow: 'hidden' });
+      gsap.set(cards, { y: 50, opacity: 0 });
+
+      const timeline = gsap.timeline({ paused: true });
+
+      timeline.to(navEl, {
+        height: calculateHeight,
+        duration: 0.4,
+        ease: 'power3.out'
+      });
+
+      timeline.to(cards, { 
+          y: 0, 
+          opacity: 1, 
+          duration: 0.4, 
+          ease: 'power3.out', 
+          stagger: 0.08 
+      }, '-=0.1');
+
+      return timeline;
+    };
+
+    tl = createTimeline();
+
+    window.addEventListener('resize', () => {
+      if (isExpanded) {
+        const newHeight = calculateHeight();
+        gsap.set(navEl, { height: newHeight });
+        tl.kill();
+        tl = createTimeline();
+        tl.progress(1);
+      } else {
+        tl.kill();
+        tl = createTimeline();
+      }
+    });
+
+    hamburger.addEventListener('click', () => {
+      if (!isExpanded) {
+        hamburger.classList.add('open');
+        navEl.classList.add('open');
+        contentEl.setAttribute('aria-hidden', 'false');
+        isExpanded = true;
+        tl.play(0);
+      } else {
+        hamburger.classList.remove('open');
+        tl.eventCallback('onReverseComplete', () => {
+            navEl.classList.remove('open');
+            contentEl.setAttribute('aria-hidden', 'true');
+            isExpanded = false;
+        });
+        tl.reverse();
+      }
+    });
+  });
+</script>

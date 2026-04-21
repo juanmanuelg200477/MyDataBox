@@ -1,0 +1,14 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="Vista de Bastidor">
+    <script>
+        import { load } from '../scripts/store.js';
+        import { renderRackRoute } from '../scripts/views/rackLogic.js';
+        document.addEventListener('astro:page-load', async () => {
+            await load();
+            const container = document.getElementById('app');
+            if(container) renderRackRoute(container);
+        });
+    </script>
+</Layout>

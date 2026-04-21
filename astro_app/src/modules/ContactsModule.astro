@@ -1,0 +1,39 @@
+---
+import { icons } from '../scripts/icons.js';
+---
+<div class="view-transition">
+    <div class="page-header">
+        <h1>Contactos</h1>
+        <div class="page-header-actions">
+            <button class="btn btn-primary" id="btn-add-contact" set:html={icons.plus + ' Añadir'}></button>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h2>Resultados <span id="contacts-count" style="background:var(--primary);color:#fff;padding:1px 8px;border-radius:10px;font-size:11px;margin-left:6px">0</span></h2>
+            <div class="search-box">
+                <span set:html={icons.search}></span>
+                <input type="text" placeholder="Buscar contacto..." id="search-contacts">
+            </div>
+        </div>
+        <div id="contacts-table-container" style="display:none">
+            <table>
+                <thead><tr><th>Nombre</th><th>Región</th><th>Cargo</th><th>Teléfono</th><th>Correo</th><th>Acciones</th></tr></thead>
+                <tbody id="contacts-tbody"></tbody>
+            </table>
+            <div class="table-count" id="contacts-showing-count">Mostrando 0 de 0</div>
+        </div>
+        <div id="contacts-empty-state" class="empty-state" style="display:none">
+            <div set:html={icons.users}></div>
+            <p>No hay contactos registrados</p><small>Añade contactos asignados a cada región</small>
+        </div>
+    </div>
+</div>
+<script>
+    import { load } from '../scripts/store.js';
+    import { initContacts } from '../scripts/views/contacts.js';
+    document.addEventListener('astro:page-load', async () => {
+        await load();
+        initContacts();
+    });
+</script>

@@ -1,0 +1,495 @@
+---
+// src/pages/login.astro
+---
+
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login — DataBox IT</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'DM Sans', sans-serif;
+            background-color: #0D0716;
+            overflow: hidden;
+            color: #fff;
+        }
+
+        #threads-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Prevent pointer-events on the canvas from completely catching if we click cards */
+        #threads-container canvas {
+            display: block;
+        }
+
+        .login-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none; /* Let clicks pass to canvas if not on card */
+        }
+
+        .login-card {
+            pointer-events: auto;
+            background: rgba(13, 7, 22, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 40px;
+            border-radius: 20px;
+            width: 360px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            /* Spotlight Setup */
+            position: relative;
+            overflow: hidden;
+            --mouse-x: 50%;
+            --mouse-y: 50%;
+            --spotlight-color: rgba(255, 255, 255, 0.12); /* Gris/Blanco tenue */
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), var(--spotlight-color), transparent 80%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .login-card:hover::before,
+        .login-card:focus-within::before {
+            opacity: 1;
+        }
+
+        /* Elevating content so the spotlight stays below text */
+        .login-header, .form-group, .btn-login {
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-header {
+            text-align: center;
+            user-select: none;
+        }
+
+        .login-header h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .login-header p {
+            margin: 6px 0 0 0;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 16px;
+            border-radius: 10px;
+            color: white;
+            font-family: inherit;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: rgba(59, 130, 246, 0.6);
+            background: rgba(0, 0, 0, 0.55);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: #fff;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 10px;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+            letter-spacing: -0.1px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.5);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+        
+        .login-error {
+            font-size: 13px;
+            color: #f87171;
+            text-align: center;
+            min-height: 18px;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- OGL Container -->
+    <div id="threads-container"></div>
+
+    <div class="login-overlay">
+        <div class="login-card" id="login-card">
+            <div class="login-header">
+                    <h1>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="2" width="20" height="20" rx="3" />
+                            <line x1="2" y1="8" x2="22" y2="8" />
+                            <line x1="8" y1="2" x2="8" y2="8" />
+                        </svg>
+                        DataBox IT
+                    </h1>
+                    <p id="branch-name">Branch Module</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="username">Correo electrónico</label>
+                    <input type="email" id="username" placeholder="correo@ejemplo.com" autocomplete="email" />
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+                </div>
+
+                <div class="login-error" id="login-error"></div>
+
+                <button class="btn-login" id="login-btn">Ingresar</button>
+        </div>
+    </div>
+
+    <script>
+        // ── Autenticación con Supabase ─────────────────────────
+        import { supabase } from '../scripts/supabase.js';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Si ya hay sesión activa, ir directo al dashboard
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) { window.location.href = '/'; return; }
+
+            const btn       = document.getElementById('login-btn');
+            const emailInput = document.getElementById('username');
+            const passInput  = document.getElementById('password');
+            const errorEl    = document.getElementById('login-error');
+
+            const doLogin = async () => {
+                const email    = emailInput.value.trim();
+                const password = passInput.value;
+
+                if (!email || !password) {
+                    errorEl.textContent = 'Completa correo y contraseña.';
+                    return;
+                }
+
+                btn.disabled    = true;
+                btn.textContent = 'Ingresando…';
+                errorEl.textContent = '';
+
+                const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+                if (error) {
+                    errorEl.textContent = 'Correo o contraseña incorrectos.';
+                    btn.disabled    = false;
+                    btn.textContent = 'Ingresar';
+                    return;
+                }
+
+                window.location.href = '/';
+            };
+
+            btn.addEventListener('click', doLogin);
+
+            // Permitir Enter en cualquiera de los dos campos
+            [emailInput, passInput].forEach(el =>
+                el.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); })
+            );
+        });
+    </script>
+    
+    <script>
+        // Spotlight Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const card = document.getElementById('login-card');
+            if(!card) return;
+
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+    </script>
+    
+    <script>
+        import { Renderer, Program, Mesh, Triangle, Color } from 'ogl';
+
+        const vertexShader = `
+        attribute vec2 position;
+        attribute vec2 uv;
+        varying vec2 vUv;
+        void main() {
+        vUv = uv;
+        gl_Position = vec4(position, 0.0, 1.0);
+        }
+        `;
+
+        const fragmentShader = `
+        precision highp float;
+
+        uniform float iTime;
+        uniform vec3 iResolution;
+        uniform vec3 uColor;
+        uniform float uAmplitude;
+        uniform float uDistance;
+        uniform vec2 uMouse;
+
+        #define PI 3.1415926538
+
+        const int u_line_count = 40;
+        const float u_line_width = 7.0;
+        const float u_line_blur = 10.0;
+
+        float Perlin2D(vec2 P) {
+            vec2 Pi = floor(P);
+            vec4 Pf_Pfmin1 = P.xyxy - vec4(Pi, Pi + 1.0);
+            vec4 Pt = vec4(Pi.xy, Pi.xy + 1.0);
+            Pt = Pt - floor(Pt * (1.0 / 71.0)) * 71.0;
+            Pt += vec2(26.0, 161.0).xyxy;
+            Pt *= Pt;
+            Pt = Pt.xzxz * Pt.yyww;
+            vec4 hash_x = fract(Pt * (1.0 / 951.135664));
+            vec4 hash_y = fract(Pt * (1.0 / 642.949883));
+            vec4 grad_x = hash_x - 0.49999;
+            vec4 grad_y = hash_y - 0.49999;
+            vec4 grad_results = inversesqrt(grad_x * grad_x + grad_y * grad_y)
+                * (grad_x * Pf_Pfmin1.xzxz + grad_y * Pf_Pfmin1.yyww);
+            grad_results *= 1.4142135623730950;
+            vec2 blend = Pf_Pfmin1.xy * Pf_Pfmin1.xy * Pf_Pfmin1.xy
+                    * (Pf_Pfmin1.xy * (Pf_Pfmin1.xy * 6.0 - 15.0) + 10.0);
+            vec4 blend2 = vec4(blend, vec2(1.0 - blend));
+            return dot(grad_results, blend2.zxzx * blend2.wwyy);
+        }
+
+        float pixel(float count, vec2 resolution) {
+            return (1.0 / max(resolution.x, resolution.y)) * count;
+        }
+
+        float lineFn(vec2 st, float width, float perc, float offset, vec2 mouse, float time, float amplitude, float distance) {
+            float split_offset = (perc * 0.4);
+            float split_point = 0.1 + split_offset;
+
+            float amplitude_normal = smoothstep(split_point, 0.7, st.x);
+            float amplitude_strength = 0.5;
+            float finalAmplitude = amplitude_normal * amplitude_strength
+                                * amplitude * (1.0 + (mouse.y - 0.5) * 0.2);
+
+            float time_scaled = time / 10.0 + (mouse.x - 0.5) * 1.0;
+            float blur = smoothstep(split_point, split_point + 0.05, st.x) * perc;
+
+            float xnoise = mix(
+                Perlin2D(vec2(time_scaled, st.x + perc) * 2.5),
+                Perlin2D(vec2(time_scaled, st.x + time_scaled) * 3.5) / 1.5,
+                st.x * 0.3
+            );
+
+            float y = 0.5 + (perc - 0.5) * distance + xnoise / 2.0 * finalAmplitude;
+
+            float line_start = smoothstep(
+                y + (width / 2.0) + (u_line_blur * pixel(1.0, iResolution.xy) * blur),
+                y,
+                st.y
+            );
+
+            float line_end = smoothstep(
+                y,
+                y - (width / 2.0) - (u_line_blur * pixel(1.0, iResolution.xy) * blur),
+                st.y
+            );
+
+            return clamp(
+                (line_start - line_end) * (1.0 - smoothstep(0.0, 1.0, pow(perc, 0.3))),
+                0.0,
+                1.0
+            );
+        }
+
+        void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+            vec2 uv = fragCoord / iResolution.xy;
+
+            float line_strength = 1.0;
+            for (int i = 0; i < u_line_count; i++) {
+                float p = float(i) / float(u_line_count);
+                line_strength *= (1.0 - lineFn(
+                    uv,
+                    u_line_width * pixel(1.0, iResolution.xy) * (1.0 - p),
+                    p,
+                    (PI * 1.0) * p,
+                    uMouse,
+                    iTime,
+                    uAmplitude,
+                    uDistance
+                ));
+            }
+
+            float colorVal = 1.0 - line_strength;
+            fragColor = vec4(uColor * colorVal, colorVal);
+        }
+
+        void main() {
+            mainImage(gl_FragColor, gl_FragCoord.xy);
+        }
+        `;
+
+        // Initialize natively
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('threads-container');
+            if (!container) return;
+
+            const renderer = new Renderer({ alpha: true });
+            const gl = renderer.gl;
+            gl.clearColor(0, 0, 0, 0);
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+            container.appendChild(gl.canvas);
+
+            const geometry = new Triangle(gl);
+            
+            const program = new Program(gl, {
+                vertex: vertexShader,
+                fragment: fragmentShader,
+                uniforms: {
+                    iTime: { value: 0 },
+                    iResolution: {
+                        value: new Color(gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height)
+                    },
+                    uColor: { value: new Color(1, 1, 1) },
+                    uAmplitude: { value: 1.0 },
+                    uDistance: { value: 0.0 },
+                    uMouse: { value: new Float32Array([0.5, 0.5]) }
+                }
+            });
+
+            const mesh = new Mesh(gl, { geometry, program });
+
+            function resize() {
+                const { clientWidth, clientHeight } = container;
+                renderer.setSize(clientWidth, clientHeight);
+                program.uniforms.iResolution.value.r = clientWidth;
+                program.uniforms.iResolution.value.g = clientHeight;
+                program.uniforms.iResolution.value.b = clientWidth / clientHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            let currentMouse = [0.5, 0.5];
+            let targetMouse = [0.5, 0.5];
+
+            // Setup tracking relative to mouse pos for mathematical distortion
+            function handleMouseMove(e) {
+                const rect = container.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width;
+                const y = 1.0 - (e.clientY - rect.top) / rect.height;
+                targetMouse = [x, y];
+            }
+
+            function handleMouseLeave() {
+                targetMouse = [0.5, 0.5];
+            }
+
+            container.addEventListener('mousemove', handleMouseMove);
+            container.addEventListener('mouseleave', handleMouseLeave);
+
+            let animationFrameId;
+
+            function update(t) {
+                const smoothing = 0.05;
+                currentMouse[0] += smoothing * (targetMouse[0] - currentMouse[0]);
+                currentMouse[1] += smoothing * (targetMouse[1] - currentMouse[1]);
+                program.uniforms.uMouse.value[0] = currentMouse[0];
+                program.uniforms.uMouse.value[1] = currentMouse[1];
+                
+                program.uniforms.iTime.value = t * 0.001;
+
+                renderer.render({ scene: mesh });
+                animationFrameId = requestAnimationFrame(update);
+            }
+            
+            animationFrameId = requestAnimationFrame(update);
+        });
+    </script>
+</body>
+</html>

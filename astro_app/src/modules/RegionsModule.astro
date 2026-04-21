@@ -1,0 +1,39 @@
+---
+import { icons } from '../scripts/icons.js';
+---
+<div class="view-transition">
+    <div class="page-header">
+        <h1>Regiones</h1>
+        <div class="page-header-actions">
+            <button class="btn btn-primary" id="btn-add-region" set:html={icons.plus + ' Añadir'}></button>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h2>Resultados <span id="regions-count" style="background:var(--primary);color:#fff;padding:1px 8px;border-radius:10px;font-size:11px;margin-left:6px">0</span></h2>
+            <div class="search-box">
+                <span set:html={icons.search}></span>
+                <input type="text" placeholder="Buscar región..." id="search-regions">
+            </div>
+        </div>
+        <div id="regions-table-container" style="display:none">
+            <table>
+                <thead><tr><th>Nombre</th><th>Ubicación</th><th>Áreas</th><th>Acciones</th></tr></thead>
+                <tbody id="regions-tbody"></tbody>
+            </table>
+            <div class="table-count" id="regions-showing-count">Mostrando 0 de 0</div>
+        </div>
+        <div id="regions-empty-state" class="empty-state" style="display:none">
+            <div set:html={icons.globe}></div>
+            <p>No hay regiones creadas</p><small>Añade tu primera región para comenzar</small>
+        </div>
+    </div>
+</div>
+<script>
+    import { load } from '../scripts/store.js';
+    import { initRegions } from '../scripts/views/regions.js';
+    document.addEventListener('astro:page-load', async () => {
+        await load();
+        initRegions();
+    });
+</script>

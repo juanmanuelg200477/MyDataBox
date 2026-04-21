@@ -1,0 +1,39 @@
+---
+import { icons } from '../scripts/icons.js';
+---
+<div class="view-transition">
+    <div class="page-header">
+        <h1>Áreas</h1>
+        <div class="page-header-actions">
+            <button class="btn btn-primary" id="btn-add-area" set:html={icons.plus + ' Añadir'}></button>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h2>Resultados <span id="areas-count" style="background:var(--primary);color:#fff;padding:1px 8px;border-radius:10px;font-size:11px;margin-left:6px">0</span></h2>
+            <div class="search-box">
+                <span set:html={icons.search}></span>
+                <input type="text" placeholder="Buscar área..." id="search-areas">
+            </div>
+        </div>
+        <div id="areas-table-container" style="display:none">
+            <table>
+                <thead><tr><th>Nombre</th><th>Región</th><th>Descripción</th><th>Acciones</th></tr></thead>
+                <tbody id="areas-tbody"></tbody>
+            </table>
+            <div class="table-count" id="areas-showing-count">Mostrando 0 de 0</div>
+        </div>
+        <div id="areas-empty-state" class="empty-state" style="display:none">
+            <div set:html={icons.grid}></div>
+            <p>No hay áreas creadas</p><small>Crea regiones primero, luego añade áreas</small>
+        </div>
+    </div>
+</div>
+<script>
+    import { load } from '../scripts/store.js';
+    import { initAreas } from '../scripts/views/areas.js';
+    document.addEventListener('astro:page-load', async () => {
+        await load();
+        initAreas();
+    });
+</script>

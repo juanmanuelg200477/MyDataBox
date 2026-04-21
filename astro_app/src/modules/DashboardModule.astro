@@ -1,0 +1,288 @@
+---
+import { icons } from '../scripts/icons.js';
+---
+
+<div class="db" id="db-wrap">
+
+  <!-- ══ HEADER ════════════════════════════════════════════ -->
+  <header class="db-header">
+    <div class="db-header-glow"></div>
+    <div class="db-header-grid"></div>
+    <div class="db-brand">
+      <div class="db-online"><span class="db-dot"></span>Sistema en línea</div>
+      <div class="db-brand-name">DataBox IT</div>
+      <div class="db-brand-sub">Centro de Control · Infraestructura de Red</div>
+    </div>
+    <div class="db-sep"></div>
+    <div class="db-kv-row">
+      <div class="db-kv" style="--kc:#60a5fa"><span class="db-kv-n" id="stat-regions">0</span><span class="db-kv-l">Regiones</span></div>
+      <div class="db-kv" style="--kc:#34d399"><span class="db-kv-n" id="stat-areas">0</span><span class="db-kv-l">Áreas</span></div>
+      <div class="db-kv" style="--kc:#a78bfa"><span class="db-kv-n" id="stat-racks">0</span><span class="db-kv-l">Bastidores</span></div>
+      <div class="db-kv" style="--kc:#4ade80"><span class="db-kv-n" id="stat-devices">0</span><span class="db-kv-l">Dispositivos</span></div>
+      <div class="db-kv" style="--kc:#fb923c"><span class="db-kv-n" id="stat-contacts">0</span><span class="db-kv-l">Contactos</span></div>
+      <div class="db-kv" style="--kc:#22d3ee"><span class="db-kv-n" id="stat-isps">0</span><span class="db-kv-l">ISPs</span></div>
+    </div>
+    <div class="db-sep"></div>
+    <div class="db-header-right">
+      <div class="db-clock-block">
+        <div class="db-clock" id="db-clock">00:00:00</div>
+        <div class="db-date"  id="db-date">Cargando…</div>
+      </div>
+      <div class="db-ring">
+        <svg viewBox="0 0 64 64" width="64" height="64">
+          <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="5"/>
+          <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="5"
+            stroke-linecap="round" stroke-dasharray="163" id="db-health-arc"
+            stroke-dashoffset="163" transform="rotate(-90 32 32)"
+            style="transition:stroke-dashoffset 1.4s cubic-bezier(0.4,0,0.2,1)"/>
+        </svg>
+        <div class="db-ring-inner">
+          <span class="db-ring-pct" id="db-health-pct">—</span>
+          <span class="db-ring-lbl">Salud</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ ROW 1 ══════════════════════════════════════════════ -->
+  <div class="db-row db-row-1">
+
+    <!-- Estado del Inventario — donut -->
+    <div class="db-card" style="--accent:#10b981">
+      <div class="db-card-hdr">
+        <div><div class="db-card-title">Estado del Inventario</div><div class="db-card-sub">Distribución por estado</div></div>
+      </div>
+      <div id="chart-status" class="db-chart-host"></div>
+    </div>
+
+    <!-- Regiones — donut -->
+    <div class="db-card" style="--accent:#3b82f6">
+      <div class="db-card-hdr">
+        <div><div class="db-card-title">Distribución Regional</div><div class="db-card-sub">Dispositivos por región</div></div>
+      </div>
+      <div id="chart-regions" class="db-chart-host"></div>
+    </div>
+
+    <!-- Capacidad de bastidores — barras -->
+    <div class="db-card" style="--accent:#8b5cf6">
+      <div class="db-card-hdr">
+        <div><div class="db-card-title">Capacidad de Bastidores</div><div class="db-card-sub">Ocupación por rack</div></div>
+        <span class="db-chip" id="db-racks-chip">0 racks</span>
+      </div>
+      <div id="chart-racks" class="db-scroll"></div>
+    </div>
+
+  </div>
+
+  <!-- ══ ROW 2 ══════════════════════════════════════════════ -->
+  <div class="db-row db-row-2">
+
+    <!-- Categorías — barras horizontales -->
+    <div class="db-card" style="--accent:#f59e0b">
+      <div class="db-card-hdr">
+        <div><div class="db-card-title">Dispositivos por Categoría</div><div class="db-card-sub">Top categorías del inventario</div></div>
+      </div>
+      <div id="chart-categories" class="db-scroll"></div>
+    </div>
+
+    <!-- Incidentes ISP -->
+    <div class="db-card" style="--accent:#ef4444">
+      <div class="db-card-hdr">
+        <div><div class="db-card-title">Incidentes ISP</div><div class="db-card-sub">Estado de incidencias</div></div>
+      </div>
+      <div id="chart-incidents-kpis" class="db-inc-kpis"></div>
+      <div id="chart-incidents-list" class="db-scroll" style="margin-top:8px"></div>
+    </div>
+
+    <!-- ISPs registrados -->
+    <div class="db-card" style="--accent:#06b6d4">
+      <div class="db-card-hdr">
+        <div><div class="db-card-title">ISPs Registrados</div><div class="db-card-sub">Proveedores por región</div></div>
+      </div>
+      <div id="chart-isps" class="db-scroll"></div>
+    </div>
+
+    <!-- Actividad reciente -->
+    <div class="db-card" style="--accent:#f97316">
+      <div class="db-card-hdr">
+        <div><div class="db-card-title">Actividad Reciente</div><div class="db-card-sub">Últimos accesos</div></div>
+      </div>
+      <div id="chart-activity" class="db-scroll"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<style>
+/* ── Base ───────────────────────────────────── */
+.db {
+  height: calc(100vh - 130px);
+  display: flex; flex-direction: column; gap: 10px;
+  overflow: hidden;
+  animation: dbIn .4s cubic-bezier(0.4,0,0.2,1);
+}
+@keyframes dbIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+
+/* ── Header ─────────────────────────────────── */
+.db-header {
+  flex-shrink: 0; height: 88px; border-radius: 18px;
+  display: flex; align-items: center; padding: 0 26px;
+  position: relative; overflow: hidden;
+  background: linear-gradient(115deg,#0f172a 0%,#1e3a8a 35%,#312e81 65%,#4a1d96 100%);
+  box-shadow: 0 4px 24px rgba(59,130,246,.22), 0 1px 0 rgba(255,255,255,.06) inset;
+  color: #fff;
+}
+.db-header-glow {
+  position:absolute;inset:0;pointer-events:none;
+  background: radial-gradient(ellipse 55% 80% at 18% 50%,rgba(99,102,241,.2),transparent 58%),
+              radial-gradient(ellipse 40% 60% at 82% 30%,rgba(139,92,246,.16),transparent 55%);
+}
+.db-header-grid {
+  position:absolute;inset:0;pointer-events:none;opacity:.14;
+  background-image: linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),
+                    linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px);
+  background-size: 28px 28px;
+}
+.db-brand { flex-shrink:0; position:relative; z-index:1; padding-right:26px; }
+.db-online {
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.28);
+  border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;color:#4ade80;margin-bottom:5px;
+}
+.db-dot { width:6px;height:6px;border-radius:50%;background:#4ade80;animation:blink 2s ease-in-out infinite; }
+@keyframes blink { 0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,.5)} 50%{box-shadow:0 0 0 6px rgba(74,222,128,0)} }
+.db-brand-name { font-size:18px;font-weight:800;letter-spacing:-.5px;line-height:1.1; }
+.db-brand-sub  { font-size:11px;color:rgba(255,255,255,.5);margin-top:2px; }
+.db-sep { flex-shrink:0;width:1px;height:48px;background:rgba(255,255,255,.1);margin:0 20px; }
+.db-kv-row { flex:1;display:flex;align-items:center;position:relative;z-index:1; }
+.db-kv { flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:0 8px;position:relative; }
+.db-kv+.db-kv::before { content:'';position:absolute;left:0;top:10%;height:80%;width:1px;background:rgba(255,255,255,.08); }
+.db-kv-n {
+  font-size:24px;font-weight:800;line-height:1;letter-spacing:-1px;
+  font-family:'JetBrains Mono',monospace;color:var(--kc);
+  text-shadow:0 0 18px color-mix(in srgb,var(--kc) 60%,transparent);
+}
+.db-kv-l { font-size:9.5px;color:rgba(255,255,255,.48);font-weight:600;text-transform:uppercase;letter-spacing:.4px; }
+.db-header-right { flex-shrink:0;display:flex;align-items:center;gap:14px;position:relative;z-index:1;padding-left:20px; }
+.db-clock-block { text-align:right; }
+.db-clock { font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:600;letter-spacing:2px;line-height:1; }
+.db-date  { font-size:10px;color:rgba(255,255,255,.5);margin-top:4px;text-transform:capitalize; }
+.db-ring  { position:relative;width:64px;height:64px;flex-shrink:0; }
+.db-ring-inner { position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center; }
+.db-ring-pct { font-size:12px;font-weight:800;color:#fff;line-height:1; }
+.db-ring-lbl  { font-size:8px;color:rgba(255,255,255,.48);text-transform:uppercase;letter-spacing:.5px;margin-top:2px; }
+
+/* ── Rows ───────────────────────────────────── */
+.db-row { flex:1;min-height:0;display:grid;gap:10px; }
+.db-row-1 { grid-template-columns:1fr 1fr 1fr; }
+.db-row-2 { grid-template-columns:2fr 1fr 1fr 1fr; }
+@media(max-width:1300px) { .db-row-2 { grid-template-columns:2fr 1fr 1fr 1fr } }
+
+/* ── Cards ──────────────────────────────────── */
+.db-card {
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:14px 16px;box-shadow:var(--shadow-sm);
+  display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;
+  position:relative;transition:box-shadow .2s,transform .2s;
+}
+.db-card::before {
+  content:'';position:absolute;top:0;left:16px;right:16px;height:2px;
+  background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 30%,transparent));
+  border-radius:0 0 2px 2px;opacity:.75;
+}
+.db-card:hover { box-shadow:var(--shadow-lg); }
+.db-card-hdr  { flex-shrink:0;margin-bottom:10px;display:flex;align-items:flex-start;justify-content:space-between; }
+.db-card-title{ font-size:13px;font-weight:700;color:var(--text-main); }
+.db-card-sub  { font-size:11px;color:var(--text-muted);margin-top:1px; }
+.db-chip {
+  font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;flex-shrink:0;
+  background:color-mix(in srgb,var(--primary) 10%,transparent);
+  color:var(--primary);border:1px solid color-mix(in srgb,var(--primary) 16%,transparent);
+}
+.db-chart-host { flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column; }
+.db-scroll { flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:5px; }
+.db-scroll::-webkit-scrollbar { width:3px }
+.db-scroll::-webkit-scrollbar-thumb { background:var(--border);border-radius:3px }
+.db-inc-kpis { display:grid;grid-template-columns:repeat(4,1fr);gap:6px;flex-shrink:0; }
+
+/* ══ INJECTED HTML (global) ══════════════════ */
+
+/* Shared */
+:global(.db-empty) { padding:20px 0;text-align:center;font-size:12px;color:var(--text-muted);font-weight:500; }
+:global(.db-bar-bg)   { height:5px;background:var(--surface-3);border-radius:3px;overflow:hidden;margin-top:4px; }
+:global(.db-bar-fill) { height:100%;border-radius:3px;transition:width 1.1s cubic-bezier(.4,0,.2,1); }
+
+/* ── Donut chart ────────── */
+:global(.dbc-donut) {
+  flex:1;min-height:0;display:flex;align-items:center;gap:16px;overflow:hidden;
+}
+:global(.dbc-svg-wrap) { flex-shrink:0;position:relative; }
+:global(.dbc-center) {
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:none;
+}
+:global(.dbc-c-num)  { font-size:24px;font-weight:800;color:var(--text-main);line-height:1;font-family:'JetBrains Mono',monospace; }
+:global(.dbc-c-lbl)  { font-size:10px;color:var(--text-muted);font-weight:500;margin-top:2px; }
+:global(.dbc-legend) { flex:1;min-width:0;display:flex;flex-direction:column;gap:7px;justify-content:center;overflow:hidden; }
+:global(.dbc-leg-row){ display:flex;align-items:center;gap:8px;min-width:0; }
+:global(.dbc-leg-dot){ width:10px;height:10px;border-radius:3px;flex-shrink:0; }
+:global(.dbc-leg-name){ font-size:12px;font-weight:600;color:var(--text-main);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+:global(.dbc-leg-num) { font-size:11.5px;font-weight:700;font-family:'JetBrains Mono',monospace;flex-shrink:0; }
+:global(.dbc-leg-pct) { font-size:10px;color:var(--text-muted);flex-shrink:0;width:32px;text-align:right; }
+
+/* ── Category bars ──────── */
+:global(.dbc-cat-row) { display:flex;align-items:center;gap:8px;flex-shrink:0;min-width:0; }
+:global(.dbc-cat-name){ font-size:11.5px;font-weight:600;color:var(--text-muted);width:100px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+:global(.dbc-cat-bar) { flex:1;height:18px;background:var(--surface-3);border-radius:6px;overflow:hidden;position:relative; }
+:global(.dbc-cat-fill){ height:100%;border-radius:6px;transition:width 1.1s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;justify-content:flex-end; }
+:global(.dbc-cat-n)   { font-size:10.5px;font-weight:700;color:#fff;padding:0 7px;font-family:'JetBrains Mono',monospace; }
+
+/* ── Rack bars ──────────── */
+:global(.dbc-rack-row) { padding:6px 0;border-bottom:1px solid var(--border);flex-shrink:0; }
+:global(.dbc-rack-row:last-child) { border-bottom:none }
+:global(.dbc-rack-hdr)  { display:flex;justify-content:space-between;align-items:center; }
+:global(.dbc-rack-name) { font-size:12.5px;font-weight:600;color:var(--text-main);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+:global(.dbc-rack-name:hover) { color:var(--primary); }
+:global(.dbc-rack-pct)  { font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;flex-shrink:0;margin-left:6px; }
+:global(.dbc-rack-meta) { font-size:10.5px;color:var(--text-muted);margin-top:1px; }
+
+/* ── Incidents ──────────── */
+:global(.dbc-inc-kpi)  { border-radius:9px;padding:9px 5px;text-align:center;border:1px solid;display:flex;flex-direction:column;align-items:center;gap:2px; }
+:global(.dbc-inc-n)    { font-size:19px;font-weight:800;line-height:1;font-family:'JetBrains Mono',monospace; }
+:global(.dbc-inc-l)    { font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;opacity:.75; }
+:global(.dbc-inc-item) { display:flex;align-items:center;gap:7px;padding:6px 7px;border-radius:8px;transition:background .15s;flex-shrink:0; }
+:global(.dbc-inc-item:hover) { background:var(--surface-2); }
+:global(.dbc-inc-dot)  { width:6px;height:6px;border-radius:50%;flex-shrink:0; }
+:global(.dbc-inc-body) { flex:1;min-width:0;display:flex;flex-direction:column;gap:1px; }
+:global(.dbc-inc-isp)  { font-size:12px;font-weight:600;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+:global(.dbc-inc-meta) { font-size:10px;color:var(--text-muted); }
+:global(.dbc-inc-tag)  { font-size:10px;font-weight:600;padding:2px 6px;border-radius:6px;flex-shrink:0; }
+
+/* ── ISPs ───────────────── */
+:global(.dbc-isp-row) { display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:9px;background:var(--surface-2);border:1px solid var(--border);transition:background .15s;flex-shrink:0; }
+:global(.dbc-isp-row:hover) { background:var(--surface-3); }
+:global(.dbc-isp-dot) { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
+:global(.dbc-isp-body){ flex:1;min-width:0; }
+:global(.dbc-isp-name){ font-size:12px;font-weight:600;color:var(--text-main); }
+:global(.dbc-isp-sub) { font-size:10.5px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+:global(.dbc-isp-bdg) { font-size:11px;font-weight:700;padding:2px 7px;border-radius:9px;flex-shrink:0; }
+
+/* ── Activity ───────────── */
+:global(.dbc-act-row) { display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:9px;cursor:pointer;transition:background .15s;border:1px solid transparent;flex-shrink:0; }
+:global(.dbc-act-row:hover) { background:var(--surface-2);border-color:var(--border); }
+:global(.dbc-act-ico) { width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+:global(.dbc-act-body){ flex:1;min-width:0;display:flex;flex-direction:column;gap:1px; }
+:global(.dbc-act-name){ font-size:12px;font-weight:600;color:var(--text-main);overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+:global(.dbc-act-type){ font-size:10px;color:var(--text-muted); }
+:global(.dbc-act-time){ font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;flex-shrink:0; }
+</style>
+
+<script>
+  import { load } from '../scripts/store.js';
+  import { initDashboard } from '../scripts/views/dashboard.js';
+  document.addEventListener('astro:page-load', async () => {
+    await load();
+    initDashboard();
+  });
+</script>

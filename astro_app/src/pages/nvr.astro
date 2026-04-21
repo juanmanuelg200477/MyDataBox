@@ -1,0 +1,14 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="Perfil del NVR">
+    <script>
+        import { load } from '../scripts/store.js';
+        import { initNvrProfile } from '../scripts/views/nvrLogic.js';
+        document.addEventListener('astro:page-load', async () => {
+            await load();
+            const container = document.getElementById('app');
+            if (container) initNvrProfile(container);
+        });
+    </script>
+</Layout>

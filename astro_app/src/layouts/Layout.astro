@@ -1,0 +1,140 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import Sidebar from '../components/Sidebar.astro';
+import CardNav from '../components/CardNav.astro';
+import '../styles/global.css';
+
+interface Props {
+	title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="description" content="Gestión de Infraestructura Databox" />
+		<meta name="viewport" content="width=device-width" />
+		<title>{title} — DataBox IT</title>
+		<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" is:inline></script>
+		<ClientRouter />
+	</head>
+	<body>
+		<div class="sidebar-overlay" id="sidebar-overlay"></div>
+		<Sidebar />
+		<CardNav />
+		
+		<div class="main">
+			<div class="topbar">
+				<button id="hamburger-btn" class="hamburger-btn" aria-label="Abrir menú">
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<line x1="3" y1="12" x2="21" y2="12"></line>
+						<line x1="3" y1="6" x2="21" y2="6"></line>
+						<line x1="3" y1="18" x2="21" y2="18"></line>
+					</svg>
+				</button>
+				<div class="breadcrumb" id="breadcrumb">
+					<span>DataBox IT</span>
+					<span class="sep">›</span>
+					<span class="current">{title}</span>
+				</div>
+				<button id="btn-logout" title="Cerrar sesión" style="margin-left:auto;background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;color:var(--text-muted);display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;font-family:inherit;transition:all 0.2s;flex-shrink:0;">
+					<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+						<polyline points="16 17 21 12 16 7"/>
+						<line x1="21" y1="12" x2="9" y2="12"/>
+					</svg>
+					Salir
+				</button>
+			</div>
+			<div class="content" id="app">
+				<slot />
+			</div>
+		</div>
+
+		<!-- Global Modal Component will be injected here by scripts -->
+		
+		<script>
+			import { supabase } from '../scripts/supabase.js';
+
+				// ── Detectar token de recovery en el hash ─────────
+			// Cuando Supabase redirige tras "Reset Password", pone
+			// #access_token=...&type=recovery en la URL. Lo capturamos
+			// aquí y mandamos al usuario a la página de nueva contraseña.
+			(async () => {
+				const hash = window.location.hash;
+				if (hash && hash.includes('type=recovery')) {
+					window.location.href = '/reset-password' + hash;
+					return;
+				}
+			})();
+
+			// ── Guard de sesión ────────────────────────────────
+			// Corre en cada navegación (incluidas view transitions).
+			// Si no hay sesión activa redirige al login.
+			document.addEventListener('astro:page-load', async () => {
+				// ── Rol: aplicar SINCRÓNICAMENTE antes del await ──
+				// Garantiza que viewer-mode esté en el body antes de que
+				// cualquier módulo renderice sus botones de acción.
+				const cachedRole = sessionStorage.getItem('databox_role');
+				if (cachedRole === 'viewer') {
+					document.body.classList.add('viewer-mode');
+				}
+
+				const { data: { session } } = await supabase.auth.getSession();
+				if (!session) {
+					window.location.href = '/login';
+					return;
+				}
+
+				// ── Rol: refrescar desde sesión activa ─────────
+				const role = session.user?.user_metadata?.role ?? 'admin';
+				sessionStorage.setItem('databox_role', role);
+				if (role === 'viewer') {
+					document.body.classList.add('viewer-mode');
+					const topbar = document.querySelector('.topbar');
+					if (topbar && !topbar.querySelector('.viewer-badge')) {
+						const badge = document.createElement('span');
+						badge.className = 'viewer-badge';
+						badge.innerHTML = `<svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Solo lectura`;
+						const logoutBtn = document.getElementById('btn-logout');
+						if (logoutBtn) topbar.insertBefore(badge, logoutBtn);
+						else topbar.appendChild(badge);
+					}
+				} else {
+					document.body.classList.remove('viewer-mode');
+				}
+
+				// ── Sidebar Hamburguesa ────────────────────────
+				const btn     = document.getElementById('hamburger-btn');
+				const sidebar = document.querySelector('.sidebar');
+				const overlay = document.getElementById('sidebar-overlay');
+				if (btn && sidebar && overlay) {
+					// Reset estado del sidebar en cada navegación para evitar
+					// que el overlay quede activo entre view transitions
+					sidebar.classList.remove('open');
+					overlay.classList.remove('active');
+
+					const toggleMenu = () => {
+						sidebar.classList.toggle('open');
+						overlay.classList.toggle('active');
+					};
+					btn.onclick     = toggleMenu;
+					overlay.onclick = toggleMenu;
+				}
+
+				// ── Logout ─────────────────────────────────────
+				const logoutBtn = document.getElementById('btn-logout');
+				if (logoutBtn) {
+					logoutBtn.onclick = async () => {
+						await supabase.auth.signOut();
+						window.location.href = '/login';
+					};
+				}
+			});
+		</script>
+	</body>
+</html>

@@ -1,0 +1,91 @@
+---
+const currentPath = Astro.url.pathname;
+
+const menuLinks = [
+    { name: 'Dashboard', path: '/', view: 'dashboard', icon: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>' },
+    { name: 'Regiones', path: '/regiones', view: 'regions', icon: '<circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/>' },
+    { name: 'Áreas', path: '/areas', view: 'areas', icon: '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="12" y1="3" x2="12" y2="21"/>' },
+];
+
+const contactLinks = [
+    { name: 'Contactos', path: '/contactos', view: 'contacts', icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>' }
+];
+
+const infraLinks = [
+    { name: 'Bastidores', path: '/bastidores', view: 'racks', icon: '<rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/>' },
+    { name: 'Dispositivos', path: '/dispositivos', view: 'devices', icon: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/><circle cx="18" cy="7" r="1"/><circle cx="18" cy="14" r="1"/>' }
+];
+
+function isActive(path: string) {
+    if (path === '/' && currentPath === '/') return true;
+    if (path !== '/' && currentPath.startsWith(path)) return true;
+    return false;
+}
+
+let activeBranch = "Infrastructure";
+let isMainArea = true;
+
+if (currentPath.startsWith('/support')) {
+    activeBranch = "Support";
+    isMainArea = false;
+} else if (currentPath.startsWith('/servers')) {
+    activeBranch = "Servers";
+    isMainArea = false;
+}
+---
+
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="2" width="20" height="20" rx="3" />
+            <line x1="2" y1="8" x2="22" y2="8" />
+            <line x1="8" y1="2" x2="8" y2="8" />
+        </svg>
+        <div><span>DataBox IT</span><small>{activeBranch}</small></div>
+    </div>
+
+    {isMainArea && (
+        <>
+            <div class="sidebar-section">Organización</div>
+            {menuLinks.map(link => (
+                <a href={link.path} class={`sidebar-item ${isActive(link.path) ? 'active' : ''}`} data-astro-prefetch>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" set:html={link.icon}></svg>
+                    {link.name}
+                </a>
+            ))}
+
+            <div class="sidebar-section">Contactos</div>
+            {contactLinks.map(link => (
+                <a href={link.path} class={`sidebar-item ${isActive(link.path) ? 'active' : ''}`} data-astro-prefetch>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" set:html={link.icon}></svg>
+                    {link.name}
+                </a>
+            ))}
+
+            <div class="sidebar-section">Infraestructura</div>
+            {infraLinks.map(link => (
+                <a href={link.path} class={`sidebar-item ${isActive(link.path) ? 'active' : ''}`} data-astro-prefetch>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" set:html={link.icon}></svg>
+                    {link.name}
+                </a>
+            ))}
+        </>
+    )}
+
+    <div class="sidebar-footer">
+        <div class="sidebar-footer-user">
+            <div class="sidebar-footer-avatar">JM</div>
+            <div class="sidebar-footer-info">
+                <div>Admin</div>
+                <div>DataBox IT</div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<style>
+/* Reset sidebar item specifically since a tags are inline */
+.sidebar-item {
+    text-decoration: none;
+}
+</style>

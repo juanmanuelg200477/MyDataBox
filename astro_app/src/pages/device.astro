@@ -1,0 +1,14 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="Perfil del Dispositivo">
+    <script>
+        import { load } from '../scripts/store.js';
+        import { initDeviceProfile } from '../scripts/views/deviceLogic.js';
+        document.addEventListener('astro:page-load', async () => {
+            await load();
+            const container = document.getElementById('app');
+            if(container) initDeviceProfile(container);
+        });
+    </script>
+</Layout>
