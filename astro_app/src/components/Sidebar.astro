@@ -36,10 +36,26 @@ if (currentPath.startsWith('/support')) {
 
 <nav class="sidebar">
     <div class="sidebar-brand">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="2" width="20" height="20" rx="3" />
-            <line x1="2" y1="8" x2="22" y2="8" />
-            <line x1="8" y1="2" x2="8" y2="8" />
+        <svg class="atom-logo" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="atom-orbit-sb" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#c0c0c0" stop-opacity="0.9"/>
+                    <stop offset="50%" stop-color="#e8e8e8" stop-opacity="0.7"/>
+                    <stop offset="100%" stop-color="#a0a0a0" stop-opacity="0.9"/>
+                </linearGradient>
+                <radialGradient id="atom-core-sb" cx="50%" cy="40%" r="50%">
+                    <stop offset="0%" stop-color="#ffffff"/>
+                    <stop offset="50%" stop-color="#d4d4d8"/>
+                    <stop offset="100%" stop-color="#a1a1aa"/>
+                </radialGradient>
+            </defs>
+            <!-- Orbits -->
+            <ellipse cx="24" cy="24" rx="20" ry="8" stroke="url(#atom-orbit-sb)" stroke-width="1.2" transform="rotate(0 24 24)" class="atom-orbit-ring"/>
+            <ellipse cx="24" cy="24" rx="20" ry="8" stroke="url(#atom-orbit-sb)" stroke-width="1.2" transform="rotate(60 24 24)" class="atom-orbit-ring"/>
+            <ellipse cx="24" cy="24" rx="20" ry="8" stroke="url(#atom-orbit-sb)" stroke-width="1.2" transform="rotate(-60 24 24)" class="atom-orbit-ring"/>
+            <!-- Nucleus -->
+            <circle cx="24" cy="24" r="4.5" fill="url(#atom-core-sb)"/>
+            <circle cx="24" cy="24" r="3" fill="#e4e4e7" opacity="0.6"/>
         </svg>
         <div><span>DataBox IT</span><small>{activeBranch}</small></div>
     </div>
@@ -87,5 +103,20 @@ if (currentPath.startsWith('/support')) {
 /* Reset sidebar item specifically since a tags are inline */
 .sidebar-item {
     text-decoration: none;
+}
+
+/* Atom logo in sidebar */
+.atom-logo {
+    width: 36px;
+    height: 36px;
+    animation: atomSpin 12s linear infinite;
+    filter: drop-shadow(0 0 4px rgba(148, 163, 184, 0.3));
+}
+@keyframes atomSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+.atom-logo:hover {
+    filter: drop-shadow(0 0 8px rgba(203, 213, 225, 0.6));
 }
 </style>

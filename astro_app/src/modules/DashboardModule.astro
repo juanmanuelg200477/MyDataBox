@@ -184,14 +184,29 @@ import { icons } from '../scripts/icons.js';
   background:var(--surface);border:1px solid var(--border);border-radius:14px;
   padding:14px 16px;box-shadow:var(--shadow-sm);
   display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;
-  position:relative;transition:box-shadow .2s,transform .2s;
+  position:relative;transition:box-shadow .3s ease,transform .3s ease,border-color .3s ease;
+  --sx:50%;--sy:50%; /* spotlight position */
 }
 .db-card::before {
   content:'';position:absolute;top:0;left:16px;right:16px;height:2px;
   background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 30%,transparent));
   border-radius:0 0 2px 2px;opacity:.75;
+  transition: opacity .3s ease, width .3s ease;
 }
-.db-card:hover { box-shadow:var(--shadow-lg); }
+/* Spotlight overlay */
+.db-card::after {
+  content:'';
+  position:absolute;inset:0;border-radius:14px;
+  background: radial-gradient(300px circle at var(--sx) var(--sy), color-mix(in srgb, var(--accent) 8%, transparent), transparent 70%);
+  opacity:0;transition:opacity .35s ease;
+  pointer-events:none;z-index:0;
+}
+.db-card:hover::after { opacity:1; }
+.db-card:hover {
+  box-shadow: 0 12px 40px rgba(0,0,0,0.18), 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
+  transform: translateY(-4px) scale(1.005);
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+}
 .db-card-hdr  { flex-shrink:0;margin-bottom:10px;display:flex;align-items:flex-start;justify-content:space-between; }
 .db-card-title{ font-size:13px;font-weight:700;color:var(--text-main); }
 .db-card-sub  { font-size:11px;color:var(--text-muted);margin-top:1px; }
@@ -320,17 +335,61 @@ import { icons } from '../scripts/icons.js';
   }
 }
 
-@media (max-width: 480px) {
-  .db-kv-row { 
-    grid-template-columns: 1fr 1fr; /* 2 columns on very small phones */
-  }
-  :global(.dbc-donut) {
-    flex-direction: column;
-    align-items: center;
-  }
-  :global(.dbc-legend) {
-    width: 100%;
-  }
+
+/* Staggered row entrance */
+:global(.db-anim-row) {
+  animation: dbRowIn .35s cubic-bezier(0.4,0,0.2,1) both;
+}
+@keyframes dbRowIn {
+  from { opacity:0; transform: translateX(-8px); }
+  to   { opacity:1; transform: none; }
+}
+
+/* KPI hover lift */
+.db-kv {
+  cursor: default;
+  transition: transform .2s cubic-bezier(0.34,1.56,0.64,1);
+}
+.db-kv:hover { transform: translateY(-3px) scale(1.08); }
+.db-kv-n { transition: text-shadow .3s; }
+.db-kv:hover .db-kv-n {
+  text-shadow: 0 0 24px color-mix(in srgb,var(--kc) 85%,transparent);
+}
+
+/* Rack name hover highlight */
+:global(.dbc-rack-row) {
+  transition: background .2s ease, padding-left .2s ease;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border-bottom:1px solid var(--border);
+}
+:global(.dbc-rack-row:hover) {
+  background: var(--surface-2);
+  padding-left: 14px;
+}
+:global(.dbc-rack-row:last-child) { border-bottom:none }
+
+/* Activity row pulse on hover */
+:global(.dbc-act-row:hover .dbc-act-ico) {
+  transform: scale(1.18) rotate(-6deg);
+  transition: transform .25s cubic-bezier(0.34,1.56,0.64,1);
+}
+:global(.dbc-act-ico) { transition: transform .25s ease; }
+
+/* ISP dot pulse */
+:global(.dbc-isp-row:hover .dbc-isp-dot) {
+  transform: scale(1.5);
+  box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 20%, transparent);
+}
+:global(.dbc-isp-dot) { transition: transform .2s ease, box-shadow .2s ease; }
+
+/* Incident KPI hover */
+:global(.dbc-inc-kpi) {
+  transition: transform .25s cubic-bezier(0.34,1.56,0.64,1), box-shadow .25s ease;
+}
+:global(.dbc-inc-kpi:hover) {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
 }
 </style>
 
@@ -338,7 +397,35 @@ import { icons } from '../scripts/icons.js';
   import { load } from '../scripts/store.js';
   import { initDashboard } from '../scripts/views/dashboard.js';
   document.addEventListener('astro:page-load', async () => {
+    if (window.location.pathname !== '/' && window.location.pathname !== '/index') return;
     await load();
     initDashboard();
+
+    // ── Cursor spotlight on cards ─────────────────────────
+    document.querySelectorAll('.db-card').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--sx', `${x}px`);
+        card.style.setProperty('--sy', `${y}px`);
+      });
+    });
+
+    // ── Staggered entrance for scrollable rows ────────────
+    const animateRows = (selector) => {
+      document.querySelectorAll(selector).forEach((row, i) => {
+        row.classList.add('db-anim-row');
+        row.style.animationDelay = `${i * 55}ms`;
+      });
+    };
+    // Small delay to let JS inject the HTML first
+    setTimeout(() => {
+      animateRows('.dbc-rack-row');
+      animateRows('.dbc-cat-row');
+      animateRows('.dbc-isp-row');
+      animateRows('.dbc-act-row');
+      animateRows('.dbc-inc-item');
+    }, 100);
   });
 </script>
