@@ -9,7 +9,7 @@
     transform: translateX(-50%);
     width: 72%;
     max-width: 680px;
-    z-index: 1000;
+    z-index: var(--z-cardnav);
     box-sizing: border-box;
 }
 

@@ -16,6 +16,10 @@ import { icons } from '../scripts/icons.js';
                 <input type="text" placeholder="Buscar contacto..." id="search-contacts">
             </div>
         </div>
+        <div class="db-loading" id="contacts-loading">
+            <div class="db-spinner"></div>
+            <span>Cargando contactos…</span>
+        </div>
         <div id="contacts-table-container" style="display:none">
             <table>
                 <thead><tr><th>Nombre</th><th>Región</th><th>Cargo</th><th>Teléfono</th><th>Correo</th><th>Acciones</th></tr></thead>
@@ -33,7 +37,12 @@ import { icons } from '../scripts/icons.js';
     import { load } from '../scripts/store.js';
     import { initContacts } from '../scripts/views/contacts.js';
     document.addEventListener('astro:page-load', async () => {
+        // Guard de ruta: el listener vive en document y se dispara en TODA
+        // navegación posterior, así que sin esto cada módulo ya visitado
+        // recargaba las 8 tablas del store en cada cambio de página.
+        if (window.location.pathname.replace(/\/$/, '') !== '/contactos') return;
         await load();
+        document.getElementById('contacts-loading')?.remove();
         initContacts();
     });
 </script>

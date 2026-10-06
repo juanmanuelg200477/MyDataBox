@@ -7,7 +7,26 @@ import { store, save, genId, logHistory, isViewer } from '../store.js';
 export function initNvrProfile(app) {
     const params = new URLSearchParams(window.location.search);
     const nvrId = params.get('id');
-    const nvr = store.devices.find(d => String(d.id) === String(nvrId) && (d.device || '').toLowerCase() === 'nvr');
+
+    // Buscar en dispositivos sueltos
+    let nvr = store.devices.find(d =>
+        String(d.id) === String(nvrId) && (d.device || '').toLowerCase() === 'nvr'
+    );
+
+    // Si no se encuentra, buscar en slots de racks
+    if (!nvr) {
+        for (const rack of store.racks) {
+            for (const [unit, dev] of Object.entries(rack.slots || {})) {
+                if ((dev.device || '').toLowerCase() === 'nvr') {
+                    if (String(dev.id) === String(nvrId) || `rack_${rack.id}_${unit}` === nvrId) {
+                        nvr = dev;
+                        break;
+                    }
+                }
+            }
+            if (nvr) break;
+        }
+    }
 
     if (!nvr) { window.location.href = '/dispositivos'; return; }
 
@@ -284,9 +303,21 @@ function renderNvrProfile(app, nvr, editMode) {
     });
 
     // Guardar
-    document.getElementById('btn-save-creds')?.addEventListener('click', () => {
+    const btnSaveCreds = document.getElementById('btn-save-creds');
+    btnSaveCreds?.addEventListener('click', async () => {
+        if (btnSaveCreds.disabled) return;
+        btnSaveCreds.disabled      = true;
+        btnSaveCreds.style.opacity = '0.6';
+
         nvr.credentials = collectCredsFromDOM();
-        save();
+        // await: "Volver Atrás" está justo al lado y navega sin esperar nada;
+        // sin esto, el load() de la página siguiente puede pisar las credenciales.
+        if (!await save()) {
+            // Seguimos en modo edición para que el usuario pueda reintentar.
+            btnSaveCreds.disabled      = false;
+            btnSaveCreds.style.opacity = '';
+            return;
+        }
         renderNvrProfile(app, nvr, false);
     });
 

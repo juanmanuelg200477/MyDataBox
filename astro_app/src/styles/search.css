@@ -1,0 +1,202 @@
+/* ============================================================
+   DATABOX IT — Búsqueda global (ver ../scripts/globalSearch.js)
+   Sin colores propios: usa los tokens de global.css.
+   ============================================================ */
+
+.gs-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+    background: rgba(7, 9, 26, 0.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 12vh 20px 20px;
+    animation: gs-fade 0.15s ease;
+}
+
+.gs-panel {
+    width: 100%;
+    max-width: 620px;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+    animation: gs-in 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Cabecera / input ─────────────────────────────────────── */
+
+.gs-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.gs-head-ico {
+    flex-shrink: 0;
+    width: 17px;
+    height: 17px;
+    color: var(--text-muted);
+}
+.gs-head-ico svg { display: block; width: 100%; height: 100%; }
+
+.gs-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: none;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--text);
+}
+.gs-input::placeholder { color: var(--text-muted); }
+
+.gs-kbd {
+    flex-shrink: 0;
+    padding: 3px 7px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+}
+
+/* ── Resultados ───────────────────────────────────────────── */
+
+.gs-list {
+    overflow-y: auto;
+    padding: 6px;
+}
+
+.gs-hint {
+    margin: 0;
+    padding: 34px 18px;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-muted);
+}
+
+.gs-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 10px 5px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.gs-group-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    letter-spacing: 0;
+}
+
+.gs-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    padding: 9px 10px;
+    border: none;
+    border-radius: var(--radius);
+    background: none;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.12s ease;
+}
+.gs-item:hover,
+.gs-item.active { background: var(--primary-light); }
+
+.gs-item-ico {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--primary);
+}
+.gs-item-ico svg { display: block; width: 100%; height: 100%; }
+
+.gs-item-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.gs-item-title {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gs-item-sub {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Disparador en la barra superior ──────────────────────── */
+
+.gs-trigger {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-left: auto;
+    padding: 6px 10px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+.gs-trigger:hover { color: var(--text); border-color: var(--primary); }
+.gs-trigger svg { width: 15px; height: 15px; }
+
+@keyframes gs-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes gs-in {
+    from { opacity: 0; transform: translateY(-8px) scale(0.99); }
+    to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gs-overlay, .gs-panel { animation: none; }
+}
+
+@media (max-width: 768px) {
+    .gs-overlay { padding: 8vh 12px 12px; }
+    .gs-panel { max-height: 80vh; }
+    /* En móvil el botón queda solo con el icono para no apretar el breadcrumb */
+    .gs-trigger span { display: none; }
+    .gs-kbd { display: none; }
+}

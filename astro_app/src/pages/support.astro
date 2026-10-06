@@ -3,8 +3,48 @@
 import Layout from '../layouts/Layout.astro';
 ---
 <Layout title="Support — DataBox IT">
-    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; text-align: center; padding-top: 10vh;">
-        <h1 style="font-size: 5rem; font-weight: 700; color: rgba(255,255,255,0.05); margin: 0; letter-spacing: -2px; user-select: none;">PRÓXIMAMENTE</h1>
-        <h2 style="font-size: 2rem; font-weight: 400; color: #fff; margin: -10px 0 0 0; letter-spacing: 2px;">Branch Support</h2>
+    <div class="soon">
+        <h1 class="soon-ghost">PRÓXIMAMENTE</h1>
+        <h2 class="soon-title">Branch Support</h2>
+        <p class="soon-sub">Esta sección todavía está en construcción.</p>
     </div>
 </Layout>
+
+<style>
+    /* Los colores de antes venían de la estética oscura del login (#fff sobre
+       #0D0716), pero esta página se monta en el shell claro del dashboard: el
+       texto quedaba blanco sobre fondo claro, o sea, invisible. Ahora usa los
+       tokens del tema y escala en móvil. */
+    .soon {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 12vh 20px;
+    }
+
+    .soon-ghost {
+        margin: 0;
+        font-size: clamp(2.5rem, 11vw, 5rem);
+        line-height: 1;
+        font-weight: 700;
+        letter-spacing: -2px;
+        color: var(--border);
+        user-select: none;
+    }
+
+    .soon-title {
+        margin: 4px 0 0;
+        font-size: clamp(1.25rem, 5vw, 2rem);
+        font-weight: 600;
+        letter-spacing: 2px;
+        color: var(--text);
+    }
+
+    .soon-sub {
+        margin: 10px 0 0;
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+</style>

@@ -3,6 +3,13 @@ import { icons } from '../scripts/icons.js';
 import MagicBento from '../components/MagicBento.jsx';
 ---
 
+<!-- Va FUERA de #devices-module porque ese arranca oculto y solo se revela
+     cuando initDevices() pinta la primera vista: este bloque ocupa ese hueco. -->
+<div class="db-loading" id="devices-loading">
+    <div class="db-spinner"></div>
+    <span>Cargando dispositivos…</span>
+</div>
+
 <div class="view-transition" id="devices-module" style="visibility:hidden;opacity:0;transition:opacity 0.12s ease;">
 
     <!-- ── HEADER ─────────────────────────────────────────── -->
@@ -308,7 +315,13 @@ import MagicBento from '../components/MagicBento.jsx';
     import { load } from '../scripts/store.js';
     import { initDevices } from '../scripts/views/devices.js';
     document.addEventListener('astro:page-load', async () => {
+        // Guard de ruta: el listener vive en document y se dispara en TODA
+        // navegación posterior, así que sin esto cada módulo ya visitado
+        // recargaba las 8 tablas del store en cada cambio de página.
+        if (window.location.pathname.replace(/\/$/, '') !== '/dispositivos') return;
         await load();
         initDevices();
+        // Después de initDevices: es ahí donde el módulo pasa a ser visible.
+        document.getElementById('devices-loading')?.remove();
     });
 </script>

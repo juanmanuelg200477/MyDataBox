@@ -130,7 +130,7 @@ function showRackForm(id) {
             <div class="form-group"><label>Anchura (cm)</label><input id="f-width" type="number" value="${r ? r.width : ''}" placeholder="Ej: 60"></div>
             <div class="form-group"><label>Altura (U) — Máx. 50</label><input id="f-height" type="number" min="1" max="50" value="${r ? r.height : ''}" placeholder="Ej: 42"></div>
         </div>
-    `, () => {
+    `, async () => {
         const regionId = document.getElementById('f-region').value;
         const areaId = document.getElementById('f-area').value;
         const name = document.getElementById('f-name').value.trim();
@@ -142,15 +142,24 @@ function showRackForm(id) {
         if (height > 50) height = 50; if (height < 1) height = 1;
         if (!name) return alert('El nombre es requerido');
         
+        const btnSave = document.getElementById('modal-save');
+        if (btnSave?.disabled) return;
+        if (btnSave) btnSave.disabled = true;
+
         let targetId = r ? r.id : genId();
-        if (r) { 
-            Object.assign(r, { regionId, areaId, name, status, type, description, width, height: String(height) }); 
+        if (r) {
+            Object.assign(r, { regionId, areaId, name, status, type, description, width, height: String(height) });
         } else {
             store.racks.push({ id: targetId, regionId, areaId, name, status, type, description, width, height: String(height), slots: {} });
         }
-        save(); closeModal();
-        
-        if (!id) window.location.href = `/rack?id=${targetId}`;
+        // await antes de navegar: al crear un bastidor se salta directo a su
+        // vista, y sin esperar, el load() de esa página traería datos viejos.
+        const ok = await save();
+        closeModal();
+
+        // Si el guardado falló no navegamos: el aviso de error moriría con la
+        // página y el bastidor parecería creado sin estar en el servidor.
+        if (!id && ok) window.location.href = `/rack?id=${targetId}`;
         else renderRacksTable();
     }, id ? 'Guardar cambios' : 'Crear bastidor');
 

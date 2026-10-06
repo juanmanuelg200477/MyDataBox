@@ -1,4 +1,6 @@
 import { supabase } from './supabase.js';
+import { toastError } from './toast.js';
+import { recordAudit, auditEntries } from './auditLog.js';
 
 // ── STORE EN MEMORIA ────────────────────────────────────────
 // Sigue siendo el mismo objeto que usan todos los views.
@@ -287,11 +289,25 @@ export async function load() {
 // actualizado, así que la UI responde al instante. Supabase se
 // sincroniza en segundo plano.
 
+// Devuelve true si la sincronización con Supabase terminó bien. Los callers
+// que naveguen después de guardar deben comprobarlo: si navegan tras un fallo,
+// el aviso en pantalla se destruye con la página y el cambio se pierde sin que
+// el usuario llegue a enterarse.
 export async function save() {
     // Respaldo inmediato en localStorage (síncrono)
     localStorage.setItem('infrabox_data', JSON.stringify(store));
     // Await-eable para callers que necesiten esperar antes de navegar.
-    await _syncToSupabase().catch(err => console.error('[DataBox] Error al guardar:', err));
+    try {
+        await _syncToSupabase();
+        return true;
+    } catch (err) {
+        console.error('[DataBox] Error al guardar:', err);
+        toastError(
+            'No se pudieron guardar los cambios en el servidor. Siguen visibles en esta pestaña, pero se perderán al recargar.',
+            { title: 'Error al guardar', detail: err?.message }
+        );
+        return false;
+    }
 }
 
 async function _syncToSupabase() {
@@ -307,7 +323,41 @@ async function _syncToSupabase() {
         _syncDevicesAndRacks(store.racks, store.devices, prev.racks, prev.devices)
     ]);
 
+    // La bitácora se escribe solo después de que la sincronización haya ido
+    // bien: no tiene sentido registrar cambios que nunca llegaron a la BD.
+    _recordAudit(prev);
+
     _snapshot = JSON.parse(JSON.stringify(store));
+}
+
+// Sin snapshot previo (p. ej. load() falló y se tiró de localStorage) no se
+// puede distinguir qué cambió: todo parecería recién creado y llenaríamos la
+// bitácora de altas falsas. En ese caso se omite.
+function _recordAudit(prev) {
+    if (!_snapshot) return;
+
+    // Los dispositivos montados viven dentro de rack.slots. Se aplanan junto a
+    // los sueltos para que mover un equipo de bastidor quede registrado.
+    const flatten = (devices, racks) => [
+        ...devices.map(d => ({ ...d, rackId: null, rackUnit: null })),
+        ...racks.flatMap(r => Object.entries(r.slots ?? {}).map(([unit, d]) => ({ ...d, rackId: r.id, rackUnit: unit })))
+    ];
+    // Los racks se comparan sin `slots`: si no, montar un equipo registraría
+    // además una modificación del bastidor, duplicando el mismo hecho.
+    const withoutSlots = racks => racks.map(({ slots, ...rest }) => rest);
+
+    const entries = [
+        ...auditEntries('region',       store.regions,      prev.regions),
+        ...auditEntries('area',         store.areas,        prev.areas),
+        ...auditEntries('contact',      store.contacts,     prev.contacts),
+        ...auditEntries('category',     store.categories,   prev.categories),
+        ...auditEntries('isp_incident', store.ispIncidents, prev.ispIncidents),
+        ...auditEntries('isp_link',     store.ispLinks,     prev.ispLinks),
+        ...auditEntries('rack',         withoutSlots(store.racks), withoutSlots(prev.racks ?? [])),
+        ...auditEntries('device',       flatten(store.devices, store.racks), flatten(prev.devices ?? [], prev.racks ?? []))
+    ];
+
+    recordAudit(entries);
 }
 
 async function _syncTable(table, current, prev, toDb) {
@@ -378,6 +428,23 @@ export function getAllDevices() {
         }
     });
     return devs;
+}
+
+// Respaldo completo del inventario. Los dispositivos montados viajan dentro
+// de rack.slots, igual que se guardan en memoria.
+export function exportSnapshot() {
+    return {
+        app:          'DataBox IT',
+        exportedAt:   new Date().toISOString(),
+        regions:      store.regions,
+        areas:        store.areas,
+        contacts:     store.contacts,
+        categories:   store.categories,
+        racks:        store.racks,
+        devices:      store.devices,
+        ispLinks:     store.ispLinks,
+        ispIncidents: store.ispIncidents
+    };
 }
 
 export function isViewer() {

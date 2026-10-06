@@ -3,6 +3,9 @@ dist/
 # generated types
 .astro/
 
+# copias .bak de archivos a medio editar (artefactos locales)
+.backups/
+
 # dependencies
 node_modules/
 

@@ -722,8 +722,18 @@ function renderRackDevice(app, rackId, unit) {
     }
 
     // ── Save ───────────────────────────────────────────────────
-    document.getElementById('btn-save-rd')?.addEventListener('click', async () => {
+    const btnSaveRd = document.getElementById('btn-save-rd');
+    btnSaveRd?.addEventListener('click', async () => {
+        if (btnSaveRd.disabled) return;
         if (!currentDevObj) return alert('Selecciona un dispositivo primero');
+
+        // Se bloquea ANTES de mutar el store: este formulario se pinta inline
+        // (no es un modal que se destruya al guardar), así que un doble clic
+        // durante el await duplicaba el push a store.devices. Un id repetido
+        // rompe el upsert por lote y aborta TODO el guardado del ciclo.
+        btnSaveRd.disabled      = true;
+        btnSaveRd.style.opacity = '0.6';
+
         const selectedId = devSelect.value;
         const newColor   = document.getElementById('fd-color')?.value || '#38a169';
         if (!rack.slots) rack.slots = {};
@@ -740,16 +750,30 @@ function renderRackDevice(app, rackId, unit) {
         }
         // Await para que Supabase complete antes de navegar.
         // Sin await, load() en la siguiente página obtiene datos viejos.
-        await save();
+        if (!await save()) {
+            // No navegamos: el aviso de error se destruiría con la página y el
+            // usuario se quedaría sin saber que su cambio no llegó al servidor.
+            btnSaveRd.disabled      = false;
+            btnSaveRd.style.opacity = '';
+            return;
+        }
         window.location.href = `/rack?id=${rackId}`;
     });
 
     // ── Delete / Retire ────────────────────────────────────────
-    document.getElementById('btn-delete-rd')?.addEventListener('click', async () => {
+    const btnDeleteRd = document.getElementById('btn-delete-rd');
+    btnDeleteRd?.addEventListener('click', async () => {
+        if (btnDeleteRd.disabled) return;
         if (confirm(`¿Retirar este dispositivo de la ${unit}U? Volverá al módulo de Dispositivos.`)) {
+            btnDeleteRd.disabled      = true;
+            btnDeleteRd.style.opacity = '0.6';
             store.devices.push(rack.slots[unit]);
             delete rack.slots[unit];
-            await save();
+            if (!await save()) {
+                btnDeleteRd.disabled      = false;
+                btnDeleteRd.style.opacity = '';
+                return;
+            }
             window.location.href = `/rack?id=${rackId}`;
         }
     });

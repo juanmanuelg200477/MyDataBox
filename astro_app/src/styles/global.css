@@ -1,5 +1,5 @@
-/* ============================================================
-   DATABOX IT — Premium Enterprise UI
+﻿/* ============================================================
+   DATABOX IT â€” Premium Enterprise UI
    ============================================================ */
 
 :root {
@@ -52,6 +52,24 @@
     --shadow-xl:  0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px rgba(15, 23, 42, 0.06);
     --shadow-primary: 0 4px 14px rgba(59, 130, 246, 0.35);
 
+    /* â”€â”€ Capas (z-index) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+       Escala Ãºnica de la app, de abajo hacia arriba. Antes cada zona
+       subÃ­a el nÃºmero a ojo para "ganarle" a la anterior y se llegÃ³ a
+       tener el editor de planos y el overlay de navegaciÃ³n empatados
+       en 999999 (el orden quedaba al azar, segÃºn el DOM).
+       Los nÃºmeros sueltos pequeÃ±os (1, 2, 10â€¦) dentro de un componente
+       son apilado local y NO entran en esta escala. */
+    --z-topbar:          50;
+    --z-cardnav:         1000;
+    --z-sidebar-overlay: 1999;
+    --z-sidebar:         2000;
+    --z-fullscreen:      5000;    /* editor de planos a pantalla completa */
+    --z-modal:           9000;    /* diÃ¡logos: tapan incluso al fullscreen */
+    --z-modal-popover:   9100;    /* desplegables dentro de un diÃ¡logo */
+    --z-toast:           9800;    /* avisos: por encima de todo lo interactivo */
+    --z-transition:      999999;  /* overlay de navegaciÃ³n entre pÃ¡ginas */
+    --z-welcome:         9999999; /* animaciÃ³n de bienvenida */
+
     /* Geometry */
     --radius:    10px;
     --radius-lg: 14px;
@@ -60,6 +78,16 @@
     /* Motion */
     --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* ============================================================
+   BREAKPOINTS — escala acordada de la app
+   Móvil: hasta 768px · Tablet: 769–1024px · Escritorio: 1025px+
+   Usar SOLO 768 y 1024 en @media nuevos. (CSS no permite variables
+   dentro de @media, así que la convención va aquí por escrito.)
+   Quedan archivos con quiebres sueltos (820, 900, 1100, 1300…) que
+   desincronizan el layout entre secciones; migrarlos requiere
+   comprobación visual, no hacerlo a ciegas.
+   ============================================================ */
 
 /* ============================================================
    BASE
@@ -88,12 +116,12 @@ body {
 .sidebar {
     width: 260px;
     background: var(--sidebar-bg);
-    color: #fff;
+    color: var(--white);
     position: fixed;
     top: 0;
     left: 0;
     bottom: 0;
-    z-index: 2000;
+    z-index: var(--z-sidebar);
     display: flex;
     flex-direction: column;
     overflow-y: auto;
@@ -114,7 +142,7 @@ body {
     background: rgba(7, 9, 26, 0.65);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
-    z-index: 1999;
+    z-index: var(--z-sidebar-overlay);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
@@ -138,7 +166,7 @@ body {
     width: 30px;
     height: 30px;
     flex-shrink: 0;
-    stroke: #3b82f6;
+    stroke: var(--primary);
     filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.4));
 }
 
@@ -146,7 +174,7 @@ body {
     font-size: 17px;
     font-weight: 700;
     letter-spacing: -0.4px;
-    color: #fff;
+    color: var(--white);
     display: block;
 }
 
@@ -206,7 +234,7 @@ body {
     transform: translateY(-50%);
     width: 3px;
     height: 55%;
-    background: #3b82f6;
+    background: var(--primary);
     border-radius: 0 3px 3px 0;
     box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
 }
@@ -225,7 +253,7 @@ body {
 
 .sidebar-item.active svg {
     opacity: 1;
-    stroke: #3b82f6;
+    stroke: var(--primary);
 }
 
 .sidebar-footer {
@@ -253,7 +281,7 @@ body {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -308,7 +336,7 @@ body {
     padding: 0 26px;
     position: sticky;
     top: 0;
-    z-index: 50;
+    z-index: var(--z-topbar);
     box-shadow: 0 4px 30px rgba(15, 23, 42, 0.03), inset 0 -1px 0 rgba(255, 255, 255, 0.3);
 }
 
@@ -336,7 +364,7 @@ body {
 }
 
 .hamburger-btn:hover {
-    background: var(--surface-3, #f1f5f9);
+    background: var(--surface-3);
     color: var(--text);
 }
 
@@ -411,15 +439,15 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%);
+    color: var(--white);
     border: 1px solid rgba(37, 99, 235, 0.6);
     box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35), inset 0 1px 0 rgba(255,255,255,0.25);
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #4f8bf7 0%, #2563eb 100%);
+    background: linear-gradient(135deg, #4f8bf7 0%, var(--primary-hover) 100%);
     transform: translateY(-2px);
     box-shadow: 0 8px 22px rgba(59, 130, 246, 0.45), inset 0 1px 0 rgba(255,255,255,0.35);
 }
@@ -430,8 +458,8 @@ body {
 }
 
 .btn-success {
-    background: linear-gradient(135deg, #10b981 0%, #047857 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--success) 0%, #047857 100%);
+    color: var(--white);
     border: 1px solid rgba(5, 150, 105, 0.6);
     box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255,255,255,0.25);
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -444,8 +472,8 @@ body {
 }
 
 .btn-danger {
-    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--danger) 0%, var(--badge-inactive-text) 100%);
+    color: var(--white);
     border: 1px solid rgba(220, 38, 38, 0.6);
     box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35), inset 0 1px 0 rgba(255,255,255,0.25);
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -491,7 +519,7 @@ body {
 }
 
 .btn-icon:hover {
-    background: #f8fafc;
+    background: var(--surface-2);
     border-color: rgba(59, 130, 246, 0.4);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
 }
@@ -607,7 +635,7 @@ thead th {
     color: var(--text-muted);
     font-weight: 700;
     text-align: left;
-    background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+    background: linear-gradient(to bottom, var(--surface-2), var(--surface-3));
     border-bottom: 1px solid var(--border);
     white-space: nowrap;
 }
@@ -615,7 +643,7 @@ thead th {
 tbody td {
     padding: 13px 18px;
     font-size: 13.5px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--surface-3);
     vertical-align: middle;
     color: var(--text);
 }
@@ -639,7 +667,7 @@ tbody tr:last-child td {
     padding: 10px 18px;
     color: var(--text-muted);
     border-top: 1px solid var(--border);
-    background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+    background: linear-gradient(to bottom, var(--surface-2), var(--surface-3));
     font-weight: 500;
 }
 
@@ -670,25 +698,25 @@ tbody tr:last-child td {
     background: var(--badge-active);
     color: var(--badge-active-text);
 }
-.badge-active::before { background: #10b981; }
+.badge-active::before { background: var(--success); }
 
 .badge-inactive {
     background: var(--badge-inactive);
     color: var(--badge-inactive-text);
 }
-.badge-inactive::before { background: #ef4444; }
+.badge-inactive::before { background: var(--danger); }
 
 .badge-warning {
     background: var(--badge-warning);
     color: var(--badge-warning-text);
 }
-.badge-warning::before { background: #f59e0b; }
+.badge-warning::before { background: var(--warning); }
 
 .badge-info {
     background: #e0e7ff;
     color: #3730a3;
 }
-.badge-info::before { background: #6366f1; }
+.badge-info::before { background: var(--info); }
 
 .badge-purple {
     background: #f3e8ff;
@@ -700,13 +728,13 @@ tbody tr:last-child td {
     background: #fff7ed;
     color: #c2410c;
 }
-.badge-orange::before { background: #f97316; }
+.badge-orange::before { background: var(--orange); }
 
 .badge-teal {
     background: #ccfbf1;
     color: #134e4a;
 }
-.badge-teal::before { background: #14b8a6; }
+.badge-teal::before { background: var(--teal); }
 
 /* ============================================================
    SPACE BAR (progress)
@@ -721,7 +749,7 @@ tbody tr:last-child td {
 .space-bar-fill {
     width: 64px;
     height: 6px;
-    background: #e2e8f0;
+    background: var(--border);
     border-radius: 10px;
     overflow: hidden;
 }
@@ -748,7 +776,7 @@ tbody tr:last-child td {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(7, 9, 26, 0.55);
-    z-index: 9000;
+    z-index: var(--z-modal);
     display: flex;
     align-items: flex-start;
     justify-content: center;
@@ -798,7 +826,7 @@ tbody tr:last-child td {
 }
 
 .form-modal-close {
-    background: #f1f5f9;
+    background: var(--surface-3);
     border: 1px solid var(--border);
     cursor: pointer;
     padding: 6px;
@@ -810,7 +838,7 @@ tbody tr:last-child td {
 }
 
 .form-modal-close:hover {
-    background: #fee2e2;
+    background: var(--badge-inactive);
     border-color: rgba(239, 68, 68, 0.3);
 }
 
@@ -915,8 +943,8 @@ tbody tr:last-child td {
 }
 
 .rack-specs-header {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--text-main) 0%, #1e293b 100%);
+    color: var(--white);
     padding: 15px 18px;
     font-size: 13.5px;
     font-weight: 700;
@@ -939,7 +967,7 @@ tbody tr:last-child td {
 .rack-specs td {
     padding: 10px 16px;
     font-size: 13px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--surface-3);
 }
 
 .rack-specs td:first-child {
@@ -985,7 +1013,7 @@ tbody tr:last-child td {
 }
 
 .rack-table td {
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--surface-3);
 }
 
 .rack-u-num {
@@ -996,7 +1024,7 @@ tbody tr:last-child td {
     font-family: 'JetBrains Mono', monospace;
     font-weight: 600;
     padding: 0 4px;
-    background: linear-gradient(to right, #f8fafc, #f1f5f9);
+    background: linear-gradient(to right, var(--surface-2), var(--surface-3));
     border-right: 2px solid var(--border);
 }
 
@@ -1051,7 +1079,7 @@ tbody tr:last-child td {
     justify-content: center;
     font-size: 11.5px;
     font-weight: 700;
-    color: #fff;
+    color: var(--white);
     letter-spacing: 0.3px;
     cursor: pointer;
     transition: var(--transition);
@@ -1121,7 +1149,7 @@ tbody tr:last-child td {
 .stat-icon svg {
     width: 22px;
     height: 22px;
-    color: #fff;
+    color: var(--white);
 }
 
 .stat-info h3 {
@@ -1172,6 +1200,41 @@ tbody tr:last-child td {
 }
 
 /* ============================================================
+   ESTADO DE CARGA
+   Mismo encuadre que .empty-state: ocupa el hueco de la tabla
+   mientras Supabase responde, en vez de dejar la tarjeta vacÃ­a
+   (se percibÃ­a como una pantalla en blanco / app colgada).
+   ============================================================ */
+
+.db-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 76px 24px;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.db-spinner {
+    width: 26px;
+    height: 26px;
+    border: 2.5px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: db-spin 0.7s linear infinite;
+}
+
+@keyframes db-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .db-spinner { animation-duration: 2s; }
+}
+
+/* ============================================================
    SCROLLBAR
    ============================================================ */
 
@@ -1215,7 +1278,7 @@ tbody tr:last-child td {
     text-underline-offset: 2px;
 }
 
-/* ── Modo solo lectura (viewer) ─────────────────────────────── */
+/* â”€â”€ Modo solo lectura (viewer) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 /* html.viewer-mode is applied synchronously before render;
    body.viewer-mode is applied later by JS. :is() matches both. */
 :is(html, body).viewer-mode .page-header-actions,
@@ -1319,7 +1382,7 @@ tbody tr:last-child td {
         gap: 12px;
     }
 
-    /* ── Tablas Responsivas ── */
+    /* â”€â”€ Tablas Responsivas â”€â”€ */
     table {
         display: block;
         width: 100%;
@@ -1328,13 +1391,13 @@ tbody tr:last-child td {
         white-space: nowrap; /* Evitar que las celdas se aplasten y el texto quede feo */
     }
 
-    /* ── Vistas Generales y Perfiles ── */
+    /* â”€â”€ Vistas Generales y Perfiles â”€â”€ */
     .rack-view {
         grid-template-columns: 1fr; /* Separar la info del rack visual en columnas apiladas */
         gap: 16px;
     }
 
-    /* La tabla técnica interna del NVR o Dispositivos (Information Table) */
+    /* La tabla tÃ©cnica interna del NVR o Dispositivos (Information Table) */
     .nvr-info-table td, .nvr-info-table th {
         white-space: normal; /* Permitir que el texto interno (descripciones) caiga naturalmente en lugar de obligar scroll en esta info basica */
     }

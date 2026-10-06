@@ -16,6 +16,10 @@ import { icons } from '../scripts/icons.js';
                 <input type="text" placeholder="Buscar área..." id="search-areas">
             </div>
         </div>
+        <div class="db-loading" id="areas-loading">
+            <div class="db-spinner"></div>
+            <span>Cargando áreas…</span>
+        </div>
         <div id="areas-table-container" style="display:none">
             <table>
                 <thead><tr><th>Nombre</th><th>Región</th><th>Descripción</th><th>Acciones</th></tr></thead>
@@ -33,7 +37,12 @@ import { icons } from '../scripts/icons.js';
     import { load } from '../scripts/store.js';
     import { initAreas } from '../scripts/views/areas.js';
     document.addEventListener('astro:page-load', async () => {
+        // Guard de ruta: el listener vive en document y se dispara en TODA
+        // navegación posterior, así que sin esto cada módulo ya visitado
+        // recargaba las 8 tablas del store en cada cambio de página.
+        if (window.location.pathname.replace(/\/$/, '') !== '/areas') return;
         await load();
+        document.getElementById('areas-loading')?.remove();
         initAreas();
     });
 </script>

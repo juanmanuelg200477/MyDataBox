@@ -3,6 +3,8 @@ import { ClientRouter } from 'astro:transitions';
 import Sidebar from '../components/Sidebar.astro';
 import CardNav from '../components/CardNav.astro';
 import '../styles/global.css';
+import '../styles/toast.css';
+import '../styles/search.css';
 
 interface Props {
 	title: string;
@@ -17,6 +19,7 @@ const { title } = Astro.props;
 		<meta charset="UTF-8" />
 		<meta name="description" content="Gestión de Infraestructura Databox" />
 		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<title>{title} — DataBox IT</title>
 		<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" is:inline></script>
@@ -52,7 +55,7 @@ const { title } = Astro.props;
 			html.page-loading #page-loading-overlay { display: flex !important; }
 			html.page-loading body { overflow: hidden; }
 		</style>
-		<div id="page-loading-overlay" style="position:fixed;inset:0;background:#0D0716;z-index:999999;flex-direction:column;gap:24px;align-items:center;justify-content:center;transition:opacity 0.3s ease, visibility 0.3s ease;">
+		<div id="page-loading-overlay" style="position:fixed;inset:0;background:#0D0716;z-index:var(--z-transition);flex-direction:column;gap:24px;align-items:center;justify-content:center;transition:opacity 0.3s ease, visibility 0.3s ease;">
 			<div style="position:relative;width:64px;height:64px;display:flex;align-items:center;justify-content:center;">
 				<div style="position:absolute;width:100%;height:100%;border-radius:50%;border:2px solid transparent;border-top-color:#3b82f6;border-left-color:rgba(59,130,246,0.3);animation:a-orb 1.2s linear infinite;"></div>
 				<div style="position:absolute;width:100%;height:100%;border-radius:50%;border:2px solid transparent;border-top-color:#14b8a6;border-left-color:rgba(20,184,166,0.3);animation:a-orb2 1.4s linear infinite;"></div>
@@ -86,7 +89,14 @@ const { title } = Astro.props;
 					<span class="sep">›</span>
 					<span class="current">{title}</span>
 				</div>
-				<button id="btn-logout" title="Cerrar sesión" style="margin-left:auto;background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;color:var(--text-muted);display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;font-family:inherit;transition:all 0.2s;flex-shrink:0;">
+				<button id="btn-global-search" class="gs-trigger" title="Buscar en todo el inventario (Ctrl+K)">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<circle cx="11" cy="11" r="8"></circle>
+						<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+					</svg>
+					<span>Buscar</span>
+				</button>
+				<button id="btn-logout" title="Cerrar sesión" style="margin-left:10px;background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;color:var(--text-muted);display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;font-family:inherit;transition:all 0.2s;flex-shrink:0;">
 					<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 						<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
 						<polyline points="16 17 21 12 16 7"/>
@@ -104,6 +114,7 @@ const { title } = Astro.props;
 		
 		<script>
 			import { supabase } from '../scripts/supabase.js';
+			import { initGlobalSearch, closeSearch } from '../scripts/globalSearch.js';
 
 				// ── Detectar token de recovery en el hash ─────────
 			// Cuando Supabase redirige tras "Reset Password", pone
@@ -181,7 +192,7 @@ const { title } = Astro.props;
 					vw.innerHTML = `
 						<style>
 							#role-welcome-overlay {
-								position: fixed; inset: 0; background: #0D0716; z-index: 9999999;
+								position: fixed; inset: 0; background: #0D0716; z-index: var(--z-welcome);
 								display: flex; flex-direction: column; align-items: center; justify-content: center;
 								opacity: 1; transition: opacity 0.8s ease;
 							}
@@ -229,6 +240,12 @@ const { title } = Astro.props;
 						setTimeout(() => vw.remove(), 800);
 					}, 3600); // Muestra la animación por 3.6 segundos
 				}
+
+				// ── Búsqueda global ───────────────────────────
+				// El overlay vive en <body>, que se reemplaza en cada swap:
+				// lo cerramos para no dejar estado colgando entre páginas.
+				closeSearch();
+				initGlobalSearch();
 
 				// ── Sidebar Hamburguesa ────────────────────────
 				const btn     = document.getElementById('hamburger-btn');

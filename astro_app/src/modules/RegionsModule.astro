@@ -16,6 +16,10 @@ import { icons } from '../scripts/icons.js';
                 <input type="text" placeholder="Buscar región..." id="search-regions">
             </div>
         </div>
+        <div class="db-loading" id="regions-loading">
+            <div class="db-spinner"></div>
+            <span>Cargando regiones…</span>
+        </div>
         <div id="regions-table-container" style="display:none">
             <table>
                 <thead><tr><th>Nombre</th><th>Ubicación</th><th>Áreas</th><th>Acciones</th></tr></thead>
@@ -33,7 +37,12 @@ import { icons } from '../scripts/icons.js';
     import { load } from '../scripts/store.js';
     import { initRegions } from '../scripts/views/regions.js';
     document.addEventListener('astro:page-load', async () => {
+        // Guard de ruta: el listener vive en document y se dispara en TODA
+        // navegación posterior, así que sin esto cada módulo ya visitado
+        // recargaba las 8 tablas del store en cada cambio de página.
+        if (window.location.pathname.replace(/\/$/, '') !== '/regiones') return;
         await load();
+        document.getElementById('regions-loading')?.remove();
         initRegions();
     });
 </script>

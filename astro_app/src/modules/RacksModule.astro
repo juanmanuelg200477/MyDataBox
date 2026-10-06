@@ -26,6 +26,10 @@ import { icons } from '../scripts/icons.js';
                 </select>
             </div>
         </div>
+        <div class="db-loading" id="racks-loading">
+            <div class="db-spinner"></div>
+            <span>Cargando bastidores…</span>
+        </div>
         <div id="racks-table-container" style="display:none">
             <table>
                 <thead><tr><th>#</th><th>Nombre</th><th>Región</th><th>Área</th><th>Estado</th><th>Tipo</th><th>Altura</th><th>Dispositivos</th><th>Espacio</th><th>Acciones</th></tr></thead>
@@ -62,7 +66,12 @@ import { icons } from '../scripts/icons.js';
     import { load } from '../scripts/store.js';
     import { initRacks } from '../scripts/views/racks.js';
     document.addEventListener('astro:page-load', async () => {
+        // Guard de ruta: el listener vive en document y se dispara en TODA
+        // navegación posterior, así que sin esto cada módulo ya visitado
+        // recargaba las 8 tablas del store en cada cambio de página.
+        if (window.location.pathname.replace(/\/$/, '') !== '/bastidores') return;
         await load();
+        document.getElementById('racks-loading')?.remove();
         initRacks();
     });
 </script>

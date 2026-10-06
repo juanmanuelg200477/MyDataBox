@@ -1,7 +1,9 @@
+/* Variables propias del componente. --white NO se redefine aquí: lo da
+   global.css (mismo valor), y tener dos declaraciones independientes del
+   mismo token es justo lo que termina desincronizándose. */
 :root {
   --hue: 27;
   --sat: 69%;
-  --white: hsl(0, 0%, 100%);
   --purple-primary: rgba(132, 0, 255, 1);
   --purple-glow: rgba(132, 0, 255, 0.2);
   --purple-border: rgba(132, 0, 255, 0.8);

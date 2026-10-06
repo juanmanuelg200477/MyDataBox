@@ -169,7 +169,7 @@ export function initDeviceProfile(app, activeTab = 'dt-details') {
             }
         } else {
             hostCell = p.host
-                ? `<strong style="color:var(--text)">${p.host}</strong>`
+                ? `<strong style="color:var(--text)">${p.hostCategory === '__usuario__' ? '👤 ' : ''}${p.host}</strong>`
                 : '<span style="color:var(--text-muted);font-style:italic">— Vacío —</span>';
         }
 
@@ -202,11 +202,18 @@ export function initDeviceProfile(app, activeTab = 'dt-details') {
 
     // TOGGLE UP/DOWN
     document.querySelectorAll('.btn-toggle-port').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const pName = e.currentTarget.dataset.port;
+        btn.addEventListener('click', async (e) => {
+            const target = e.currentTarget;
+            if (target.disabled) return;
+            target.disabled = true;
+
+            const pName = target.dataset.port;
             const ifc = realObj.interfaces[pName];
             ifc.status = ifc.status === 'up' ? 'down' : 'up';
-            save();
+            // await: si el usuario pulsa "Volver" antes de que Supabase confirme,
+            // el load() de la página siguiente traería datos viejos y pisaría
+            // este cambio.
+            await save();
             initDeviceProfile(app, 'dt-interfaces'); // reactively reload keeping tab
         });
     });
@@ -288,13 +295,15 @@ function openPortConfig(app, realObj, unifiedDevContext, portName) {
             <div class="form-group"><label>Categoría (Tipo de Host)</label>
                 <select id="p-host-type">
                     <option value="">— Seleccione categoría —</option>
+                    <option value="__usuario__" ${p.hostCategory === '__usuario__' ? 'selected' : ''}>👤 Usuario (manual)</option>
                     ${catOpts || '<option disabled>Sin dispositivos en esta área</option>'}
                 </select>
             </div>
-            <div class="form-group"><label>Host de Destino Físico</label>
+            <div class="form-group"><label id="p-host-target-label">Host de Destino Físico</label>
                 <select id="p-host-device">
                     <option value="">Esperando categoría...</option>
                 </select>
+                <input id="p-host-username" type="text" placeholder="Ej: Juan Pérez" style="display:none;" />
             </div>
         </div>
 
@@ -323,18 +332,30 @@ function openPortConfig(app, realObj, unifiedDevContext, portName) {
         </div>
     `;
 
-    showModal(`Interfaz :: ${portName}`, modalBody, () => {
+    showModal(`Interfaz :: ${portName}`, modalBody, async () => {
+        // El handler es async: bloqueamos el botón para que un doble clic no
+        // dispare dos guardados con estados distintos.
+        const btnApply = document.getElementById('modal-save');
+        if (btnApply?.disabled) return;
+        if (btnApply) btnApply.disabled = true;
+
         if (isFiber) {
             const sfpSel = document.getElementById('p-sfp-selector');
             p.sfpDeviceId = sfpSel ? sfpSel.value : '';
         } else {
             p.hostCategory = document.getElementById('p-host-type').value;
-            p.hostId = document.getElementById('p-host-device').value;
-            const hostDev = allHosts.find(d => String(d.id) === String(p.hostId));
-            p.host = hostDev ? hostDev.name : '';
+            if (p.hostCategory === '__usuario__') {
+                // Host manual: nombre de usuario escrito libremente (no es un dispositivo)
+                p.hostId = '';
+                p.host = document.getElementById('p-host-username').value.trim();
+            } else {
+                p.hostId = document.getElementById('p-host-device').value;
+                const hostDev = allHosts.find(d => String(d.id) === String(p.hostId));
+                p.host = hostDev ? hostDev.name : '';
+            }
         }
 
-        save();
+        await save();
         closeModal();
         initDeviceProfile(app, 'dt-interfaces');
     }, 'Aplicar Configuración');
@@ -344,6 +365,17 @@ function openPortConfig(app, realObj, unifiedDevContext, portName) {
         const typeSel = document.getElementById('p-host-type');
         const devSel = document.getElementById('p-host-device');
         const roPanel = document.getElementById('read-only-host-details');
+        const userInput = document.getElementById('p-host-username');
+        const targetLabel = document.getElementById('p-host-target-label');
+
+        // Alterna entre selector de dispositivo físico y campo de texto de usuario
+        const applyMode = () => {
+            const isUser = typeSel.value === '__usuario__';
+            userInput.style.display = isUser ? '' : 'none';
+            devSel.style.display = isUser ? 'none' : '';
+            targetLabel.textContent = isUser ? 'Nombre de Usuario' : 'Host de Destino Físico';
+            if (isUser) roPanel.style.display = 'none';
+        };
 
         const paintRoPanel = (devObj) => {
             if (!devObj) {
@@ -381,14 +413,23 @@ function openPortConfig(app, realObj, unifiedDevContext, portName) {
             devSel.dispatchEvent(new Event('change'));
         };
 
-        typeSel.addEventListener('change', updateDevSel);
+        typeSel.addEventListener('change', () => {
+            applyMode();
+            if (typeSel.value !== '__usuario__') updateDevSel();
+        });
         devSel.addEventListener('change', () => {
             const selectedId = devSel.value;
             if (!selectedId) { paintRoPanel(null); return; }
             paintRoPanel(allHosts.find(d => String(d.id) === String(selectedId)));
         });
 
-        if (p.hostCategory) updateDevSel();
+        // Estado inicial (incluye edición de un puerto ya guardado)
+        applyMode();
+        if (p.hostCategory === '__usuario__') {
+            userInput.value = p.host || '';
+        } else if (p.hostCategory) {
+            updateDevSel();
+        }
     }
 
     if (isFiber) {

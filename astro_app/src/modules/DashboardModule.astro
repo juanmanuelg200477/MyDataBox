@@ -41,6 +41,14 @@ import { icons } from '../scripts/icons.js';
           <span class="db-ring-lbl">Salud</span>
         </div>
       </div>
+      <button class="db-backup" id="db-backup" title="Descargar respaldo del inventario (.json)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span>Respaldo</span>
+      </button>
     </div>
   </header>
 
@@ -48,23 +56,25 @@ import { icons } from '../scripts/icons.js';
   <div class="db-row db-row-1">
 
     <!-- Estado del Inventario — donut -->
-    <div class="db-card" style="--accent:#10b981">
+    <div class="db-card" style="--accent:#10b981" data-preview="status" tabindex="0" role="button" aria-label="Ver detalle de Estado del Inventario">
       <div class="db-card-hdr">
         <div><div class="db-card-title">Estado del Inventario</div><div class="db-card-sub">Distribución por estado</div></div>
+        <span class="db-expand-hint" aria-hidden="true">Ver detalle ↗</span>
       </div>
       <div id="chart-status" class="db-chart-host"></div>
     </div>
 
     <!-- Regiones — donut -->
-    <div class="db-card" style="--accent:#3b82f6">
+    <div class="db-card" style="--accent:#3b82f6" data-preview="regions" tabindex="0" role="button" aria-label="Ver detalle de Distribución Regional">
       <div class="db-card-hdr">
         <div><div class="db-card-title">Distribución Regional</div><div class="db-card-sub">Dispositivos por región</div></div>
+        <span class="db-expand-hint" aria-hidden="true">Ver detalle ↗</span>
       </div>
       <div id="chart-regions" class="db-chart-host"></div>
     </div>
 
     <!-- Capacidad de bastidores — barras -->
-    <div class="db-card" style="--accent:#8b5cf6">
+    <div class="db-card" style="--accent:#8b5cf6" data-preview="racks" tabindex="0" role="button" aria-label="Ver detalle de Capacidad de Bastidores">
       <div class="db-card-hdr">
         <div><div class="db-card-title">Capacidad de Bastidores</div><div class="db-card-sub">Ocupación por rack</div></div>
         <span class="db-chip" id="db-racks-chip">0 racks</span>
@@ -78,34 +88,38 @@ import { icons } from '../scripts/icons.js';
   <div class="db-row db-row-2">
 
     <!-- Categorías — barras horizontales -->
-    <div class="db-card" style="--accent:#f59e0b">
+    <div class="db-card" style="--accent:#f59e0b" data-preview="categories" tabindex="0" role="button" aria-label="Ver detalle de Dispositivos por Categoría">
       <div class="db-card-hdr">
         <div><div class="db-card-title">Dispositivos por Categoría</div><div class="db-card-sub">Top categorías del inventario</div></div>
+        <span class="db-expand-hint" aria-hidden="true">Ver detalle ↗</span>
       </div>
       <div id="chart-categories" class="db-scroll"></div>
     </div>
 
     <!-- Incidentes ISP -->
-    <div class="db-card" style="--accent:#ef4444">
+    <div class="db-card" style="--accent:#ef4444" data-preview="incidents" tabindex="0" role="button" aria-label="Ver detalle de Incidentes ISP">
       <div class="db-card-hdr">
         <div><div class="db-card-title">Incidentes ISP</div><div class="db-card-sub">Estado de incidencias</div></div>
+        <span class="db-expand-hint" aria-hidden="true">Ver detalle ↗</span>
       </div>
       <div id="chart-incidents-kpis" class="db-inc-kpis"></div>
       <div id="chart-incidents-list" class="db-scroll" style="margin-top:8px"></div>
     </div>
 
     <!-- ISPs registrados -->
-    <div class="db-card" style="--accent:#06b6d4">
+    <div class="db-card" style="--accent:#06b6d4" data-preview="isps" tabindex="0" role="button" aria-label="Ver detalle de ISPs Registrados">
       <div class="db-card-hdr">
         <div><div class="db-card-title">ISPs Registrados</div><div class="db-card-sub">Proveedores por región</div></div>
+        <span class="db-expand-hint" aria-hidden="true">Ver detalle ↗</span>
       </div>
       <div id="chart-isps" class="db-scroll"></div>
     </div>
 
     <!-- Actividad reciente -->
-    <div class="db-card" style="--accent:#f97316">
+    <div class="db-card" style="--accent:#f97316" data-preview="activity" tabindex="0" role="button" aria-label="Ver detalle de Actividad Reciente">
       <div class="db-card-hdr">
         <div><div class="db-card-title">Actividad Reciente</div><div class="db-card-sub">Últimos accesos</div></div>
+        <span class="db-expand-hint" aria-hidden="true">Ver detalle ↗</span>
       </div>
       <div id="chart-activity" class="db-scroll"></div>
     </div>
@@ -172,6 +186,25 @@ import { icons } from '../scripts/icons.js';
 .db-ring-inner { position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center; }
 .db-ring-pct { font-size:12px;font-weight:800;color:#fff;line-height:1; }
 .db-ring-lbl  { font-size:8px;color:rgba(255,255,255,.48);text-transform:uppercase;letter-spacing:.5px;margin-top:2px; }
+
+/* Botón de respaldo — estilado para el banner oscuro, no hereda .btn del tema claro */
+.db-backup {
+  display:flex;align-items:center;gap:7px;flex-shrink:0;
+  padding:8px 13px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:var(--radius);
+  color:var(--white);
+  font-family:inherit;font-size:12px;font-weight:600;
+  cursor:pointer;
+  transition:var(--transition);
+}
+.db-backup:hover:not(:disabled) { background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.34); }
+.db-backup:disabled { opacity:.55;cursor:default; }
+.db-backup svg { width:15px;height:15px; }
+/* Solo lectura: el respaldo lleva contraseñas de ISP en claro */
+body.viewer-mode .db-backup { display:none; }
+@media(max-width:768px) { .db-backup span { display:none; } }
 
 /* ── Rows ───────────────────────────────────── */
 .db-row { flex:1;min-height:0;display:grid;gap:10px; }
@@ -391,15 +424,489 @@ import { icons } from '../scripts/icons.js';
   transform: translateY(-3px) scale(1.04);
   box-shadow: 0 4px 16px rgba(0,0,0,0.1);
 }
+
+/* ── Clickable card hint ────────────────────────────── */
+.db-card[data-preview] { cursor: pointer; }
+.db-card[data-preview]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.db-expand-hint {
+  font-size: 10px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--accent) 75%, transparent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+  padding: 3px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  opacity: 0;
+  transform: translateX(4px);
+  transition: opacity .25s ease, transform .25s ease;
+}
+.db-card[data-preview]:hover .db-expand-hint,
+.db-card[data-preview]:focus-visible .db-expand-hint {
+  opacity: 1;
+  transform: none;
+}
+
+/* ════════════════════════════════════════════════════════
+   PREVIEW MODAL (.dbp-*)
+   ════════════════════════════════════════════════════════ */
+:global(body.dbp-open) { overflow: hidden; }
+
+:global(.dbp-overlay) {
+  position: fixed; inset: 0; z-index: var(--z-modal);
+  background: rgba(8, 12, 24, 0.55);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  transition: opacity .22s ease;
+  --dbp-accent: #3b82f6;
+}
+:global(.dbp-overlay.dbp-show) { opacity: 1; }
+
+:global(.dbp-modal) {
+  width: min(1180px, 100%);
+  max-height: 92vh;
+  background: var(--surface);
+  border-radius: 18px;
+  box-shadow: 0 30px 90px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.06) inset;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  transform: scale(.94) translateY(20px);
+  opacity: 0;
+  transition: transform .32s cubic-bezier(0.34,1.4,0.64,1), opacity .26s ease;
+}
+:global(.dbp-overlay.dbp-show .dbp-modal) {
+  transform: none;
+  opacity: 1;
+}
+
+/* ── Header ──────────────────────────── */
+:global(.dbp-head) {
+  position: relative;
+  padding: 22px 28px 18px;
+  display: flex; align-items: flex-start; gap: 18px;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--dbp-accent) 12%, var(--surface)) 0%,
+    var(--surface) 70%);
+  border-bottom: 1px solid var(--border);
+}
+:global(.dbp-head-bar) {
+  position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: linear-gradient(90deg,
+    var(--dbp-accent),
+    color-mix(in srgb, var(--dbp-accent) 40%, transparent));
+}
+:global(.dbp-head-info) { flex: 1; min-width: 0; }
+:global(.dbp-eyebrow) {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--dbp-accent);
+  margin-bottom: 6px;
+}
+:global(.dbp-title) {
+  font-size: 24px; font-weight: 800;
+  color: var(--text-main); line-height: 1.15;
+  letter-spacing: -.6px;
+  margin: 0;
+}
+:global(.dbp-sub) {
+  font-size: 13px; color: var(--text-muted);
+  margin-top: 4px;
+}
+:global(.dbp-close) {
+  flex-shrink: 0;
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .18s ease;
+}
+:global(.dbp-close svg) { width: 18px; height: 18px; }
+:global(.dbp-close:hover) {
+  background: color-mix(in srgb, var(--danger) 14%, var(--surface-2));
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+  color: var(--danger);
+  transform: rotate(90deg);
+}
+
+/* ── KPI strip ──────────────────────── */
+:global(.dbp-kpis) {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 16px 28px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+:global(.dbp-kpi) {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  border-left: 3px solid var(--c);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+:global(.dbp-kpi:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+}
+:global(.dbp-kpi-n) {
+  font-size: 22px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--c);
+  line-height: 1;
+  letter-spacing: -.5px;
+}
+:global(.dbp-kpi-l) {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+
+/* ── Body / sections ────────────────── */
+:global(.dbp-body) {
+  flex: 1; min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  gap: 0;
+  overflow: hidden;
+}
+:global(.dbp-chart),
+:global(.dbp-table-wrap) {
+  padding: 18px 22px;
+  display: flex; flex-direction: column;
+  min-height: 0;
+}
+:global(.dbp-chart) {
+  background: var(--surface-2);
+  border-right: 1px solid var(--border);
+}
+:global(.dbp-section-hdr) {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+:global(.dbp-section-title) {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+:global(.dbp-chart-host) {
+  flex: 1; min-height: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── Donut grande ───────────────────── */
+:global(.dbp-donut-wrap) {
+  display: flex; flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  width: 100%;
+}
+:global(.dbp-svg-host) { position: relative; flex-shrink: 0; }
+:global(.dbp-svg-center) {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  pointer-events: none;
+}
+:global(.dbp-c-n) {
+  font-size: 32px; font-weight: 800;
+  color: var(--text-main); line-height: 1;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -1px;
+}
+:global(.dbp-c-l) {
+  font-size: 11px; color: var(--text-muted);
+  margin-top: 4px; font-weight: 500;
+}
+:global(.dbp-legend) {
+  width: 100%;
+  display: flex; flex-direction: column; gap: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+:global(.dbp-leg-row) {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background .15s ease;
+}
+:global(.dbp-leg-row:hover) { background: var(--surface); }
+:global(.dbp-leg-dot) {
+  width: 12px; height: 12px;
+  border-radius: 3px; flex-shrink: 0;
+}
+:global(.dbp-leg-name) {
+  flex: 1; min-width: 0;
+  font-size: 12.5px; font-weight: 600;
+  color: var(--text-main);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+:global(.dbp-leg-num) {
+  font-size: 13px; font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  flex-shrink: 0;
+}
+:global(.dbp-leg-pct) {
+  font-size: 11px; color: var(--text-muted);
+  flex-shrink: 0; width: 38px; text-align: right;
+}
+
+/* ── Bar chart grande ───────────────── */
+:global(.dbp-bars) {
+  width: 100%;
+  display: flex; flex-direction: column; gap: 10px;
+}
+:global(.dbp-bar-row) {
+  display: flex; align-items: center; gap: 10px;
+}
+:global(.dbp-bar-lbl) {
+  font-size: 12px; font-weight: 600;
+  color: var(--text-muted);
+  width: 110px; flex-shrink: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+:global(.dbp-bar-track) {
+  flex: 1; height: 22px;
+  background: var(--surface-3);
+  border-radius: 7px;
+  overflow: hidden;
+}
+:global(.dbp-bar-fill) {
+  height: 100%; border-radius: 7px;
+  display: flex; align-items: center; justify-content: flex-end;
+  transition: width 1.1s cubic-bezier(.4,0,.2,1);
+}
+:global(.dbp-bar-n) {
+  font-size: 11px; font-weight: 700;
+  color: #fff; padding: 0 9px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── Tools (filtros + búsqueda + export) ────────────── */
+:global(.dbp-tools) {
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+}
+:global(.dbp-search) {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 6px 10px;
+  transition: border-color .18s ease;
+}
+:global(.dbp-search:focus-within) {
+  border-color: var(--dbp-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dbp-accent) 15%, transparent);
+}
+:global(.dbp-search svg) {
+  width: 14px; height: 14px;
+  color: var(--text-muted); flex-shrink: 0;
+}
+:global(.dbp-search input) {
+  border: none; outline: none; background: transparent;
+  font-size: 12.5px; color: var(--text-main);
+  width: 160px;
+  font-family: inherit;
+}
+:global(.dbp-filter-select) {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 7px 10px;
+  font-size: 12.5px;
+  color: var(--text-main);
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color .18s ease;
+  max-width: 180px;
+}
+:global(.dbp-filter-select:hover) { border-color: var(--text-muted); }
+:global(.dbp-filter-select:focus) {
+  outline: none;
+  border-color: var(--dbp-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dbp-accent) 15%, transparent);
+}
+:global(.dbp-btn) {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 12px;
+  border-radius: 9px;
+  font-size: 12px; font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all .18s ease;
+  font-family: inherit;
+}
+:global(.dbp-btn:hover) {
+  background: var(--dbp-accent);
+  border-color: var(--dbp-accent);
+  color: #fff;
+}
+:global(.dbp-btn-export svg) { transition: transform .2s ease; }
+:global(.dbp-btn-export:hover svg) { transform: translateY(2px); }
+
+/* ── Tabla ──────────────────────────── */
+:global(.dbp-table-scroll) {
+  flex: 1; min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+:global(.dbp-table-scroll::-webkit-scrollbar) { width: 8px; height: 8px; }
+:global(.dbp-table-scroll::-webkit-scrollbar-thumb) {
+  background: var(--border); border-radius: 4px;
+}
+:global(.dbp-table) {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+:global(.dbp-table thead) {
+  position: sticky; top: 0; z-index: 1;
+  background: var(--surface-2);
+}
+:global(.dbp-table th) {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 10.5px; font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+:global(.dbp-table td) {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-main);
+  vertical-align: middle;
+}
+:global(.dbp-table tbody tr:hover) { background: var(--surface-2); }
+:global(.dbp-table tbody tr:last-child td) { border-bottom: none; }
+
+:global(.dbp-empty) {
+  text-align: center; padding: 32px 12px !important;
+  color: var(--text-muted);
+  font-style: italic;
+}
+:global(.dbp-empty-state) {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* ── Cells ──────────────────────────── */
+:global(.dbp-pill) {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 12px;
+  font-size: 10.5px;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+  color: var(--c);
+  border: 1px solid color-mix(in srgb, var(--c) 28%, transparent);
+}
+:global(.dbp-dot) {
+  display: inline-block;
+  width: 9px; height: 9px;
+  border-radius: 3px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+:global(.dbp-mini-bar) {
+  display: inline-block;
+  width: 80px; height: 6px;
+  background: var(--surface-3);
+  border-radius: 3px;
+  overflow: hidden;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+:global(.dbp-mini-bar > span) {
+  display: block; height: 100%;
+  border-radius: 3px;
+  transition: width 1s cubic-bezier(.4,0,.2,1);
+}
+:global(.dbp-link) {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color .15s ease;
+}
+:global(.dbp-link:hover) {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+/* ── Responsive ─────────────────────── */
+@media (max-width: 1024px) {
+  :global(.dbp-overlay) { padding: 12px; }
+  :global(.dbp-modal) { max-height: 96vh; }
+  :global(.dbp-kpis) { grid-template-columns: repeat(2, 1fr); }
+  :global(.dbp-body) {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+  :global(.dbp-chart) {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  :global(.dbp-title) { font-size: 20px; }
+}
+@media (max-width: 600px) {
+  :global(.dbp-kpis) { grid-template-columns: 1fr 1fr; }
+  :global(.dbp-search input) { width: 110px; }
+  :global(.dbp-filter-select) { max-width: 140px; font-size: 12px; }
+  :global(.dbp-head) { padding: 16px 18px 14px; }
+  :global(.dbp-chart), :global(.dbp-table-wrap) { padding: 14px 16px; }
+}
 </style>
 
 <script>
-  import { load } from '../scripts/store.js';
+  import { load, exportSnapshot } from '../scripts/store.js';
   import { initDashboard } from '../scripts/views/dashboard.js';
+  import { openCardPreview } from '../scripts/views/dashboardPreview.js';
+  import { downloadJson } from '../scripts/utils.js';
+  import { toastSuccess } from '../scripts/toast.js';
   document.addEventListener('astro:page-load', async () => {
     if (window.location.pathname !== '/' && window.location.pathname !== '/index') return;
     await load();
     initDashboard();
+
+    // ── Respaldo del inventario ───────────────────────────
+    const backupBtn = document.getElementById('db-backup');
+    if (backupBtn) {
+      backupBtn.onclick = () => {
+        const stamp = new Date().toISOString().slice(0, 10);
+        downloadJson(`databox-respaldo-${stamp}.json`, exportSnapshot());
+        toastSuccess('Respaldo descargado. Contiene credenciales de ISP en texto plano: guárdalo en un sitio seguro.', {
+          title: 'Respaldo generado'
+        });
+      };
+    }
 
     // ── Cursor spotlight on cards ─────────────────────────
     document.querySelectorAll('.db-card').forEach(card => {
@@ -409,6 +916,20 @@ import { icons } from '../scripts/icons.js';
         const y = e.clientY - rect.top;
         card.style.setProperty('--sx', `${x}px`);
         card.style.setProperty('--sy', `${y}px`);
+      });
+    });
+
+    // ── Click → preview modal ─────────────────────────────
+    document.querySelectorAll('.db-card[data-preview]').forEach(card => {
+      const key = card.dataset.preview;
+      const open = () => openCardPreview(key);
+      card.addEventListener('click', e => {
+        // Evita abrir si se hizo click en un enlace o botón interno
+        if (e.target.closest('a, button, .dbc-rack-name, .dbc-act-row')) return;
+        open();
+      });
+      card.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
       });
     });
 

@@ -37,7 +37,7 @@ const items = [
 <div class="card-nav-container">
   <nav id="card-nav" class="card-nav">
     <div class="card-nav-top">
-      <div id="hamburger-menu-cn" class="hamburger-menu-cn" role="button" aria-label="Open menu" tabindex="0">
+      <div id="hamburger-menu-cn" class="hamburger-menu-cn" role="button" aria-label="Abrir menú" tabindex="0">
         <div class="hamburger-line-cn"></div>
         <div class="hamburger-line-cn"></div>
       </div>
@@ -92,6 +92,13 @@ const items = [
 
 <script>
   // Vanilla JS + GSAP translation for CardNav
+
+  // El handler de resize se guarda a nivel de módulo: este script se evalúa
+  // una sola vez por documento, pero el callback de abajo corre en CADA
+  // navegación. Sin esta referencia, cada navegación dejaba otro listener
+  // permanente en window apuntando a nodos y timelines ya desmontados.
+  let _resizeHandler = null;
+
   document.addEventListener('astro:page-load', () => {
     if (!window.gsap) {
         console.warn('GSAP is missing. Navigation animations will not work.');
@@ -165,7 +172,8 @@ const items = [
 
     tl = createTimeline();
 
-    window.addEventListener('resize', () => {
+    if (_resizeHandler) window.removeEventListener('resize', _resizeHandler);
+    _resizeHandler = () => {
       if (isExpanded) {
         const newHeight = calculateHeight();
         gsap.set(navEl, { height: newHeight });
@@ -176,7 +184,8 @@ const items = [
         tl.kill();
         tl = createTimeline();
       }
-    });
+    };
+    window.addEventListener('resize', _resizeHandler);
 
     hamburger.addEventListener('click', () => {
       if (!isExpanded) {
