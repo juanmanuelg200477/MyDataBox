@@ -1,0 +1,7 @@
+# Cabeceras que aplica Cloudflare Pages al servir el sitio.
+# Deliberadamente mínimas: sin CSP, porque la app carga fuentes de Google,
+# GSAP desde cdnjs y habla con Supabase, y una CSP mal ajustada rompe eso.
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin

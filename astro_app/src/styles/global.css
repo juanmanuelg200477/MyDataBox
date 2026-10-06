@@ -1,5 +1,5 @@
-﻿/* ============================================================
-   DATABOX IT â€” Premium Enterprise UI
+/* ============================================================
+   DATABOX IT — Premium Enterprise UI
    ============================================================ */
 
 :root {
@@ -52,23 +52,26 @@
     --shadow-xl:  0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px rgba(15, 23, 42, 0.06);
     --shadow-primary: 0 4px 14px rgba(59, 130, 246, 0.35);
 
-    /* â”€â”€ Capas (z-index) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-       Escala Ãºnica de la app, de abajo hacia arriba. Antes cada zona
-       subÃ­a el nÃºmero a ojo para "ganarle" a la anterior y se llegÃ³ a
-       tener el editor de planos y el overlay de navegaciÃ³n empatados
-       en 999999 (el orden quedaba al azar, segÃºn el DOM).
-       Los nÃºmeros sueltos pequeÃ±os (1, 2, 10â€¦) dentro de un componente
+    /* ── Capas (z-index) ──────────────────────────────────────────
+       Escala única de la app, de abajo hacia arriba. Antes cada zona
+       subía el número a ojo para "ganarle" a la anterior y se llegó a
+       tener el editor de planos y el overlay de navegación empatados
+       en 999999 (el orden quedaba al azar, según el DOM).
+       Los números sueltos pequeños (1, 2, 10…) dentro de un componente
        son apilado local y NO entran en esta escala. */
     --z-topbar:          50;
     --z-cardnav:         1000;
     --z-sidebar-overlay: 1999;
     --z-sidebar:         2000;
-    --z-fullscreen:      5000;    /* editor de planos a pantalla completa */
-    --z-modal:           9000;    /* diÃ¡logos: tapan incluso al fullscreen */
-    --z-modal-popover:   9100;    /* desplegables dentro de un diÃ¡logo */
-    --z-toast:           9800;    /* avisos: por encima de todo lo interactivo */
-    --z-transition:      999999;  /* overlay de navegaciÃ³n entre pÃ¡ginas */
-    --z-welcome:         9999999; /* animaciÃ³n de bienvenida */
+    --z-modal:           9000;     /* diálogos generales (.form-overlay) */
+    --z-modal-popover:   9100;     /* desplegables dentro de un diálogo */
+    --z-preview:         9999;     /* vista detallada del dashboard */
+    --z-notes-modal:     10000;    /* diálogos del workspace de Notas */
+    --z-notes-popover:   10100;    /* desplegables dentro de esos diálogos */
+    --z-fullscreen:      999999;   /* editor de planos a pantalla completa */
+    --z-toast:           1000050;  /* avisos: por encima de todo lo interactivo */
+    --z-transition:      1000100;  /* overlay de navegación: tapa hasta el fullscreen */
+    --z-welcome:         9999999;  /* animación de bienvenida */
 
     /* Geometry */
     --radius:    10px;
@@ -80,13 +83,13 @@
 }
 
 /* ============================================================
-   BREAKPOINTS — escala acordada de la app
-   Móvil: hasta 768px · Tablet: 769–1024px · Escritorio: 1025px+
+   BREAKPOINTS � escala acordada de la app
+   M�vil: hasta 768px � Tablet: 769�1024px � Escritorio: 1025px+
    Usar SOLO 768 y 1024 en @media nuevos. (CSS no permite variables
-   dentro de @media, así que la convención va aquí por escrito.)
-   Quedan archivos con quiebres sueltos (820, 900, 1100, 1300…) que
+   dentro de @media, as� que la convenci�n va aqu� por escrito.)
+   Quedan archivos con quiebres sueltos (820, 900, 1100, 1300�) que
    desincronizan el layout entre secciones; migrarlos requiere
-   comprobación visual, no hacerlo a ciegas.
+   comprobaci�n visual, no hacerlo a ciegas.
    ============================================================ */
 
 /* ============================================================
@@ -1202,8 +1205,8 @@ tbody tr:last-child td {
 /* ============================================================
    ESTADO DE CARGA
    Mismo encuadre que .empty-state: ocupa el hueco de la tabla
-   mientras Supabase responde, en vez de dejar la tarjeta vacÃ­a
-   (se percibÃ­a como una pantalla en blanco / app colgada).
+   mientras Supabase responde, en vez de dejar la tarjeta vacía
+   (se percibía como una pantalla en blanco / app colgada).
    ============================================================ */
 
 .db-loading {
@@ -1278,7 +1281,7 @@ tbody tr:last-child td {
     text-underline-offset: 2px;
 }
 
-/* â”€â”€ Modo solo lectura (viewer) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Modo solo lectura (viewer) ─────────────────────────────── */
 /* html.viewer-mode is applied synchronously before render;
    body.viewer-mode is applied later by JS. :is() matches both. */
 :is(html, body).viewer-mode .page-header-actions,
@@ -1382,7 +1385,7 @@ tbody tr:last-child td {
         gap: 12px;
     }
 
-    /* â”€â”€ Tablas Responsivas â”€â”€ */
+    /* ── Tablas Responsivas ── */
     table {
         display: block;
         width: 100%;
@@ -1391,13 +1394,13 @@ tbody tr:last-child td {
         white-space: nowrap; /* Evitar que las celdas se aplasten y el texto quede feo */
     }
 
-    /* â”€â”€ Vistas Generales y Perfiles â”€â”€ */
+    /* ── Vistas Generales y Perfiles ── */
     .rack-view {
         grid-template-columns: 1fr; /* Separar la info del rack visual en columnas apiladas */
         gap: 16px;
     }
 
-    /* La tabla tÃ©cnica interna del NVR o Dispositivos (Information Table) */
+    /* La tabla técnica interna del NVR o Dispositivos (Information Table) */
     .nvr-info-table td, .nvr-info-table th {
         white-space: normal; /* Permitir que el texto interno (descripciones) caiga naturalmente en lugar de obligar scroll en esta info basica */
     }

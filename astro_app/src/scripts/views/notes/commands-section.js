@@ -376,7 +376,7 @@ function injectStyles() {
 
         /* ── Modal ── */
         .cm-modal-overlay {
-            position: fixed; inset: 0; z-index: var(--z-modal);
+            position: fixed; inset: 0; z-index: var(--z-notes-modal);
             background: rgba(8,12,24,.55);
             backdrop-filter: blur(6px);
             display: flex; align-items: center; justify-content: center;

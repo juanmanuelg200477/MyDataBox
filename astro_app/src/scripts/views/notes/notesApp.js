@@ -426,7 +426,7 @@ export function ensureSharedStyles() {
             padding: 10px 18px; border-radius: 10px;
             font-size: 13px; font-weight: 600;
             box-shadow: 0 8px 30px rgba(0,0,0,.3);
-            z-index: var(--z-modal-popover); opacity: 0;
+            z-index: var(--z-notes-popover); opacity: 0;
             transition: all .25s cubic-bezier(0.34,1.4,0.64,1);
             pointer-events: none;
         }
@@ -437,7 +437,7 @@ export function ensureSharedStyles() {
 
         /* ── Modal genérico (prompt / confirm) ── */
         .nwm-overlay {
-            position: fixed; inset: 0; z-index: var(--z-modal);
+            position: fixed; inset: 0; z-index: var(--z-notes-modal);
             background: rgba(8,12,24,.6);
             backdrop-filter: blur(8px) saturate(140%);
             -webkit-backdrop-filter: blur(8px) saturate(140%);

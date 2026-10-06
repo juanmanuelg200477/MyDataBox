@@ -48,6 +48,14 @@ const { title } = Astro.props;
 			// oculte botones de edición antes de que se renderice nada.
 			if (sessionStorage.getItem('databox_role') === 'viewer') {
 				document.documentElement.classList.add('viewer-mode');
+				}
+				// El tema oscuro es EXCLUSIVO del workspace de Notas. Se limpia
+				// aquí, síncronamente y en todas las páginas, porque la limpieza
+				// vivía en NotesModule y ese script solo se carga en /notas:
+				// fuera de ahí no había nada que quitara la clase, y el tema se
+				// quedaba pegado a medias sobre el resto de la app.
+				if (window.location.pathname.replace(/\/$/, '') !== '/notas') {
+					document.documentElement.classList.remove('nw-dark');
 			}
 		</script>
 		<style is:global>
@@ -144,6 +152,11 @@ const { title } = Astro.props;
 			// Corre en cada navegación (incluidas view transitions).
 			// Si no hay sesión activa redirige al login.
 			document.addEventListener('astro:page-load', async () => {
+				// El tema oscuro solo existe en /notas (ver nota del script inline).
+				if (window.location.pathname.replace(/\/$/, '') !== '/notas') {
+					document.documentElement.classList.remove('nw-dark');
+				}
+
 				// ── Rol: aplicar SINCRÓNICAMENTE antes del await ──
 				// Garantiza que viewer-mode esté en el body antes de que
 				// cualquier módulo renderice sus botones de acción.
