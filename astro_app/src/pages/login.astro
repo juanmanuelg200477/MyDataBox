@@ -281,7 +281,18 @@
                 const { error } = await supabase.auth.signInWithPassword({ email, password });
 
                 if (error) {
-                    errorEl.textContent = 'Correo o contraseña incorrectos.';
+                    // Antes cualquier fallo decía "contraseña incorrecta", así que
+                    // casos como el correo sin confirmar o un bloqueo por intentos
+                    // quedaban escondidos y no había forma de saber qué pasaba.
+                    const MOTIVOS = {
+                        invalid_credentials:     'Correo o contraseña incorrectos.',
+                        email_not_confirmed:     'Tu correo aún no está confirmado. Revisa tu bandeja de entrada.',
+                        over_request_rate_limit: 'Demasiados intentos. Espera un momento y vuelve a intentarlo.',
+                        user_banned:             'Esta cuenta está deshabilitada.'
+                    };
+                    errorEl.textContent = MOTIVOS[error.code] ?? `No se pudo iniciar sesión: ${error.message}`;
+                    console.error('[login]', error.code ?? '(sin código)', error.message);
+
                     btn.disabled    = false;
                     btn.textContent = 'Ingresar';
                     return;
