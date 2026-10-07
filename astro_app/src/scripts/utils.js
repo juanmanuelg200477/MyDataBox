@@ -1,3 +1,26 @@
+// Paginador simple: anterior · página X de Y · siguiente.
+// Se oculta solo cuando todo cabe en una página.
+export function renderPager(container, { page, totalPages, onChange }) {
+    const el = typeof container === 'string' ? document.getElementById(container) : container;
+    if (!el) return;
+
+    if (totalPages <= 1) {
+        el.innerHTML = '';
+        el.style.display = 'none';
+        return;
+    }
+    el.style.display = '';
+    el.innerHTML = `
+        <button class="pager-btn" data-dir="-1" ${page <= 1 ? 'disabled' : ''}>‹ Anterior</button>
+        <span class="pager-info">Página ${page} de ${totalPages}</span>
+        <button class="pager-btn" data-dir="1" ${page >= totalPages ? 'disabled' : ''}>Siguiente ›</button>`;
+
+    // onclick (no addEventListener) para no acumular manejadores en cada render
+    el.querySelectorAll('.pager-btn').forEach(btn => {
+        btn.onclick = () => onChange(page + Number(btn.dataset.dir));
+    });
+}
+
 // Copia los encabezados de la tabla a cada celda como data-label.
 // En teléfono el CSS oculta el <thead> y usa esa etiqueta para rotular
 // cada dato, convirtiendo la fila en una tarjeta; así se evita el scroll

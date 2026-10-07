@@ -1426,6 +1426,65 @@ tbody tr:last-child td {
 }
 
 /* ============================================================
+   PAGINADOR (ver renderPager en utils.js)
+   ============================================================ */
+
+.pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+}
+
+.pager-btn {
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+.pager-btn:hover:not(:disabled) {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.pager-btn:disabled {
+    opacity: .45;
+    cursor: default;
+}
+
+.pager-info {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+/* Celda larga que se recorta con puntos suspensivos. Va como clase y no
+   como estilo en linea porque los estilos en linea ganan a las reglas
+   del modo tarjeta de abajo y dejaban el texto cortado en telefono. */
+.cell-truncate {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-muted);
+}
+
+.cell-no-results {
+    padding: 28px 12px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* ============================================================
    TABLAS COMO TARJETAS (telefono)
    A partir de cuatro columnas no hay ancho de telefono que alcance:
    el desplazamiento lateral deja las palabras cortadas a media
@@ -1509,4 +1568,18 @@ tbody tr:last-child td {
         text-align: center;
     }
     .table-cards td:not([data-label])::before { content: none; }
+
+    /* En tarjeta hay ancho de sobra: el texto se muestra completo en
+       lugar de recortarse con puntos suspensivos. */
+    .table-cards .cell-truncate {
+        max-width: none;
+        overflow: visible;
+        white-space: normal;
+        text-overflow: clip;
+    }
+
+    /* Botones del paginador mas comodos de pulsar */
+    .pager { gap: 8px; padding: 12px; }
+    .pager-btn { flex: 1; padding: 10px 8px; }
+    .pager-info { font-size: 11.5px; }
 }

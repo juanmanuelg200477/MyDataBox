@@ -21,11 +21,12 @@ import { icons } from '../scripts/icons.js';
             <span>Cargando áreas…</span>
         </div>
         <div id="areas-table-container" style="display:none">
-            <table>
+            <table class="table-cards">
                 <thead><tr><th>Nombre</th><th>Región</th><th>Descripción</th><th>Acciones</th></tr></thead>
                 <tbody id="areas-tbody"></tbody>
             </table>
             <div class="table-count" id="areas-showing-count">Mostrando 0 de 0</div>
+            <div class="pager" id="areas-pager" style="display:none"></div>
         </div>
         <div id="areas-empty-state" class="empty-state" style="display:none">
             <div set:html={icons.grid}></div>
