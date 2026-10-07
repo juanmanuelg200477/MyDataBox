@@ -1,7 +1,7 @@
 import { store, save, genId } from '../store.js';
 import { icons } from '../icons.js';
 import { showModal, closeModal } from '../modal.js';
-import { filterTable } from '../utils.js';
+import { filterTable, labelTableCells } from '../utils.js';
 
 export function initRegions() {
     const tbody = document.getElementById('regions-tbody');
@@ -46,6 +46,9 @@ function renderRegionsTable() {
             </td>
         </tr>`;
     }).join('');
+
+    // Rotula cada celda para que en teléfono la fila se lea como tarjeta
+    labelTableCells(tbody);
 
     document.querySelectorAll('#regions-tbody .btn-edit').forEach(btn =>
         btn.addEventListener('click', e => showRegionForm(e.currentTarget.dataset.id))

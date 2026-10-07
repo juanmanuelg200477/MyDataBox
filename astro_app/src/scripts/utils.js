@@ -1,3 +1,23 @@
+// Copia los encabezados de la tabla a cada celda como data-label.
+// En teléfono el CSS oculta el <thead> y usa esa etiqueta para rotular
+// cada dato, convirtiendo la fila en una tarjeta; así se evita el scroll
+// horizontal, que partía las palabras a media pantalla.
+// Llamar después de cada render del tbody.
+export function labelTableCells(tbody) {
+    const el    = typeof tbody === 'string' ? document.getElementById(tbody) : tbody;
+    const table = el?.closest('table');
+    if (!table) return;
+
+    const titulos = [...table.querySelectorAll('thead th')].map(th => th.textContent.trim());
+    if (!titulos.length) return;
+
+    el.querySelectorAll('tr').forEach(fila => {
+        [...fila.children].forEach((celda, i) => {
+            if (titulos[i]) celda.setAttribute('data-label', titulos[i]);
+        });
+    });
+}
+
 // Para interpolar texto que viene de la base de datos dentro de innerHTML.
 export function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, ch => (

@@ -1385,7 +1385,10 @@ tbody tr:last-child td {
         gap: 12px;
     }
 
-    /* ── Tablas Responsivas ── */
+    /* ── Tablas Responsivas ──
+       Entre 601 y 768px (tableta en vertical) basta con desplazamiento
+       lateral: las columnas aun caben razonablemente. Por debajo de eso
+       se convierten en tarjetas, mas abajo en este archivo. */
     table {
         display: block;
         width: 100%;
@@ -1420,4 +1423,90 @@ tbody tr:last-child td {
         padding-bottom: 2px;
         color: var(--primary);
     }
+}
+
+/* ============================================================
+   TABLAS COMO TARJETAS (telefono)
+   A partir de cuatro columnas no hay ancho de telefono que alcance:
+   el desplazamiento lateral deja las palabras cortadas a media
+   pantalla. Las tablas marcadas con .table-cards se reordenan de modo
+   que cada fila sea una tarjeta y cada celda rotule su dato con el
+   encabezado, que labelTableCells() de utils.js copia a data-label.
+
+   Es opt-in a proposito: asi no afecta a las tablas especiales (ficha
+   de dispositivo, hoja de credenciales del NVR, vista de bastidor),
+   que tienen su propio diseno.
+
+   El corte va en 600px y no en 768 porque lo que manda aqui es el
+   numero de columnas, no la familia de dispositivo: en tableta
+   vertical las tablas todavia se leen bien.
+   ============================================================ */
+
+@media (max-width: 600px) {
+    /* Cabecera de tarjeta: titulo arriba, buscador y filtros debajo
+       ocupando el ancho. Lado a lado, el campo de busqueda quedaba
+       estrecho y los filtros se apretaban contra el borde. */
+    .card-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 16px;
+    }
+    .search-box input { width: 100%; }
+
+    .table-cards,
+    .table-cards tbody,
+    .table-cards tr,
+    .table-cards td {
+        display: block;
+        width: 100%;
+    }
+
+    .table-cards {
+        white-space: normal;
+        overflow-x: hidden;
+    }
+
+    .table-cards thead { display: none; }
+
+    .table-cards tr {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        margin-bottom: 10px;
+        overflow: hidden;
+    }
+    .table-cards tbody tr:hover { background: var(--surface); }
+
+    .table-cards td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 9px 13px;
+        border-bottom: none;
+        text-align: right;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+    .table-cards td + td { border-top: 1px solid var(--surface-3); }
+
+    .table-cards td::before {
+        content: attr(data-label);
+        flex-shrink: 0;
+        text-align: left;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        color: var(--text-muted);
+    }
+
+    /* Celdas sin encabezado (p. ej. una fila de estado vacio) ocupan
+       todo el ancho y no llevan rotulo. */
+    .table-cards td:not([data-label]) {
+        display: block;
+        text-align: center;
+    }
+    .table-cards td:not([data-label])::before { content: none; }
 }
