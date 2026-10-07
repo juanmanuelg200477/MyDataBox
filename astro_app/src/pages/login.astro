@@ -191,6 +191,27 @@
         .pwd-toggle.visible .pwd-eye { display: none; }
         .pwd-toggle.visible .pwd-eye-off { display: block; }
 
+        /* ── Autocompletado ──
+           Chrome pinta de claro los campos que autocompleta. Eso rompia el
+           diseno oscuro y, sobre fondo blanco, el ojo blanco desaparecia.
+           El box-shadow interior gigante es la forma estandar de recuperar
+           el fondo, porque background-color no se puede sobrescribir aqui. */
+        .form-group input:-webkit-autofill,
+        .form-group input:-webkit-autofill:hover,
+        .form-group input:-webkit-autofill:focus,
+        .form-group input:-webkit-autofill:active {
+            -webkit-text-fill-color: #fff;
+            -webkit-box-shadow: 0 0 0 1000px #11111a inset;
+            box-shadow: 0 0 0 1000px #11111a inset;
+            caret-color: #fff;
+            /* El retardo enorme impide que Chrome vuelva a pintar su fondo */
+            transition: background-color 9999s ease-in-out 0s;
+        }
+        .form-group input:autofill {
+            -webkit-text-fill-color: #fff;
+            caret-color: #fff;
+        }
+
         .form-group input:focus {
             outline: none;
             border-color: rgba(59, 130, 246, 0.6);
