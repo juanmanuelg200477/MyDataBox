@@ -169,6 +169,10 @@ import '../styles/notes.css';
       }
     }
     document.body.classList.remove('bp-fs-body');
+    // Si se sale con el editor de Apuntes a pantalla completa, la clase
+    // dejaría el scroll bloqueado y el botón flotante oculto en la
+    // siguiente página.
+    document.body.classList.remove('ap-fullscreen');
     // Quitar el tema oscuro de Notas al salir hacia otra página
     document.documentElement.classList.remove('nw-dark');
   });

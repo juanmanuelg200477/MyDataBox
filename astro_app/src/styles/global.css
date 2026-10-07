@@ -63,6 +63,9 @@
     --z-cardnav:         1000;
     --z-sidebar-overlay: 1999;
     --z-sidebar:         2000;
+    --z-sheet:           5000;     /* panel a pantalla completa en teléfono
+                                      (editor de Apuntes): tapa el marco de
+                                      la app, pero los diálogos quedan encima */
     --z-modal:           9000;     /* diálogos generales (.form-overlay) */
     --z-modal-popover:   9100;     /* desplegables dentro de un diálogo */
     --z-preview:         9999;     /* vista detallada del dashboard */
@@ -1482,6 +1485,23 @@ tbody tr:last-child td {
     text-align: center;
     color: var(--text-muted);
     font-size: 13px;
+}
+
+/* ============================================================
+   EDITOR DE APUNTES A PANTALLA COMPLETA (telefono)
+   La clase la pone setEditing() en notes-section.js al abrir una nota.
+   Va dentro del media query a proposito: ese JS corre en cualquier
+   ancho, y sin acotarlo ocultaria el boton flotante y bloquearia el
+   scroll tambien en escritorio, donde el editor no es pantalla completa.
+   ============================================================ */
+
+@media (max-width: 768px) {
+    /* Se congela la pagina de detras para que no se desplace mientras
+       se escribe dentro del panel fijo. */
+    body.ap-fullscreen { overflow: hidden; }
+
+    /* El boton flotante de navegacion se encimaba sobre el editor */
+    body.ap-fullscreen .card-nav-container { display: none; }
 }
 
 /* ============================================================

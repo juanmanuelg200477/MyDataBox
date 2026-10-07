@@ -301,6 +301,10 @@ function renderNotesList() {
 // nada, porque los tres paneles conviven.
 function setEditing(on) {
     document.querySelector('.nws-apuntes')?.classList.toggle('ap-editing', on);
+    // El editor a pantalla completa vive fuera del árbol de Notas, así que
+    // la clase va en <body>: desde ahí se oculta el botón flotante de
+    // navegación y se bloquea el scroll de la página de detrás.
+    document.body.classList.toggle('ap-fullscreen', on);
 }
 
 function backToList() {
@@ -352,8 +356,8 @@ function renderEditor() {
         <div class="ap-editor">
             <!-- Cabecera con título + estrella + eliminar -->
             <header class="ap-editor-top">
-                <button class="nws-iconbtn ap-back-btn" id="ap-back" title="Volver a la lista" aria-label="Volver a la lista">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                <button class="nws-iconbtn ap-back-btn" id="ap-back" title="Cerrar y volver a las notas" aria-label="Cerrar y volver a las notas">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
                 <button class="nws-iconbtn ap-focus-btn" id="ap-focus" title="Modo enfocado (ocultar/mostrar paneles)">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
@@ -1485,6 +1489,24 @@ function injectStyles() {
                 white-space: nowrap;
             }
 
+            /* Carpetas como pastillas: en fila, la franja de color a la
+               izquierda de la versión de escritorio no se lee. */
+            .nws-apuntes .nws-side:first-child .ap-folder {
+                padding: 7px 12px;
+                border: 1px solid var(--border);
+                border-radius: 20px;
+                background: var(--surface);
+                gap: 8px;
+            }
+            .nws-apuntes .nws-side:first-child .ap-folder.active {
+                box-shadow: none;
+                border-color: var(--c);
+                background: color-mix(in srgb, var(--c) 14%, var(--surface));
+            }
+            /* El lápiz de renombrar dependía de hover, así que en una
+               pantalla táctil no había manera de llegar a él. */
+            .nws-apuntes .ap-folder-edit { opacity: 1; }
+
             /* Lista de notas: ocupa el resto del alto */
             .nws-apuntes .ap-notes-side {
                 width: 100%;
@@ -1494,13 +1516,23 @@ function injectStyles() {
                 border-right: none;
             }
 
-            /* Nivel 2: el editor solo aparece al abrir una nota */
+            /* Nivel 2: el editor sale del marco de la app y ocupa la
+               pantalla entera, como si fuera una app de notas aparte.
+               position:fixed lo saca de .nw-content (que recorta con
+               overflow:hidden) y de la tarjeta, la cabecera y las pestañas. */
             .nws-apuntes .nws-main { display: none; }
             .nws-apuntes.ap-editing .nws-main {
                 display: flex;
-                flex: 1;
+                flex-direction: column;
+                position: fixed;
+                inset: 0;
+                z-index: var(--z-sheet);
                 min-height: 0;
+                background: var(--surface);
             }
+            /* El área de escritura necesita poder encogerse para que su
+               propio scroll funcione dentro del panel fijo. */
+            .nws-apuntes.ap-editing .ap-scroll-area { min-height: 0; }
 
             /* El modo enfocado es de escritorio; aquí manda .ap-editing,
                y sin esto una sesión que lo dejó activo escondería los
