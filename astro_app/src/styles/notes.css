@@ -156,6 +156,24 @@ html.nw-dark .nw-spinner { border-color: rgba(255, 255, 255, 0.08); border-top-c
 /* ══════════════════════════════════════════════════════
    COMPARTIDOS (.nws-*)
 ══════════════════════════════════════════════════════ */
+/* ── Modo app en teléfono: piezas propias del shell ──────
+   Van aquí, con el resto del tema oscuro, para que la app se vea
+   coherente al activarlo desde el botón de la barra superior. */
+html.nw-dark .nw { background: #050505; }
+html.nw-dark .nw-back { color: #e5e9f5; }
+html.nw-dark .nw-back:active { background: rgba(255, 255, 255, 0.07); }
+html.nw-dark .nw-tabs {
+  background: #0d0d0d;
+  border-top-color: rgba(255, 255, 255, 0.07);
+}
+html.nw-dark .nw-tab { color: rgba(203, 213, 225, 0.65); }
+html.nw-dark .nw-fab {
+  background: linear-gradient(135deg, #06b6d4, #a855f7);
+  box-shadow: 0 6px 22px rgba(6, 182, 212, 0.45);
+  color: #fff;
+}
+html.nw-dark .nws-main-body { background: transparent; }
+
 html.nw-dark .nws-side {
   background: #0d0d0d;
   border-right-color: rgba(255, 255, 255, 0.06);

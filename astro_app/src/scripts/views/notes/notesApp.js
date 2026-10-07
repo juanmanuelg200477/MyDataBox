@@ -68,6 +68,16 @@ export async function initNotesApp() {
         tab.addEventListener('click', () => navigate(tab.dataset.section));
     });
 
+    // Botón flotante de crear (teléfono): cada sección ya tiene el suyo,
+    // así que se delega en el que esté montado en ese momento en vez de
+    // duplicar la lógica de creación.
+    const fab = document.getElementById('nw-fab');
+    if (fab) {
+        fab.onclick = () => {
+            document.querySelector('#ap-new-note, #vt-add, #cm-add')?.click();
+        };
+    }
+
     // Sección inicial
     let initial = getState().settings.activeSection || 'apuntes';
     // Planos está oculto en teléfono; si quedó guardado desde el escritorio
@@ -456,6 +466,14 @@ export function ensureSharedStyles() {
             transition: opacity .22s ease;
         }
         .nwm-overlay.show { opacity: 1; }
+
+        /* En teléfono el diálogo aprovecha el ancho y limita su alto, que
+           con formularios largos (credenciales) se salía de pantalla. */
+        @media (max-width: 768px) {
+            .nwm-overlay { padding: 12px; }
+            .nwm-modal { max-height: 88vh; display: flex; flex-direction: column; }
+            .nwm-body { overflow-y: auto; }
+        }
         .nwm-modal {
             background: var(--surface);
             border-radius: 16px;

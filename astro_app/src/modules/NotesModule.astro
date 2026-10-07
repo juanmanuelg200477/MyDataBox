@@ -7,6 +7,13 @@ import '../styles/notes.css';
   <!-- ── Cabecera del workspace ───────────────────────────── -->
   <header class="nw-head">
     <div class="nw-head-bar"></div>
+    <!-- Salida del "modo app" (solo teléfono): en escritorio se sale por
+         el menú lateral, que aquí queda tapado por la pantalla completa. -->
+    <a class="nw-back" href="/" aria-label="Salir del espacio de trabajo" title="Salir">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+      </svg>
+    </a>
     <div class="nw-head-left">
       <div class="nw-eyebrow">Workspace personal</div>
       <h1 class="nw-title">Mi Espacio de Trabajo</h1>
@@ -87,6 +94,14 @@ import '../styles/notes.css';
     </div>
   </div>
 
+  <!-- Botón de crear flotante (solo teléfono). Reutiliza el botón "nueva"
+       de la sección activa, así no duplica lógica. -->
+  <button class="nw-fab" id="nw-fab" aria-label="Crear nuevo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  </button>
+
 </section>
 
 <script>
@@ -109,6 +124,10 @@ import '../styles/notes.css';
     const role = sessionStorage.getItem('databox_role');
     const isOnNotas = path === '/notas';
     const isViewerOnNotas = isOnNotas && role === 'viewer';
+
+    // Modo app: en teléfono Notas ocupa la pantalla entera, así que la
+    // página de detrás no debe desplazarse (el CSS acota el efecto a móvil).
+    document.body.classList.toggle('nw-app-mode', isOnNotas);
 
     if (isOnNotas) {
       applyTheme();
@@ -173,6 +192,7 @@ import '../styles/notes.css';
     // dejaría el scroll bloqueado y el botón flotante oculto en la
     // siguiente página.
     document.body.classList.remove('ap-fullscreen');
+    document.body.classList.remove('nw-app-mode');
     // Quitar el tema oscuro de Notas al salir hacia otra página
     document.documentElement.classList.remove('nw-dark');
   });
@@ -548,6 +568,136 @@ import '../styles/notes.css';
   }
 }
 
+/* Ocultos en escritorio: solo existen en el modo app del teléfono */
+.nw-back { display: none; }
+.nw-fab  { display: none; }
+
+/* ════════════════════════════════════════════════════════
+   MODO APP (teléfono)
+   Notas deja de ser una página del panel y pasa a ocupar la
+   pantalla entera, con barra superior propia, navegación
+   inferior y botón flotante de crear. Al entrar se siente
+   como abrir otra aplicación; se sale con la flecha.
+   Nada de esto aplica en escritorio.
+   ════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* El contenedor se despega del panel y tapa barra superior,
+     menú lateral y botón flotante de navegación, que quedan por
+     debajo en la escala de capas. */
+  .nw {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-sheet);
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    gap: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+  }
+
+  /* ── Barra superior de la app ── */
+  .nw-head {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 0;
+    flex-shrink: 0;
+  }
+  .nw-head-bar { display: none; }
+  .nw-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px; height: 38px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    color: inherit;
+    text-decoration: none;
+  }
+  .nw-back svg { width: 20px; height: 20px; }
+  .nw-head-left { flex: 1; min-width: 0; }
+  /* En una barra de app sobra todo menos el nombre */
+  .nw-eyebrow, .nw-sub { display: none; }
+  .nw-title { font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nw-head-right { width: auto; display: flex; gap: 6px; }
+  /* Los contadores pasan a la navegación inferior */
+  .nw-stat { display: none; }
+
+  /* ── Contenido ── */
+  .nw-content {
+    flex: 1;
+    min-height: 0;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    background: var(--surface);
+  }
+
+  /* ── Navegación inferior ── */
+  .nw-tabs {
+    display: flex;
+    gap: 0;
+    order: 99;             /* siempre al final, sea cual sea el orden del DOM */
+    flex-shrink: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .nw-tab {
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 9px 4px 7px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    min-width: 0;
+  }
+  .nw-tab-ico { width: 23px; height: 23px; margin: 0; }
+  .nw-tab-ico svg { width: 20px; height: 20px; }
+  .nw-tab-body { align-items: center; }
+  .nw-tab-name { font-size: 11px; font-weight: 600; }
+  /* La descripción no cabe y tampoco hace falta con el icono */
+  .nw-tab-desc { display: none; }
+  .nw-tab.active { background: transparent; color: var(--c); }
+  .nw-tab.active .nw-tab-ico,
+  .nw-tab.active .nw-tab-name { color: var(--c); }
+
+  /* ── Botón flotante de crear ── */
+  .nw-fab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: 18px;
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    width: 56px; height: 56px;
+    border: none;
+    border-radius: 50%;
+    background: var(--primary);
+    color: var(--white);
+    box-shadow: 0 6px 20px color-mix(in srgb, var(--primary) 45%, transparent);
+    cursor: pointer;
+    z-index: 5;
+  }
+  .nw-fab svg { width: 26px; height: 26px; }
+  .nw-fab:active { transform: scale(.94); }
+  /* Mientras se escribe una nota a pantalla completa, el FAB estorba */
+  body.ap-fullscreen .nw-fab { display: none; }
+
+  /* Planos no se ofrece en teléfono: el editor de dibujo necesita
+     lienzo y precisión de puntero que una pantalla pequeña no da. */
+  .nw-tab[data-section="planos"] { display: none; }
+}
+
 /* ════════════════════════════════════════════════════════
    SECCIONES EN TELÉFONO
    El panel lateral de categorías ocupaba hasta un 35% del alto para
@@ -594,9 +744,9 @@ import '../styles/notes.css';
      pantallas de 320–360px se desborda. Aquí siempre una columna. */
   :global(.vt-grid) { grid-template-columns: 1fr; }
 
-  /* Planos no se ofrece en teléfono: el editor de dibujo necesita
-     lienzo y precisión de puntero que una pantalla pequeña no da. */
-  .nw-tab[data-section="planos"] { display: none; }
-  .nw-stat[data-stat="drawings"] { display: none; }
+  /* Hueco al final de las listas para que el botón flotante no tape
+     el último elemento. */
+  :global(.nws-main-body) { padding-bottom: 86px; }
+  :global(.nws-apuntes .ap-notes-side .nws-side-list) { padding-bottom: 86px; }
 }
 </style>
