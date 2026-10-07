@@ -107,6 +107,10 @@ export function renderApuntes(host) {
     renderFoldersList();
     renderNotesList();
     renderEditor();
+
+    // Se entra siempre por la lista, aunque quedara una nota abierta de la
+    // sesión anterior: abrir el editor de golpe desorienta.
+    setEditing(false);
 }
 
 // ── Folders ─────────────────────────────────────────────────────
@@ -292,11 +296,23 @@ function renderNotesList() {
     });
 }
 
+// En teléfono la vista funciona por niveles (lista → editor), como una app
+// de notas. Esta clase es la que decide cuál se ve; en escritorio no hace
+// nada, porque los tres paneles conviven.
+function setEditing(on) {
+    document.querySelector('.nws-apuntes')?.classList.toggle('ap-editing', on);
+}
+
+function backToList() {
+    setEditing(false);
+}
+
 function selectNote(id) {
     _ctx.activeNoteId = id;
     updateSettings({ activeNoteId: id });
     renderNotesList();
     renderEditor();
+    setEditing(true);
 }
 
 function onNewNote() {
@@ -315,6 +331,8 @@ function onNewNote() {
 function renderEditor() {
     const host = document.getElementById('ap-editor');
     if (!_ctx.activeNoteId) {
+        // Sin nota (p. ej. recién borrada) se vuelve a la lista en teléfono
+        setEditing(false);
         host.innerHTML = `
             <div class="nws-empty">
                 <div class="nws-empty-ico">
@@ -334,6 +352,9 @@ function renderEditor() {
         <div class="ap-editor">
             <!-- Cabecera con título + estrella + eliminar -->
             <header class="ap-editor-top">
+                <button class="nws-iconbtn ap-back-btn" id="ap-back" title="Volver a la lista" aria-label="Volver a la lista">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
                 <button class="nws-iconbtn ap-focus-btn" id="ap-focus" title="Modo enfocado (ocultar/mostrar paneles)">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
                 </button>
@@ -712,6 +733,11 @@ function initEditor(note) {
         updateNote(_ctx.activeNoteId, { starred: !n.starred });
         renderEditor(); renderNotesList();
     };
+
+    // Volver a la lista (solo se ve en teléfono; en escritorio sobra porque
+    // la lista está siempre a la vista)
+    const backBtn = document.getElementById('ap-back');
+    if (backBtn) backBtn.onclick = backToList;
 
     // Focus mode toggle (oculta carpetas + lista para ampliar el área de escritura)
     const focusBtn = document.getElementById('ap-focus');
@@ -1408,6 +1434,86 @@ function injectStyles() {
             .ap-tb-font, .ap-tb-block { display: none; }
             .ap-editor-top { padding: 14px 16px 0; }
             .ap-tags-row { padding: 6px 16px 10px; }
+        }
+
+        /* El botón de volver solo tiene sentido en la vista por niveles */
+        .ap-back-btn { display: none; }
+
+        /* ════════════════════════════════════════════════════════
+           APUNTES EN TELÉFONO — navegación por niveles
+           Los tres paneles (carpetas · lista · editor) no caben uno al
+           lado de otro en una pantalla estrecha. Aquí se recorre por
+           niveles, como una app de notas:
+             Nivel 1 → carpetas en tira + lista de notas
+             Nivel 2 → el editor ocupa toda el área, con botón atrás
+           La clase .ap-editing (la pone selectNote) decide cuál se ve.
+           En escritorio nada de esto aplica: siguen los tres paneles.
+           ════════════════════════════════════════════════════════ */
+        @media (max-width: 768px) {
+            .nws-apuntes { flex-direction: column; }
+
+            /* Carpetas: de panel lateral de 230px a tira horizontal.
+               El max-height:35vh que la regla global de 900px aplica a
+               todo .nws-side se anula aquí: en una tira sobra, y en la
+               lista de notas la dejaría recortada a un tercio de alto. */
+            .nws-apuntes .nws-side:first-child {
+                width: 100%;
+                max-height: none;
+                flex-direction: row;
+                align-items: center;
+                flex-shrink: 0;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+            .nws-apuntes .nws-side:first-child .nws-side-hdr {
+                border-bottom: none;
+                border-right: 1px solid var(--border);
+                padding: 8px 10px;
+                flex-shrink: 0;
+            }
+            /* El rótulo "Carpetas" sobra: el botón + ya se entiende */
+            .nws-apuntes .nws-side:first-child .nws-side-title { display: none; }
+            .nws-apuntes .nws-side:first-child .nws-side-list {
+                flex-direction: row;
+                overflow-x: auto;
+                overflow-y: hidden;
+                gap: 6px;
+                padding: 8px 10px;
+            }
+            .nws-apuntes .nws-side:first-child .nws-side-list > * {
+                flex-shrink: 0;
+                white-space: nowrap;
+            }
+
+            /* Lista de notas: ocupa el resto del alto */
+            .nws-apuntes .ap-notes-side {
+                width: 100%;
+                max-height: none;
+                flex: 1;
+                min-height: 0;
+                border-right: none;
+            }
+
+            /* Nivel 2: el editor solo aparece al abrir una nota */
+            .nws-apuntes .nws-main { display: none; }
+            .nws-apuntes.ap-editing .nws-main {
+                display: flex;
+                flex: 1;
+                min-height: 0;
+            }
+
+            /* El modo enfocado es de escritorio; aquí manda .ap-editing,
+               y sin esto una sesión que lo dejó activo escondería los
+               paneles sin forma de recuperarlos. */
+            .nws-apuntes.ap-focus > .nws-side { display: flex !important; }
+            .nws-apuntes.ap-editing > .nws-side { display: none !important; }
+            .ap-focus-restore,
+            .ap-focus-btn { display: none !important; }
+
+            .ap-back-btn { display: inline-flex; }
+
+            /* Objetivos táctiles más cómodos en la lista */
+            .nws-apuntes .ap-notes-side .nws-side-list { padding: 8px; }
         }
     `;
     document.head.appendChild(s);
