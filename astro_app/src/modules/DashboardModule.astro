@@ -655,7 +655,10 @@ body.viewer-mode .db-backup { display:none; }
 :global(.dbp-body) {
   flex: 1; min-height: 0;
   display: grid;
-  grid-template-columns: minmax(280px, 360px) 1fr;
+  /* minmax(0,1fr) y no 1fr: un grid item usa min-width:auto por defecto,
+     así que la tabla (con cabeceras nowrap) estiraba la rejilla hasta
+     sacar el modal de la pantalla en vez de dejar scrollear la tabla. */
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
   gap: 0;
   overflow: hidden;
 }
@@ -664,6 +667,7 @@ body.viewer-mode .db-backup { display:none; }
   padding: 18px 22px;
   display: flex; flex-direction: column;
   min-height: 0;
+  min-width: 0;   /* ver nota de arriba */
 }
 :global(.dbp-chart) {
   background: var(--surface-2);
@@ -940,7 +944,7 @@ body.viewer-mode .db-backup { display:none; }
   :global(.dbp-modal) { max-height: 96vh; }
   :global(.dbp-kpis) { grid-template-columns: repeat(2, 1fr); }
   :global(.dbp-body) {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     overflow-y: auto;
   }
   :global(.dbp-chart) {
@@ -949,12 +953,45 @@ body.viewer-mode .db-backup { display:none; }
   }
   :global(.dbp-title) { font-size: 20px; }
 }
+
+/* ── Teléfono ───────────────────────────────────────────── */
 @media (max-width: 600px) {
-  :global(.dbp-kpis) { grid-template-columns: 1fr 1fr; }
-  :global(.dbp-search input) { width: 110px; }
-  :global(.dbp-filter-select) { max-width: 140px; font-size: 12px; }
-  :global(.dbp-head) { padding: 16px 18px 14px; }
+  :global(.dbp-overlay) { padding: 0; align-items: stretch; }
+  /* A pantalla completa: a este ancho, los márgenes del overlay solo
+     robaban espacio útil. */
+  :global(.dbp-modal) {
+    width: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+
+  :global(.dbp-head)  { padding: 16px 16px 14px; }
+  :global(.dbp-title) { font-size: 18px; }
+  :global(.dbp-sub)   { font-size: 12px; }
+  :global(.dbp-kpis)  { grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 16px; }
   :global(.dbp-chart), :global(.dbp-table-wrap) { padding: 14px 16px; }
+
+  /* El donut se dibuja a 220px fijos desde JS y además con
+     overflow="visible": sin este tope se salía del contenedor. */
+  :global(.dbp-svg-host svg) { max-width: 100%; height: auto; }
+  :global(.dbp-donut-wrap)   { gap: 16px; }
+  :global(.dbp-c-n)          { font-size: 26px; }
+
+  /* Fuera el scroll anidado: el modal entero ya se desplaza, y una
+     leyenda con su propia barra dentro resultaba incómoda. */
+  :global(.dbp-legend) { max-height: none; overflow-y: visible; }
+
+  /* Buscador y filtros en su propia fila, ocupando el ancho */
+  :global(.dbp-section-hdr)   { gap: 8px; }
+  :global(.dbp-tools)         { width: 100%; }
+  :global(.dbp-search)        { flex: 1; min-width: 0; }
+  :global(.dbp-search input)  { width: 100%; min-width: 0; }
+  :global(.dbp-filter-select) { flex: 1; min-width: 0; max-width: none; font-size: 12px; }
+  :global(.dbp-btn-export span) { display: none; }
+
+  /* Tabla más densa; sigue teniendo scroll horizontal propio */
+  :global(.dbp-table) { font-size: 11.5px; }
+  :global(.dbp-table th), :global(.dbp-table td) { padding: 8px 10px; }
 }
 </style>
 
