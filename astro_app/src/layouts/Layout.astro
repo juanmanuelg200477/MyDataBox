@@ -18,7 +18,11 @@ const { title } = Astro.props;
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="description" content="Gestión de Infraestructura Databox" />
-		<meta name="viewport" content="width=device-width" />
+		<!-- initial-scale=1 es imprescindible: sin el, si algun elemento
+		     desborda a lo ancho, Android ensancha el viewport de maquetado y
+		     las @media de movil dejan de activarse (la pagina se ve "de
+		     escritorio encogida"). login y reset-password ya lo llevaban. -->
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<title>{title} — DataBox IT</title>
 		<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
