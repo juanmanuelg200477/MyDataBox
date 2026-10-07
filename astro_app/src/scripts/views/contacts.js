@@ -1,7 +1,7 @@
 import { store, save, genId } from '../store.js';
 import { icons } from '../icons.js';
 import { showModal, closeModal } from '../modal.js';
-import { filterTable } from '../utils.js';
+import { filterTable, labelTableCells, escapeHtml } from '../utils.js';
 
 export function initContacts() {
     const tbody = document.getElementById('contacts-tbody');
@@ -31,13 +31,26 @@ function renderContactsTable() {
         showingDisplay.textContent = `Mostrando ${store.contacts.length} de ${store.contacts.length}`;
         
         tbody.innerHTML = store.contacts.map(c => {
-            const reg = store.regions.find(r => r.id === c.regionId);
-            return `<tr data-search="${c.name} ${reg ? reg.name : ''} ${c.role} ${c.email}">
-                <td><strong>${c.name}</strong></td>
-                <td><span class="badge badge-teal">${reg ? reg.name : '—'}</span></td>
-                <td>${c.role || '—'}</td>
-                <td style="font-family:'JetBrains Mono',monospace;font-size:12px">${c.phone || '—'}</td>
-                <td><span class="link">${c.email || '—'}</span></td>
+            const reg    = store.regions.find(r => r.id === c.regionId);
+            const nombre = escapeHtml(c.name);
+            const region = escapeHtml(reg ? reg.name : '—');
+            const cargo  = escapeHtml(c.role || '—');
+
+            // En el teléfono lo natural es tocar el número para llamar o el
+            // correo para escribir; en escritorio el enlace no estorba.
+            const tel = c.phone
+                ? `<a href="tel:${escapeHtml(c.phone.replace(/[^+\d]/g, ''))}" class="link">${escapeHtml(c.phone)}</a>`
+                : '—';
+            const mail = c.email
+                ? `<a href="mailto:${escapeHtml(c.email)}" class="link">${escapeHtml(c.email)}</a>`
+                : '—';
+
+            return `<tr data-search="${escapeHtml(`${c.name} ${reg ? reg.name : ''} ${c.role ?? ''} ${c.email ?? ''}`)}">
+                <td><strong>${nombre}</strong></td>
+                <td><span class="badge badge-teal">${region}</span></td>
+                <td>${cargo}</td>
+                <td style="font-family:'JetBrains Mono',monospace;font-size:12px">${tel}</td>
+                <td>${mail}</td>
                 <td>
                     <button class="btn-icon btn-edit" data-id="${c.id}">${icons.edit}</button>
                     <button class="btn-icon danger btn-delete" data-id="${c.id}">${icons.trash}</button>
@@ -45,7 +58,10 @@ function renderContactsTable() {
             </tr>`;
         }).join('');
 
-        document.querySelectorAll('#contacts-tbody .btn-edit').forEach(btn => 
+        // Rotula cada celda para que en teléfono la fila se lea como tarjeta
+        labelTableCells(tbody);
+
+        document.querySelectorAll('#contacts-tbody .btn-edit').forEach(btn =>
             btn.addEventListener('click', (e) => showContactForm(e.currentTarget.dataset.id))
         );
         document.querySelectorAll('#contacts-tbody .btn-delete').forEach(btn => 
