@@ -83,13 +83,13 @@
 }
 
 /* ============================================================
-   BREAKPOINTS � escala acordada de la app
-   M�vil: hasta 768px � Tablet: 769�1024px � Escritorio: 1025px+
-   Usar SOLO 768 y 1024 en @media nuevos. (CSS no permite variables
-   dentro de @media, as� que la convenci�n va aqu� por escrito.)
-   Quedan archivos con quiebres sueltos (820, 900, 1100, 1300�) que
+   BREAKPOINTS - escala acordada de la app
+   Movil: hasta 768px | Tablet: 769-1024px | Escritorio: 1025px+
+   Usar SOLO 768 y 1024 en los @media nuevos. (CSS no permite
+   variables dentro de @media, por eso la convencion va escrita aqui.)
+   Quedan archivos con quiebres sueltos (820, 900, 1100, 1300) que
    desincronizan el layout entre secciones; migrarlos requiere
-   comprobaci�n visual, no hacerlo a ciegas.
+   comprobacion visual, no hacerlo a ciegas.
    ============================================================ */
 
 /* ============================================================

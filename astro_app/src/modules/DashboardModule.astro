@@ -210,7 +210,6 @@ body.viewer-mode .db-backup { display:none; }
 .db-row { flex:1;min-height:0;display:grid;gap:10px; }
 .db-row-1 { grid-template-columns:1fr 1fr 1fr; }
 .db-row-2 { grid-template-columns:2fr 1fr 1fr 1fr; }
-@media(max-width:1300px) { .db-row-2 { grid-template-columns:2fr 1fr 1fr 1fr } }
 
 /* ── Cards ──────────────────────────────────── */
 .db-card {
@@ -326,46 +325,120 @@ body.viewer-mode .db-backup { display:none; }
 :global(.dbc-act-time){ font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;flex-shrink:0; }
 
 /* ============================================================
-   MOBILE RESPONSIVENESS (FASE 2: Dashboard Grid)
+   RESPONSIVE
+   En escritorio el dashboard es una rejilla de altura fija (100vh)
+   pensada para verse entera de un vistazo. Eso no funciona en
+   pantallas pequeñas: aquí pasa a ser una columna de tarjetas que
+   crecen con su contenido y se recorren con el scroll normal de la
+   página, sin scroll anidado dentro de cada tarjeta.
    ============================================================ */
+
+/* ── Tablet ─────────────────────────────────────────────── */
 @media (max-width: 1024px) {
-  .db { 
-    height: auto; /* Remove hard height limit */
-    overflow: visible; 
+  .db {
+    height: auto;        /* se quita el alto fijo de 100vh */
+    overflow: visible;
   }
-  .db-row-1, .db-row-2 { 
-    grid-template-columns: 1fr; 
-    gap: 16px;
+  /* auto-fit reparte las tarjetas solo: 3 ó 2 columnas según quepa */
+  .db-row-1, .db-row-2 {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
   }
-  .db-card { 
-    min-height: 280px; /* Ensure cards don't collapse */
-  }
-  .db-header { 
-    height: auto; 
-    flex-direction: column; 
-    padding: 20px; 
-    gap: 20px;
-  }
-  .db-brand { 
-    padding-right: 0; 
-    text-align: center;
+  .db-card { min-height: 260px; }
+
+  .db-header { height: auto; flex-direction: column; padding: 20px; gap: 18px; }
+  .db-brand  { padding-right: 0; text-align: center; width: 100%; }
+  .db-sep    { display: none; }
+  .db-kv-row {
     width: 100%;
-  }
-  .db-sep { display: none; }
-  .db-kv-row { 
-    width: 100%; 
-    display: grid; 
-    grid-template-columns: 1fr 1fr 1fr; 
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px 8px;
   }
-  .db-kv+.db-kv::before { display: none; /* remove separators when stacked */ }
-  .db-header-right { 
-    width: 100%; 
-    justify-content: space-between; 
-    padding-left: 0; 
-    border-top: 1px solid rgba(255,255,255,.1); 
-    padding-top: 16px; 
+  .db-kv + .db-kv::before { display: none; } /* los separadores solo valen en fila */
+  .db-header-right {
+    width: 100%;
+    justify-content: space-between;
+    padding-left: 0;
+    border-top: 1px solid rgba(255,255,255,.1);
+    padding-top: 16px;
   }
+}
+
+/* ── Teléfono ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .db { gap: 12px; }
+
+  .db-row-1, .db-row-2 { grid-template-columns: 1fr; gap: 12px; }
+
+  /* Altura según contenido: con 7 tarjetas apiladas, forzar 280px a
+     cada una obligaba a recorrer huecos vacíos. */
+  .db-card { min-height: auto; padding: 13px 14px; }
+
+  /* Las listas largas conservan su propio scroll pero acotado, para
+     que una tarjeta corta no deje espacio muerto. */
+  .db-scroll { max-height: 230px; }
+
+  /* Cabecera compacta */
+  .db-header     { padding: 16px 14px; gap: 14px; border-radius: 14px; }
+  .db-brand-name { font-size: 16px; }
+  .db-brand-sub  { font-size: 10px; }
+  .db-kv-row     { gap: 12px 6px; }
+  .db-kv         { padding: 0 2px; }
+  .db-kv-n       { font-size: 19px; letter-spacing: -.5px; }
+  .db-kv-l       { font-size: 8.5px; }
+
+  .db-header-right { gap: 10px; padding-top: 13px; }
+  .db-clock        { font-size: 17px; letter-spacing: 1px; }
+  .db-date         { font-size: 9px; }
+  .db-ring         { width: 52px; height: 52px; }
+  .db-ring svg     { width: 52px; height: 52px; }
+
+  /* El donut se dibuja a 150px fijos desde JS; se reescala por CSS
+     (tiene viewBox) para dejarle sitio a la leyenda. */
+  :global(.dbc-donut)        { gap: 12px; }
+  :global(.dbc-svg-wrap svg) { width: 124px; height: 124px; }
+  :global(.dbc-c-num)        { font-size: 20px; }
+
+  /* Cuatro columnas de KPI eran ilegibles a este ancho */
+  .db-inc-kpis { grid-template-columns: 1fr 1fr; gap: 8px; }
+}
+
+/* ── Teléfono estrecho ──────────────────────────────────── */
+@media (max-width: 480px) {
+  .db-header     { padding: 14px 12px; }
+  .db-kv-row     { gap: 10px 4px; }
+  .db-kv-n       { font-size: 17px; }
+  .db-card       { padding: 12px; }
+  .db-card-title { font-size: 12.5px; }
+  .db-card-sub   { font-size: 10px; }
+  .db-expand-hint{ font-size: 9px; padding: 2px 6px; }
+
+  /* Lado a lado, la leyenda quedaba cortada a puntos suspensivos:
+     mejor el donut arriba y la leyenda entera debajo. */
+  :global(.dbc-donut)        { flex-direction: column; align-items: center; gap: 10px; }
+  :global(.dbc-legend)       { width: 100%; }
+  :global(.dbc-svg-wrap svg) { width: 132px; height: 132px; }
+}
+
+/* ── Dispositivos táctiles ──────────────────────────────── */
+@media (hover: none) {
+  /* Sin ratón no hay hover: el aviso "Ver detalle" quedaba invisible
+     para siempre y nada sugería que la tarjeta se puede tocar. */
+  .db-card[data-preview] .db-expand-hint { opacity: 1; transform: none; }
+
+  /* Elevaciones y foco de luz solo estorban al tocar (y el :hover se
+     queda "pegado" tras el toque en varios navegadores móviles). */
+  .db-card:hover {
+    transform: none;
+    box-shadow: var(--shadow-sm);
+    border-color: var(--border);
+  }
+  .db-card:hover::after { opacity: 0; }
+  .db-kv:hover { transform: none; }
+
+  /* Respuesta táctil al pulsar, que sí aporta */
+  .db-card[data-preview]:active { transform: scale(.99); }
 }
 
 
