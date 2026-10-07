@@ -1,14 +1,19 @@
 import { store, save, genId } from '../store.js';
 import { icons } from '../icons.js';
 import { showModal, closeModal } from '../modal.js';
+import { labelTableCells, renderPager } from '../utils.js';
+
+const PAGE_SIZE = 10;
 
 let _rackFilters = { search: '', region: '', status: '' };
+let _page = 1;
 
 export function initRacks() {
     const tbody = document.getElementById('racks-tbody');
     if (!tbody) return;
 
     _rackFilters = { search: '', region: '', status: '' };
+    _page = 1;
 
     // Populate region filter
     const regSel = document.getElementById('rack-region-filter');
@@ -19,16 +24,21 @@ export function initRacks() {
 
     document.getElementById('btn-add-rack')?.addEventListener('click', () => showRackForm(null));
 
+    // Cualquier cambio de filtro vuelve a la página 1: si no, podrías
+    // quedarte en la 4 de un resultado que ahora tiene una sola.
     document.getElementById('search-racks')?.addEventListener('input', e => {
         _rackFilters.search = e.target.value.toLowerCase();
+        _page = 1;
         renderRacksTable();
     });
     document.getElementById('rack-region-filter')?.addEventListener('change', e => {
         _rackFilters.region = e.target.value;
+        _page = 1;
         renderRacksTable();
     });
     document.getElementById('rack-status-filter')?.addEventListener('change', e => {
         _rackFilters.status = e.target.value;
+        _page = 1;
         renderRacksTable();
     });
 
@@ -64,14 +74,25 @@ function renderRacksTable() {
     tableContainer.style.display = 'block';
     emptyState.style.display = 'none';
     countDisplay.textContent = store.racks.length;
-    showingDisplay.textContent = `Mostrando ${filtered.length} de ${store.racks.length}`;
 
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" style="padding:40px;text-align:center;color:var(--text-muted);font-style:italic;">Ningún bastidor coincide con los filtros aplicados.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="cell-no-results">Ningún bastidor coincide con los filtros aplicados.</td></tr>`;
+        showingDisplay.textContent = `Mostrando 0 de ${store.racks.length}`;
+        renderPager('racks-pager', { page: 1, totalPages: 1, onChange: () => {} });
         return;
     }
 
-    tbody.innerHTML = filtered.map((r, i) => {
+    const totalPaginas = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    // Tras borrar o filtrar, la página actual puede quedar fuera de rango
+    if (_page > totalPaginas) _page = totalPaginas;
+
+    const inicio = (_page - 1) * PAGE_SIZE;
+    const pagina = filtered.slice(inicio, inicio + PAGE_SIZE);
+
+    showingDisplay.textContent =
+        `Mostrando ${inicio + 1}–${inicio + pagina.length} de ${filtered.length}`;
+
+    tbody.innerHTML = pagina.map((r, i) => {
         const reg = store.regions.find(x => x.id === r.regionId);
         const area = store.areas.find(x => x.id === r.areaId);
         const slotCount = r.slots ? Object.keys(r.slots).length : 0;
@@ -79,7 +100,7 @@ function renderRacksTable() {
         const pct = Math.round((slotCount / totalU) * 100);
         const barColor = pct < 30 ? 'var(--success)' : pct < 70 ? 'var(--warning)' : 'var(--danger)';
         return `<tr>
-            <td style="color:var(--text-muted);font-size:12px;font-family:'JetBrains Mono',monospace;text-align:center;width:40px;">${i + 1}</td>
+            <td class="cell-index">${inicio + i + 1}</td>
             <td><a href="/rack?id=${r.id}" class="link">${r.name}</a></td>
             <td>${reg ? reg.name : '—'}</td>
             <td><span class="badge badge-purple">${area ? area.name : '—'}</span></td>
@@ -100,6 +121,20 @@ function renderRacksTable() {
             </td>
         </tr>`;
     }).join('');
+
+    // Rotula cada celda para que en teléfono la fila se lea como tarjeta
+    labelTableCells(tbody);
+
+    renderPager('racks-pager', {
+        page: _page,
+        totalPages: totalPaginas,
+        onChange: (p) => {
+            _page = p;
+            renderRacksTable();
+            document.getElementById('racks-table-container')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    });
 
     document.querySelectorAll('#racks-tbody .btn-edit').forEach(btn =>
         btn.addEventListener('click', e => showRackForm(e.currentTarget.dataset.id))

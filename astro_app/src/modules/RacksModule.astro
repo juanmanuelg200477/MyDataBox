@@ -31,11 +31,12 @@ import { icons } from '../scripts/icons.js';
             <span>Cargando bastidores…</span>
         </div>
         <div id="racks-table-container" style="display:none">
-            <table>
+            <table class="table-cards">
                 <thead><tr><th>#</th><th>Nombre</th><th>Región</th><th>Área</th><th>Estado</th><th>Tipo</th><th>Altura</th><th>Dispositivos</th><th>Espacio</th><th>Acciones</th></tr></thead>
                 <tbody id="racks-tbody"></tbody>
             </table>
             <div class="table-count" id="racks-showing-count">Mostrando 0 de 0</div>
+            <div class="pager" id="racks-pager" style="display:none"></div>
         </div>
         <div id="racks-empty-state" class="empty-state" style="display:none">
             <div set:html={icons.rack}></div>

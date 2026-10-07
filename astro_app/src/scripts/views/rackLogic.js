@@ -198,6 +198,30 @@ function renderRackView(app, rackId) {
             z-index: 10;
             position: relative;
         }
+
+        /* ── Teléfono ───────────────────────────────────────── */
+        @media (max-width: 768px) {
+            .rack-view-container { gap: 20px; }
+            /* min-width:300px obligaba a un ancho que no siempre cabe */
+            .rack-specs-wrapper { min-width: 0; width: 100%; }
+
+            /* La tabla de especificaciones es de dos columnas
+               (etiqueta / valor): debe ajustar el texto en vez de
+               provocar scroll lateral, que es lo que hace la regla
+               general de tablas en móvil. */
+            .table-details { white-space: normal; }
+            .table-details td { word-break: break-word; }
+
+            /* El nombre del equipo se salía del riel cuando era largo */
+            .rack-u-slot.occupied a {
+                font-size: 10.5px;
+                padding: 0 6px;
+                overflow: hidden;
+                white-space: nowrap;
+            }
+            .rack-digital-twin { padding: 18px 12px; }
+            .rack-digital-twin-header h3 { font-size: 14px; }
+        }
     </style>
     <div class="view-transition">
         <div class="page-header">

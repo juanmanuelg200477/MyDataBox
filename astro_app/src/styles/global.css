@@ -1480,6 +1480,15 @@ tbody tr:last-child td {
     color: var(--text-muted);
 }
 
+/* Columna de numeracion correlativa */
+.cell-index {
+    width: 40px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
 .cell-no-results {
     padding: 28px 12px;
     text-align: center;
@@ -1601,6 +1610,10 @@ tbody tr:last-child td {
         white-space: normal;
         text-overflow: clip;
     }
+
+    /* La numeracion correlativa es una ayuda de la tabla de escritorio;
+       dentro de una tarjeta solo seria ruido. */
+    .table-cards .cell-index { display: none; }
 
     /* Botones del paginador mas comodos de pulsar */
     .pager { gap: 8px; padding: 12px; }
