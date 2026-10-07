@@ -1497,6 +1497,36 @@ tbody tr:last-child td {
 }
 
 /* ============================================================
+   TARJETAS DE ISP  (vista Dispositivos -> ISP -> ISPs General)
+   La rejilla de configuracion de red tenia tres columnas fijas en
+   estilos en linea: con valores como 200.6.251.128/29 no cabian en
+   un telefono y Gateway y Puerto FW quedaban cortados contra el
+   borde. Al pasar a clase se puede adaptar por ancho.
+   ============================================================ */
+
+.isp-card-body { padding: 22px 26px; }
+
+.isp-net-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px 16px;
+}
+
+/* Que un valor largo se parta antes que ensanchar su columna */
+.isp-net-val { overflow-wrap: anywhere; }
+
+@media (max-width: 768px) {
+    .isp-card-body { padding: 16px 16px; }
+    .isp-net-grid  { grid-template-columns: repeat(2, 1fr); gap: 10px 12px; }
+}
+
+/* Una sola columna: a este ancho ni siquiera dos entran sin partir
+   las direcciones por la mitad. */
+@media (max-width: 480px) {
+    .isp-net-grid { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
    EDITOR DE APUNTES A PANTALLA COMPLETA (telefono)
    La clase la pone setEditing() en notes-section.js al abrir una nota.
    Va dentro del media query a proposito: ese JS corre en cualquier

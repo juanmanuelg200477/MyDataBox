@@ -1924,10 +1924,12 @@ function _renderIspListForRegion(container, regionId) {
             const clr = ISP_REGION_COLORS[i % ISP_REGION_COLORS.length];
             const typeCfg = TYPE_COLORS[l.type] || TYPE_COLORS['Otro'];
 
+            // min-width:0 y overflow-wrap son los que impiden que una IP larga
+            // ensanche su columna y se salga de la tarjeta.
             const infoCell = (label, val, mono = false) => val
-                ? `<div style="display:flex;flex-direction:column;gap:3px;">
+                ? `<div style="display:flex;flex-direction:column;gap:3px;min-width:0;">
                        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted);">${label}</span>
-                       <span style="font-size:13px;font-weight:700;color:var(--text);${mono ? "font-family:'JetBrains Mono',monospace;" : ''}">${val}</span>
+                       <span class="isp-net-val" style="font-size:13px;font-weight:700;color:var(--text);${mono ? "font-family:'JetBrains Mono',monospace;" : ''}">${val}</span>
                    </div>` : '';
 
             const networkGrid = [
@@ -1955,7 +1957,7 @@ function _renderIspListForRegion(container, regionId) {
                 <div style="height:5px;background:linear-gradient(90deg,${clr.accent},${clr.accent}66);"></div>
 
                 <!-- Card body -->
-                <div style="padding:22px 26px;">
+                <div class="isp-card-body">
 
                     <!-- Header: name + type + actions -->
                     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px;">
@@ -1981,7 +1983,7 @@ function _renderIspListForRegion(container, regionId) {
                     ${networkGrid ? `
                     <div style="background:${clr.bg};border:1px solid ${clr.border};border-radius:12px;padding:16px 18px;margin-bottom:14px;">
                         <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:${clr.accent};margin-bottom:12px;">Configuración de Red</div>
-                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px 16px;">
+                        <div class="isp-net-grid">
                             ${networkGrid}
                         </div>
                     </div>` : ''}
@@ -2058,9 +2060,9 @@ function showIspLinkDetail(id) {
     const reg = store.regions.find(r => r.id === l.regionId);
 
     const row = (label, val, mono = false) => val
-        ? `<div style="display:flex;flex-direction:column;gap:2px;">
+        ? `<div style="display:flex;flex-direction:column;gap:2px;min-width:0;">
                <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted);">${label}</span>
-               <span style="font-size:13px;font-weight:600;color:var(--text);${mono ? "font-family:'JetBrains Mono',monospace;" : ''}">${val}</span>
+               <span class="isp-net-val" style="font-size:13px;font-weight:600;color:var(--text);${mono ? "font-family:'JetBrains Mono',monospace;" : ''}">${val}</span>
            </div>`
         : '';
 
