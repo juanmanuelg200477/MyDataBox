@@ -1,5 +1,6 @@
 import { store, getAllDevices } from '../store.js';
 import { icons } from '../icons.js';
+import { escapeHtml } from '../utils.js';
 
 // ════════════════════════════════════════════════════════════════
 //  DASHBOARD CARD PREVIEW
@@ -94,7 +95,7 @@ export function openCardPreview(cardKey) {
                                 <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
                             </thead>
                             <tbody id="dbp-tbody">
-                                ${renderRows(rows, headers.length)}
+                                ${renderRows(rows, headers)}
                             </tbody>
                         </table>
                     </div>
@@ -140,11 +141,18 @@ export function closeCardPreview() {
 }
 
 // ── Render rows ─────────────────────────────────────────────────
-function renderRows(rows, colSpan) {
+// Cada celda lleva su encabezado en data-label: en móvil la tabla se
+// reordena por CSS como tarjetas y usa esa etiqueta en lugar del <thead>,
+// que ahí se oculta. Así se evita el scroll horizontal que cortaba las
+// palabras a media pantalla.
+function renderRows(rows, headers) {
+    const titulos = Array.isArray(headers) ? headers : [];
     if (!rows.length) {
-        return `<tr><td colspan="${colSpan}" class="dbp-empty">Sin resultados</td></tr>`;
+        return `<tr><td colspan="${titulos.length || 1}" class="dbp-empty">Sin resultados</td></tr>`;
     }
-    return rows.map(r => `<tr>${r.map(c => `<td>${c == null ? '—' : c}</td>`).join('')}</tr>`).join('');
+    return rows.map(r => `<tr>${r.map((c, i) =>
+        `<td data-label="${escapeHtml(titulos[i] ?? '')}">${c == null ? '—' : c}</td>`
+    ).join('')}</tr>`).join('');
 }
 
 // ── Filtros ─────────────────────────────────────────────────────
@@ -169,7 +177,7 @@ function applyFilters(overlay) {
     });
 
     const tbody = overlay.querySelector('#dbp-tbody');
-    if (tbody) tbody.innerHTML = renderRows(filtered, _state.headers.length);
+    if (tbody) tbody.innerHTML = renderRows(filtered, _state.headers);
 
     const title = overlay.querySelector('.dbp-table-wrap .dbp-section-title');
     if (title) title.textContent = `Detalle (${filtered.length}${filtered.length !== _state.rows.length ? ` de ${_state.rows.length}` : ''})`;

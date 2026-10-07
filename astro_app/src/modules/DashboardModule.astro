@@ -971,6 +971,26 @@ body.viewer-mode .db-backup { display:none; }
   :global(.dbp-kpis)  { grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 16px; }
   :global(.dbp-chart), :global(.dbp-table-wrap) { padding: 14px 16px; }
 
+  /* El cuerpo deja de ser rejilla: en vertical, columna simple que
+     fluye con el contenido y se desplaza como una sola página. */
+  :global(.dbp-body) {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  /* min-height:auto y flex:none son la corrección clave: con min-height:0
+     las secciones se comprimían por debajo de su contenido y, como
+     .dbp-chart-host centra con align-items:center, lo que no cabía se
+     desbordaba por ARRIBA y por ABAJO a la vez — de ahí que el título
+     "Visualización" y el bloque "Detalle" quedaran tapados. */
+  :global(.dbp-chart),
+  :global(.dbp-table-wrap) { min-height: auto; flex: none; }
+  :global(.dbp-chart-host) {
+    flex: none;
+    min-height: auto;
+    align-items: stretch;
+  }
+
   /* El donut se dibuja a 220px fijos desde JS y además con
      overflow="visible": sin este tope se salía del contenedor. */
   :global(.dbp-svg-host svg) { max-width: 100%; height: auto; }
@@ -981,6 +1001,12 @@ body.viewer-mode .db-backup { display:none; }
      leyenda con su propia barra dentro resultaba incómoda. */
   :global(.dbp-legend) { max-height: none; overflow-y: visible; }
 
+  /* Barras: la etiqueta pasa encima. Con 110px fijos a la izquierda,
+     nombres como ND_ADMIN_BROC se cortaban con puntos suspensivos. */
+  :global(.dbp-bar-row)   { flex-direction: column; align-items: stretch; gap: 4px; }
+  :global(.dbp-bar-lbl)   { width: auto; font-size: 11.5px; }
+  :global(.dbp-bar-track) { height: 18px; }
+
   /* Buscador y filtros en su propia fila, ocupando el ancho */
   :global(.dbp-section-hdr)   { gap: 8px; }
   :global(.dbp-tools)         { width: 100%; }
@@ -989,9 +1015,60 @@ body.viewer-mode .db-backup { display:none; }
   :global(.dbp-filter-select) { flex: 1; min-width: 0; max-width: none; font-size: 12px; }
   :global(.dbp-btn-export span) { display: none; }
 
-  /* Tabla más densa; sigue teniendo scroll horizontal propio */
-  :global(.dbp-table) { font-size: 11.5px; }
-  :global(.dbp-table th), :global(.dbp-table td) { padding: 8px 10px; }
+  /* ── La tabla pasa a tarjetas ──────────────────────────
+     Con 6 columnas no hay ancho de teléfono que valga: el scroll
+     horizontal partía las palabras a media pantalla. Cada fila se
+     convierte en una tarjeta y cada celda muestra su encabezado
+     (viene en data-label desde dashboardPreview.js), así que ya no
+     hace falta desplazarse de lado. El <thead> sobra aquí. */
+  :global(.dbp-table-scroll) {
+    overflow-x: hidden;
+    max-height: none;
+    border: none;
+    background: transparent;
+  }
+  :global(.dbp-table) { font-size: 12.5px; }
+  :global(.dbp-table thead) { display: none; }
+  :global(.dbp-table),
+  :global(.dbp-table tbody),
+  :global(.dbp-table tr),
+  :global(.dbp-table td) { display: block; width: 100%; }
+
+  :global(.dbp-table tr) {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    padding: 4px 0;
+    overflow: hidden;
+  }
+  :global(.dbp-table tbody tr:hover) { background: var(--surface); }
+
+  :global(.dbp-table td) {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 7px 13px;
+    border-bottom: none;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+  :global(.dbp-table td + td) { border-top: 1px solid var(--surface-3); }
+  :global(.dbp-table td::before) {
+    content: attr(data-label);
+    flex-shrink: 0;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--text-muted);
+  }
+
+  /* La fila de "Sin resultados" no es una tarjeta de datos */
+  :global(.dbp-table td.dbp-empty) { display: block; text-align: center; }
+  :global(.dbp-table td.dbp-empty::before) { content: none; }
 }
 </style>
 
