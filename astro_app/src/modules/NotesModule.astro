@@ -547,4 +547,56 @@ import '../styles/notes.css';
     border-right: none; border-bottom: 1px solid var(--border);
   }
 }
+
+/* ════════════════════════════════════════════════════════
+   SECCIONES EN TELÉFONO
+   El panel lateral de categorías ocupaba hasta un 35% del alto para
+   mostrar una lista corta. Aquí pasa a ser una tira horizontal de
+   pastillas, y el contenido se queda con el resto de la pantalla.
+
+   Apuntes queda fuera (:not) porque tiene DOS paneles laterales
+   —carpetas y lista de notas— y su propio flujo por niveles.
+   ════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  :global(.nws:not(.nws-apuntes) > .nws-side) {
+    width: 100%;
+    max-height: none;
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  :global(.nws:not(.nws-apuntes) > .nws-side > .nws-side-hdr) {
+    border-bottom: none;
+    border-right: 1px solid var(--border);
+    padding: 8px 12px;
+    flex-shrink: 0;
+  }
+  :global(.nws:not(.nws-apuntes) > .nws-side > .nws-side-list) {
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 6px;
+    padding: 8px 10px;
+  }
+  :global(.nws:not(.nws-apuntes) > .nws-side > .nws-side-list > *) {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* Buscador y botón de crear, en su propia fila y a lo ancho */
+  :global(.nws-main-hdr) { flex-wrap: wrap; padding: 12px 14px; gap: 10px; }
+  :global(.nws-main-hdr .nws-search) { flex: 1; min-width: 0; }
+  :global(.nws-main-body) { padding: 14px; }
+
+  /* La rejilla de la Bóveda pedía un mínimo de 320px por tarjeta, que en
+     pantallas de 320–360px se desborda. Aquí siempre una columna. */
+  :global(.vt-grid) { grid-template-columns: 1fr; }
+
+  /* Planos no se ofrece en teléfono: el editor de dibujo necesita
+     lienzo y precisión de puntero que una pantalla pequeña no da. */
+  .nw-tab[data-section="planos"] { display: none; }
+  .nw-stat[data-stat="drawings"] { display: none; }
+}
 </style>

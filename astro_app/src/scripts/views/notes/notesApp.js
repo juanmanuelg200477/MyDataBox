@@ -69,12 +69,21 @@ export async function initNotesApp() {
     });
 
     // Sección inicial
-    const initial = getState().settings.activeSection || 'apuntes';
+    let initial = getState().settings.activeSection || 'apuntes';
+    // Planos está oculto en teléfono; si quedó guardado desde el escritorio
+    // el usuario aterrizaría en una pestaña que no puede ni ver ni cambiar.
+    if (initial === 'planos' && esPantallaEstrecha()) initial = 'apuntes';
     navigate(initial);
+}
+
+// Mismo umbral que el @media de NotesModule.astro que oculta la pestaña
+function esPantallaEstrecha() {
+    return window.matchMedia('(max-width: 768px)').matches;
 }
 
 function navigate(section) {
     if (!SECTIONS[section]) section = 'apuntes';
+    if (section === 'planos' && esPantallaEstrecha()) section = 'apuntes';
     if (_activeSection === section) return;
     _activeSection = section;
 
