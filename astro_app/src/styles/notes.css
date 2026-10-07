@@ -173,6 +173,10 @@ html.nw-dark .nw-fab {
   color: #fff;
 }
 html.nw-dark .nws-main-body { background: transparent; }
+/* El editor a pantalla completa necesita fondo propio y opaco: .nws-main
+   es transparente en este tema, y sin esto se transparentaba lo que
+   hubiera detrás. */
+html.nw-dark .nws-apuntes.ap-editing .nws-main { background: #050505; }
 
 html.nw-dark .nws-side {
   background: #0d0d0d;

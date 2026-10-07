@@ -690,7 +690,14 @@ import '../styles/notes.css';
   }
   .nw-fab svg { width: 26px; height: 26px; }
   .nw-fab:active { transform: scale(.94); }
-  /* Mientras se escribe una nota a pantalla completa, el FAB estorba */
+
+  /* ── Escribiendo una nota: inmersión total ──
+     Con el editor a pantalla completa, la barra de la app y la
+     navegación inferior quedaban detrás y su titulo se cruzaba con el
+     de la nota. Se retiran mientras se escribe, igual que en una app
+     de notas; se recuperan al cerrar con la X. */
+  body.ap-fullscreen .nw-head,
+  body.ap-fullscreen .nw-tabs,
   body.ap-fullscreen .nw-fab { display: none; }
 
   /* Planos no se ofrece en teléfono: el editor de dibujo necesita
