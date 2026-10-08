@@ -571,20 +571,37 @@ body.viewer-mode .db-backup { display:none; }
 :global(.dbp-modal) {
   width: min(1180px, 100%);
   max-height: calc(var(--vh-util) * 0.92);
-  /* 0.80 y no menos: por debajo de eso el color del dashboard se cuela
-     como manchas sobre la tabla. La saturación se queda en 160% por lo
-     mismo: es lo que hace que los colores de atrás destaquen. */
-  background: rgba(255, 255, 255, 0.80);
-  backdrop-filter: blur(48px) saturate(160%);
-  -webkit-backdrop-filter: blur(48px) saturate(160%);
-  border-radius: 26px;
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  /* El marco baja a 0.70 para que se vea más vidrio; lo que compensa la
+     legibilidad son las superficies internas, que suben de opacidad.
+     Es el reparto de iOS: el marco es cristal, el contenido se apoya en
+     material sólido.
+
+     Encima van dos degradados que son el brillo: una franja clara en el
+     borde superior y un reflejo diagonal que cruza la esquina. Van en el
+     propio fondo y no en un ::before porque un pseudoelemento colocado
+     se pintaría POR ENCIMA del contenido y lo velaría. */
+  background:
+    linear-gradient(to bottom,
+      rgba(255, 255, 255, 0.45) 0px,
+      rgba(255, 255, 255, 0) 120px),
+    linear-gradient(135deg,
+      rgba(255, 255, 255, 0.40) 0%,
+      rgba(255, 255, 255, 0.08) 34%,
+      rgba(255, 255, 255, 0) 55%),
+    rgba(255, 255, 255, 0.70);
+  backdrop-filter: blur(52px) saturate(170%);
+  -webkit-backdrop-filter: blur(52px) saturate(170%);
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
   box-shadow:
-    0 40px 90px -20px rgba(8, 12, 24, 0.55),
-    0 2px 8px rgba(8, 12, 24, 0.12),
-    /* Filo claro arriba y sombra tenue abajo: el canto del vidrio. */
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    inset 0 -1px 0 rgba(15, 23, 42, 0.05);
+    0 44px 100px -22px rgba(8, 12, 24, 0.58),
+    0 2px 10px rgba(8, 12, 24, 0.12),
+    /* El canto del vidrio: luz arriba, algo menos en los laterales y
+       una sombra fina abajo. Es lo que le da el grosor. */
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 1px 0 0 rgba(255, 255, 255, 0.6),
+    inset -1px 0 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(15, 23, 42, 0.07);
   display: flex; flex-direction: column;
   overflow: hidden;
   transform: scale(.94) translateY(20px);
@@ -608,10 +625,12 @@ body.viewer-mode .db-backup { display:none; }
   position: relative;
   padding: 22px 28px 18px;
   display: flex; align-items: flex-start; gap: 18px;
+  /* La cabecera deja ver el cristal: solo un tinte del color de la
+     tarjeta, sin tapar el brillo que viene del fondo de la ventana. */
   background: linear-gradient(135deg,
-    color-mix(in srgb, var(--dbp-accent) 14%, rgba(255,255,255,0.72)) 0%,
-    rgba(255, 255, 255, 0.60) 70%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+    color-mix(in srgb, var(--dbp-accent) 13%, rgba(255,255,255,0.34)) 0%,
+    rgba(255, 255, 255, 0.10) 72%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
 }
 :global(.dbp-head-bar) {
   position: absolute; top: 0; left: 0; right: 0; height: 4px;
@@ -641,10 +660,14 @@ body.viewer-mode .db-backup { display:none; }
 :global(.dbp-close) {
   flex-shrink: 0;
   width: 38px; height: 38px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  /* Redondo, como los botones de cerrar de iOS */
+  border-radius: 50%;
+  background:
+    linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(255,255,255,0.55));
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 2px 6px rgba(15, 23, 42, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
   color: var(--text-muted);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
@@ -664,18 +687,22 @@ body.viewer-mode .db-backup { display:none; }
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   padding: 16px 28px;
-  background: rgba(248, 250, 252, 0.45);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(248, 250, 252, 0.26);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
 }
 :global(.dbp-kpi) {
   display: flex; flex-direction: column; gap: 4px;
   padding: 12px 14px;
-  /* Opaca de verdad: es donde van las cifras y tienen que destacar
-     sobre el cristal, no fundirse con él. */
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
-  border-radius: 14px;
+  /* Casi opaca: es donde van las cifras y tienen que destacar sobre el
+     cristal, no fundirse con él. Lleva su propio reflejo arriba para
+     que parezca una pastilla de vidrio sobre el vidrio. */
+  background:
+    linear-gradient(to bottom, rgba(255,255,255,0.96), rgba(255,255,255,0.84));
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow:
+    0 2px 8px rgba(15, 23, 42, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+  border-radius: 16px;
   border-left: 3px solid var(--c);
   transition: transform .2s ease, box-shadow .2s ease;
 }
@@ -718,8 +745,8 @@ body.viewer-mode .db-backup { display:none; }
   min-width: 0;   /* ver nota de arriba */
 }
 :global(.dbp-chart) {
-  background: rgba(248, 250, 252, 0.45);
-  border-right: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(248, 250, 252, 0.26);
+  border-right: 1px solid rgba(255, 255, 255, 0.5);
 }
 :global(.dbp-section-hdr) {
   display: flex; align-items: center; justify-content: space-between;
@@ -841,10 +868,10 @@ body.viewer-mode .db-backup { display:none; }
 }
 :global(.dbp-search) {
   display: flex; align-items: center; gap: 6px;
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
-  border-radius: 11px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(255,255,255,0.8));
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.07), inset 0 1px 0 rgba(255,255,255,1);
+  border-radius: 12px;
   padding: 6px 10px;
   transition: border-color .18s ease;
 }
@@ -863,10 +890,10 @@ body.viewer-mode .db-backup { display:none; }
   font-family: inherit;
 }
 :global(.dbp-filter-select) {
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
-  border-radius: 11px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(255,255,255,0.8));
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.07), inset 0 1px 0 rgba(255,255,255,1);
+  border-radius: 12px;
   padding: 7px 10px;
   font-size: 12.5px;
   color: var(--text-main);
@@ -884,11 +911,11 @@ body.viewer-mode .db-backup { display:none; }
 :global(.dbp-btn) {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 12px;
-  border-radius: 11px;
+  border-radius: 12px;
   font-size: 12px; font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  background: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(255,255,255,0.8));
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.07), inset 0 1px 0 rgba(255,255,255,1);
   color: var(--text-main);
   cursor: pointer;
   transition: all .18s ease;
@@ -906,11 +933,14 @@ body.viewer-mode .db-backup { display:none; }
 :global(.dbp-table-scroll) {
   flex: 1; min-height: 0;
   overflow: auto;
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  border-radius: 16px;
-  /* La tabla es lo más denso de leer: va casi opaca. */
-  background: rgba(255, 255, 255, 0.86);
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 18px;
+  /* La tabla es lo más denso de leer: va casi opaca, y es lo que
+     permite que el marco de la ventana pueda ser más transparente. */
+  background: rgba(255, 255, 255, 0.93);
+  box-shadow:
+    0 2px 10px rgba(15, 23, 42, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 :global(.dbp-table-scroll::-webkit-scrollbar) { width: 8px; height: 8px; }
 :global(.dbp-table-scroll::-webkit-scrollbar-thumb) {
