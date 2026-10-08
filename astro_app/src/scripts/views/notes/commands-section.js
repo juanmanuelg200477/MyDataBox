@@ -388,7 +388,7 @@ function injectStyles() {
             background: var(--surface);
             border-radius: 16px;
             width: min(620px, 100%);
-            max-height: 90vh;
+            max-height: calc(var(--vh-util) * 0.9 - env(safe-area-inset-bottom, 0px));
             box-shadow: 0 30px 80px rgba(0,0,0,.35);
             transform: scale(.94); transition: transform .25s cubic-bezier(.34,1.4,.64,1);
             overflow: hidden;
@@ -403,7 +403,7 @@ function injectStyles() {
         .cm-modal-body {
             padding: 18px 22px;
             display: flex; flex-direction: column; gap: 14px;
-            overflow-y: auto; max-height: 65vh;
+            overflow-y: auto; max-height: calc(var(--vh-util) * 0.65);
         }
         .cm-fld { display: flex; flex-direction: column; gap: 6px; }
         .cm-fld-lbl {

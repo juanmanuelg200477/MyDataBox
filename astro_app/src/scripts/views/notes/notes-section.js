@@ -1376,6 +1376,11 @@ function injectStyles() {
             width: min(440px, 92%);
             box-shadow: 0 30px 80px rgba(0,0,0,.35);
             transform: scale(.94); transition: transform .25s cubic-bezier(.34,1.4,.64,1);
+            /* Mismo patrón que el resto de diálogos: el alto se limita a la
+               ventana visible y lo que sobra se desplaza por dentro, para
+               que el pie con los botones nunca quede fuera de pantalla. */
+            max-height: calc(var(--vh-util) * 0.9 - env(safe-area-inset-bottom, 0px));
+            display: flex; flex-direction: column;
             overflow: hidden;
         }
         .ap-modal-overlay.show .ap-modal { transform: scale(1); }
@@ -1384,7 +1389,10 @@ function injectStyles() {
             padding: 16px 20px; border-bottom: 1px solid var(--border);
         }
         .ap-modal-hdr h3 { font-size: 16px; font-weight: 700; color: var(--text-main); margin: 0; }
-        .ap-modal-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+        .ap-modal-body {
+            padding: 18px 20px; display: flex; flex-direction: column; gap: 14px;
+            overflow-y: auto;
+        }
         .ap-field { display: flex; flex-direction: column; gap: 6px; }
         .ap-field-lbl {
             font-size: 11px; font-weight: 700;

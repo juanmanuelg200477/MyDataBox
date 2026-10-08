@@ -544,7 +544,7 @@ body.viewer-mode .db-backup { display:none; }
 
 :global(.dbp-modal) {
   width: min(1180px, 100%);
-  max-height: 92vh;
+  max-height: calc(var(--vh-util) * 0.92);
   background: var(--surface);
   border-radius: 18px;
   box-shadow: 0 30px 90px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.06) inset;
@@ -941,7 +941,9 @@ body.viewer-mode .db-backup { display:none; }
 /* ── Responsive ─────────────────────── */
 @media (max-width: 1024px) {
   :global(.dbp-overlay) { padding: 12px; }
-  :global(.dbp-modal) { max-height: 96vh; }
+  :global(.dbp-modal) {
+    max-height: calc(var(--vh-util) * 0.96 - env(safe-area-inset-bottom, 0px));
+  }
   :global(.dbp-kpis) { grid-template-columns: repeat(2, 1fr); }
   :global(.dbp-body) {
     grid-template-columns: minmax(0, 1fr);

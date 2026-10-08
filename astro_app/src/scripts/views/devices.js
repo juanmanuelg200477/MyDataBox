@@ -2081,7 +2081,7 @@ function showIspLinkDetail(id) {
         : '—';
 
     const body = `
-    <div style="max-height:75vh;overflow-y:auto;padding-right:4px;">
+    <div style="max-height:calc(var(--vh-util) * 0.75);overflow-y:auto;padding-right:4px;">
         <!-- Header banner -->
         <div style="background:linear-gradient(135deg,#059669,#064e3b);border-radius:12px;padding:20px 24px;margin-bottom:20px;color:#fff;">
             <div style="font-size:22px;font-weight:900;letter-spacing:-0.5px;">${l.name}</div>
@@ -2170,7 +2170,7 @@ function showIspLinkForm(id, regionId) {
     const v = f => l?.[f] || '';
 
     const body = `
-    <div style="max-height:70vh;overflow-y:auto;padding-right:4px;">
+    <div style="max-height:calc(var(--vh-util) * 0.7);overflow-y:auto;padding-right:4px;">
 
         <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--primary);margin:0 0 10px;padding-bottom:6px;border-bottom:2px solid rgba(59,130,246,0.15);">Información General</div>
         <div class="form-row">

@@ -81,8 +81,26 @@
     --radius-lg: 14px;
     --radius-xl: 20px;
 
+    /* ── Alto util de la ventana ──────────────────────────────────
+       En el telefono, 100vh mide la ventana CON la barra del
+       navegador oculta, que es mas alta de lo que se ve de verdad.
+       Un dialogo dimensionado con vh se sale por abajo y el pie
+       (Guardar / Cancelar) queda fuera de la pantalla: se ve cortado
+       y no hay forma de alcanzarlo, porque el pie es sticky y
+       acompana al borde inferior del dialogo.
+       dvh si sigue a la barra del navegador. Se expone como variable
+       para poder usarla tambien desde los estilos que se inyectan en
+       caliente, que van despues de esta hoja y no se pueden pisar
+       desde aqui.
+       Todo dialogo debe medirse con --vh-util, nunca con vh. */
+    --vh-util: 100vh;
+
     /* Motion */
     --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@supports (height: 100dvh) {
+    :root { --vh-util: 100dvh; }
 }
 
 /* ============================================================
@@ -802,7 +820,7 @@ tbody tr:last-child td {
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-xl), 0 0 0 1px rgba(15, 23, 42, 0.06);
     width: 580px;
-    max-height: calc(100vh - 120px);
+    max-height: calc(var(--vh-util) - 120px);
     overflow-y: auto;
     animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -1376,13 +1394,21 @@ tbody tr:last-child td {
         width: 100%;
         max-width: 100%;
         margin: 0 16px;
-        max-height: calc(100vh - 40px);
+        /* 20px de aire arriba y otros 20 abajo, mas la franja de gestos. */
+        max-height: calc(var(--vh-util) - 40px - env(safe-area-inset-bottom, 0px));
     }
-    
+
     .form-overlay {
         padding-top: 20px;
     }
-    
+
+    /* El pie es sticky y se pega al borde inferior del dialogo, justo
+       donde el telefono dibuja la barra de gestos. Se le anade esa
+       franja para que los botones queden enteros y pulsables. */
+    .form-modal-footer {
+        padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    }
+
     .form-row {
         grid-template-columns: 1fr; /* Stack form inputs */
         gap: 12px;

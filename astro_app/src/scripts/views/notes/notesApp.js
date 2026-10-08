@@ -471,7 +471,10 @@ export function ensureSharedStyles() {
            con formularios largos (credenciales) se salía de pantalla. */
         @media (max-width: 768px) {
             .nwm-overlay { padding: 12px; }
-            .nwm-modal { max-height: 88vh; display: flex; flex-direction: column; }
+            .nwm-modal {
+                max-height: calc(var(--vh-util) * 0.88 - env(safe-area-inset-bottom, 0px));
+                display: flex; flex-direction: column;
+            }
             .nwm-body { overflow-y: auto; }
         }
         .nwm-modal {
