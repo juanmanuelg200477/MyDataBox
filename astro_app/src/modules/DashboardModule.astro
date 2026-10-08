@@ -1,5 +1,6 @@
 ---
 import { icons } from '../scripts/icons.js';
+import TechText from '../components/TechText.jsx';
 ---
 
 <div class="db" id="db-wrap">
@@ -8,12 +9,34 @@ import { icons } from '../scripts/icons.js';
   <header class="db-header">
     <div class="db-header-glow"></div>
     <div class="db-header-grid"></div>
+    <!-- Destello lento que recorre la barra: el único movimiento que
+         queda aquí, y es decorativo. -->
+    <div class="db-header-sheen"></div>
+
     <div class="db-brand">
-      <div class="db-online"><span class="db-dot"></span>Sistema en línea</div>
-      <div class="db-brand-name">DataBox IT</div>
+      <!-- El nombre se dibuja con TechText. El propio componente expone
+           el texto como aria-label, así que no hace falta duplicarlo. -->
+      <div class="db-brand-canvas">
+        <TechText
+          client:only="react"
+          text="DataBox IT"
+          align="left"
+          fontSize={44}
+          fontWeight={800}
+          letterSpacing={-0.03}
+          color="#ffffff"
+          accentColor="#93c5fd"
+          reach={110}
+          specks={12}
+          strokeWidth={1.2}
+          labels={false}
+        />
+      </div>
       <div class="db-brand-sub">Centro de Control · Infraestructura de Red</div>
     </div>
+
     <div class="db-sep"></div>
+
     <div class="db-kv-row">
       <div class="db-kv" style="--kc:#60a5fa"><span class="db-kv-n" id="stat-regions">0</span><span class="db-kv-l">Regiones</span></div>
       <div class="db-kv" style="--kc:#34d399"><span class="db-kv-n" id="stat-areas">0</span><span class="db-kv-l">Áreas</span></div>
@@ -21,34 +44,6 @@ import { icons } from '../scripts/icons.js';
       <div class="db-kv" style="--kc:#4ade80"><span class="db-kv-n" id="stat-devices">0</span><span class="db-kv-l">Dispositivos</span></div>
       <div class="db-kv" style="--kc:#fb923c"><span class="db-kv-n" id="stat-contacts">0</span><span class="db-kv-l">Contactos</span></div>
       <div class="db-kv" style="--kc:#22d3ee"><span class="db-kv-n" id="stat-isps">0</span><span class="db-kv-l">ISPs</span></div>
-    </div>
-    <div class="db-sep"></div>
-    <div class="db-header-right">
-      <div class="db-clock-block">
-        <div class="db-clock" id="db-clock">00:00:00</div>
-        <div class="db-date"  id="db-date">Cargando…</div>
-      </div>
-      <div class="db-ring">
-        <svg viewBox="0 0 64 64" width="64" height="64">
-          <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="5"/>
-          <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="5"
-            stroke-linecap="round" stroke-dasharray="163" id="db-health-arc"
-            stroke-dashoffset="163" transform="rotate(-90 32 32)"
-            style="transition:stroke-dashoffset 1.4s cubic-bezier(0.4,0,0.2,1)"/>
-        </svg>
-        <div class="db-ring-inner">
-          <span class="db-ring-pct" id="db-health-pct">—</span>
-          <span class="db-ring-lbl">Salud</span>
-        </div>
-      </div>
-      <button class="db-backup" id="db-backup" title="Descargar respaldo del inventario (.json)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-        <span>Respaldo</span>
-      </button>
     </div>
   </header>
 
@@ -140,11 +135,14 @@ import { icons } from '../scripts/icons.js';
 
 /* ── Header ─────────────────────────────────── */
 .db-header {
-  flex-shrink: 0; height: 88px; border-radius: 18px;
-  display: flex; align-items: center; padding: 0 26px;
+  flex-shrink: 0; height: 104px; border-radius: 22px;
+  display: flex; align-items: center; padding: 0 30px;
   position: relative; overflow: hidden;
-  background: linear-gradient(115deg,#0f172a 0%,#1e3a8a 35%,#312e81 65%,#4a1d96 100%);
-  box-shadow: 0 4px 24px rgba(59,130,246,.22), 0 1px 0 rgba(255,255,255,.06) inset;
+  background: linear-gradient(115deg,#0b1222 0%,#152a63 32%,#27225f 62%,#3d1a74 100%);
+  box-shadow:
+    0 10px 34px rgba(37,99,235,.24),
+    0 1px 0 rgba(255,255,255,.1) inset,
+    0 -1px 0 rgba(0,0,0,.25) inset;
   color: #fff;
 }
 .db-header-glow {
@@ -153,58 +151,98 @@ import { icons } from '../scripts/icons.js';
               radial-gradient(ellipse 40% 60% at 82% 30%,rgba(139,92,246,.16),transparent 55%);
 }
 .db-header-grid {
-  position:absolute;inset:0;pointer-events:none;opacity:.14;
+  position:absolute;inset:0;pointer-events:none;opacity:.1;
   background-image: linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),
                     linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px);
-  background-size: 28px 28px;
+  background-size: 32px 32px;
 }
-.db-brand { flex-shrink:0; position:relative; z-index:1; padding-right:26px; }
-.db-online {
-  display:inline-flex;align-items:center;gap:6px;
-  background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.28);
-  border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;color:#4ade80;margin-bottom:5px;
-}
-.db-dot { width:6px;height:6px;border-radius:50%;background:#4ade80;animation:blink 2s ease-in-out infinite; }
-@keyframes blink { 0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,.5)} 50%{box-shadow:0 0 0 6px rgba(74,222,128,0)} }
-.db-brand-name { font-size:18px;font-weight:800;letter-spacing:-.5px;line-height:1.1; }
-.db-brand-sub  { font-size:11px;color:rgba(255,255,255,.5);margin-top:2px; }
-.db-sep { flex-shrink:0;width:1px;height:48px;background:rgba(255,255,255,.1);margin:0 20px; }
-.db-kv-row { flex:1;display:flex;align-items:center;position:relative;z-index:1; }
-.db-kv { flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:0 8px;position:relative; }
-.db-kv+.db-kv::before { content:'';position:absolute;left:0;top:10%;height:80%;width:1px;background:rgba(255,255,255,.08); }
-.db-kv-n {
-  font-size:24px;font-weight:800;line-height:1;letter-spacing:-1px;
-  font-family:'JetBrains Mono',monospace;color:var(--kc);
-  text-shadow:0 0 18px color-mix(in srgb,var(--kc) 60%,transparent);
-}
-.db-kv-l { font-size:9.5px;color:rgba(255,255,255,.48);font-weight:600;text-transform:uppercase;letter-spacing:.4px; }
-.db-header-right { flex-shrink:0;display:flex;align-items:center;gap:14px;position:relative;z-index:1;padding-left:20px; }
-.db-clock-block { text-align:right; }
-.db-clock { font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:600;letter-spacing:2px;line-height:1; }
-.db-date  { font-size:10px;color:rgba(255,255,255,.5);margin-top:4px;text-transform:capitalize; }
-.db-ring  { position:relative;width:64px;height:64px;flex-shrink:0; }
-.db-ring-inner { position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center; }
-.db-ring-pct { font-size:12px;font-weight:800;color:#fff;line-height:1; }
-.db-ring-lbl  { font-size:8px;color:rgba(255,255,255,.48);text-transform:uppercase;letter-spacing:.5px;margin-top:2px; }
 
-/* Botón de respaldo — estilado para el banner oscuro, no hereda .btn del tema claro */
-.db-backup {
-  display:flex;align-items:center;gap:7px;flex-shrink:0;
-  padding:8px 13px;
-  background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.18);
-  border-radius:var(--radius);
-  color:var(--white);
-  font-family:inherit;font-size:12px;font-weight:600;
-  cursor:pointer;
-  transition:var(--transition);
+/* Reflejo que recorre la barra muy despacio. Va en diagonal y con poca
+   opacidad: tiene que insinuarse, no llamar la atención. */
+.db-header-sheen {
+  position:absolute; inset:-20% -40%; pointer-events:none;
+  background: linear-gradient(100deg,
+    transparent 38%,
+    rgba(255,255,255,.05) 46%,
+    rgba(255,255,255,.11) 50%,
+    rgba(255,255,255,.05) 54%,
+    transparent 62%);
+  animation: dbSheen 11s ease-in-out infinite;
 }
-.db-backup:hover:not(:disabled) { background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.34); }
-.db-backup:disabled { opacity:.55;cursor:default; }
-.db-backup svg { width:15px;height:15px; }
-/* Solo lectura: el respaldo lleva contraseñas de ISP en claro */
-body.viewer-mode .db-backup { display:none; }
-@media(max-width:768px) { .db-backup span { display:none; } }
+@keyframes dbSheen {
+  0%, 100% { transform: translateX(-46%); }
+  50%      { transform: translateX(46%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .db-header-sheen { animation: none; opacity: .5; }
+}
+
+.db-brand { flex-shrink:0; position:relative; z-index:1; padding-right:30px; }
+
+/* El lienzo necesita un ancho DEFINIDO: con un porcentaje dentro de un
+   contenedor que se ajusta al contenido, el ancho se calcularía como
+   cero y el nombre saldría microscópico (ver .dev-title-canvas). */
+.db-brand-canvas {
+  width: 300px;
+  height: 56px;
+  /* Compensa el margen interno de TechText con align="left" (EDGE_PAD) */
+  margin-left: -14px;
+}
+
+.db-brand-sub {
+  font-size:11px;
+  color:rgba(255,255,255,.52);
+  letter-spacing:.3px;
+  margin-top:2px;
+}
+
+.db-sep {
+  flex-shrink:0; width:1px; height:56px; margin:0 24px;
+  /* Difuminado en los extremos: una línea sólida corta demasiado. */
+  background: linear-gradient(to bottom, transparent, rgba(255,255,255,.16) 50%, transparent);
+}
+
+.db-kv-row { flex:1;display:flex;align-items:center;position:relative;z-index:1; }
+
+.db-kv {
+  flex:1; position:relative;
+  display:flex; flex-direction:column; align-items:center;
+  padding:14px 8px 16px;
+  border-radius:14px;
+  transition: background .22s ease;
+}
+.db-kv:hover { background: rgba(255,255,255,.045); }
+.db-kv+.db-kv::before {
+  content:''; position:absolute; left:0; top:18%; height:64%; width:1px;
+  background: linear-gradient(to bottom, transparent, rgba(255,255,255,.13) 50%, transparent);
+}
+
+/* El número va en blanco con un degradado suave, y el color de cada dato
+   se reserva para la línea de abajo. Seis cifras de seis colores
+   distintos competían entre sí; así el conjunto respira. */
+.db-kv-n {
+  font-size:30px; font-weight:700; line-height:1; letter-spacing:-1.6px;
+  font-family:'JetBrains Mono',monospace;
+  background: linear-gradient(180deg, #ffffff 0%, rgba(255,255,255,.7) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.db-kv-l {
+  font-size:9px; margin-top:8px;
+  color:rgba(255,255,255,.5); font-weight:600;
+  text-transform:uppercase; letter-spacing:1.4px;
+}
+.db-kv::after {
+  content:''; position:absolute; bottom:6px; left:50%;
+  transform:translateX(-50%);
+  width:18px; height:2px; border-radius:2px;
+  background:var(--kc);
+  box-shadow:0 0 12px color-mix(in srgb, var(--kc) 75%, transparent);
+  opacity:.9;
+  transition: width .22s ease;
+}
+.db-kv:hover::after { width:30px; }
 
 /* ── Rows ───────────────────────────────────── */
 .db-row { flex:1;min-height:0;display:grid;gap:10px; }
@@ -359,23 +397,22 @@ body.viewer-mode .db-backup { display:none; }
   }
   .db-card { min-height: 260px; }
 
-  .db-header { height: auto; flex-direction: column; padding: 20px; gap: 18px; }
-  .db-brand  { padding-right: 0; text-align: center; width: 100%; }
+  .db-header { height: auto; flex-direction: column; padding: 22px 20px 18px; gap: 16px; }
+  .db-brand  { padding-right: 0; width: 100%; display: flex; flex-direction: column; align-items: center; }
+  /* El nombre se centra: el lienzo pasa a medir lo justo y se dibuja
+     centrado, en vez de pegado al borde izquierdo. */
+  .db-brand-canvas { width: 260px; height: 50px; margin-left: 0; }
+  .db-brand-sub    { text-align: center; }
   .db-sep    { display: none; }
   .db-kv-row {
     width: 100%;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px 8px;
+    gap: 6px;
+    border-top: 1px solid rgba(255,255,255,.1);
+    padding-top: 10px;
   }
   .db-kv + .db-kv::before { display: none; } /* los separadores solo valen en fila */
-  .db-header-right {
-    width: 100%;
-    justify-content: space-between;
-    padding-left: 0;
-    border-top: 1px solid rgba(255,255,255,.1);
-    padding-top: 16px;
-  }
 }
 
 /* ── Teléfono ───────────────────────────────────────────── */
@@ -393,19 +430,14 @@ body.viewer-mode .db-backup { display:none; }
   .db-scroll { max-height: 230px; }
 
   /* Cabecera compacta */
-  .db-header     { padding: 16px 14px; gap: 14px; border-radius: 14px; }
-  .db-brand-name { font-size: 16px; }
-  .db-brand-sub  { font-size: 10px; }
-  .db-kv-row     { gap: 12px 6px; }
-  .db-kv         { padding: 0 2px; }
-  .db-kv-n       { font-size: 19px; letter-spacing: -.5px; }
-  .db-kv-l       { font-size: 8.5px; }
-
-  .db-header-right { gap: 10px; padding-top: 13px; }
-  .db-clock        { font-size: 17px; letter-spacing: 1px; }
-  .db-date         { font-size: 9px; }
-  .db-ring         { width: 52px; height: 52px; }
-  .db-ring svg     { width: 52px; height: 52px; }
+  .db-header       { padding: 18px 14px 14px; gap: 12px; border-radius: 16px; }
+  .db-brand-canvas { width: 212px; height: 42px; }
+  .db-brand-sub    { font-size: 10px; }
+  .db-kv-row       { gap: 4px; }
+  .db-kv           { padding: 9px 2px 12px; }
+  .db-kv-n         { font-size: 21px; letter-spacing: -.9px; }
+  .db-kv-l         { font-size: 8px; letter-spacing: .9px; margin-top: 6px; }
+  .db-kv::after    { width: 14px; bottom: 4px; }
 
   /* Se encoge el donut para dejarle sitio a la leyenda. */
   :global(.dbc-donut)        { gap: 12px; }
@@ -1180,27 +1212,13 @@ body.viewer-mode .db-backup { display:none; }
 </style>
 
 <script>
-  import { load, exportSnapshot } from '../scripts/store.js';
+  import { load } from '../scripts/store.js';
   import { initDashboard } from '../scripts/views/dashboard.js';
   import { openCardPreview } from '../scripts/views/dashboardPreview.js';
-  import { downloadJson } from '../scripts/utils.js';
-  import { toastSuccess } from '../scripts/toast.js';
   document.addEventListener('astro:page-load', async () => {
     if (window.location.pathname !== '/' && window.location.pathname !== '/index') return;
     await load();
     initDashboard();
-
-    // ── Respaldo del inventario ───────────────────────────
-    const backupBtn = document.getElementById('db-backup');
-    if (backupBtn) {
-      backupBtn.onclick = () => {
-        const stamp = new Date().toISOString().slice(0, 10);
-        downloadJson(`databox-respaldo-${stamp}.json`, exportSnapshot());
-        toastSuccess('Respaldo descargado. Contiene credenciales de ISP en texto plano: guárdalo en un sitio seguro.', {
-          title: 'Respaldo generado'
-        });
-      };
-    }
 
     // ── Cursor spotlight on cards ─────────────────────────
     document.querySelectorAll('.db-card').forEach(card => {

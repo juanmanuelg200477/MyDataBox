@@ -1,12 +1,8 @@
 import { store, getAllDevices } from '../store.js';
 
-let _clockTimer = null;
-
 export function initDashboard() {
     if (!document.getElementById('db-wrap')) return;
-    if (_clockTimer) clearInterval(_clockTimer);
 
-    startClock();
     renderKPIs();
     renderStatusChart();
     renderRegionsChart();
@@ -15,23 +11,6 @@ export function initDashboard() {
     renderIncidents();
     renderIsps();
     renderActivity();
-    updateHealthRing();
-}
-
-// ── Clock ─────────────────────────────────────────────────
-function startClock() {
-    const clockEl = document.getElementById('db-clock');
-    const dateEl = document.getElementById('db-date');
-    if (!clockEl) return;
-    const tick = () => {
-        const now = new Date();
-        clockEl.textContent = now.toLocaleTimeString('es-DO', { hour12: false });
-        dateEl.textContent = now.toLocaleDateString('es-DO', {
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-        });
-    };
-    tick();
-    _clockTimer = setInterval(tick, 1000);
 }
 
 // ── Animated counter ──────────────────────────────────────
@@ -372,20 +351,3 @@ function renderActivity() {
     }).join('');
 }
 
-// ── Health ring ───────────────────────────────────────────
-function updateHealthRing() {
-    const pctEl = document.getElementById('db-health-pct');
-    const arc = document.getElementById('db-health-arc');
-    if (!pctEl) return;
-
-    const allDevs = getAllDevices();
-    if (!allDevs.length) { pctEl.textContent = '—'; return; }
-
-    const pct = Math.round(allDevs.filter(d => d.status === 'Activo').length / allDevs.length * 100);
-    const offset = 163 - (pct / 100) * 163;
-    const clr = pct >= 80 ? '#4ade80' : pct >= 50 ? '#fbbf24' : '#f87171';
-
-    animateCount(pctEl, pct);
-    setTimeout(() => { if (pctEl.textContent !== '—') pctEl.textContent = pct + '%'; }, 950);
-    if (arc) { arc.style.stroke = clr; setTimeout(() => { arc.style.strokeDashoffset = offset; }, 100); }
-}
