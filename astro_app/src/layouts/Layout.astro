@@ -207,9 +207,11 @@ const { title } = Astro.props;
 				const welcomeKey = role === 'viewer' ? 'viewer_welcomed' : 'admin_welcomed';
 				if (!sessionStorage.getItem(welcomeKey)) {
 					sessionStorage.setItem(welcomeKey, 'true');
-					const subText = role === 'viewer' ? 'Solo Lectura' : 'Modo Administrador';
-					const subColor = role === 'viewer' ? '#f59e0b' : '#10b981'; // Ambar para viewer, Esmeralda para admin
-					const shadowColor = role === 'viewer' ? 'rgba(245,158,11,0.5)' : 'rgba(16,185,129,0.5)';
+					// A quien solo consulta no se le anuncia su rol al entrar:
+					// recibe la bienvenida sin más. El subtítulo queda para
+					// quien administra, que sí necesita saber con qué permisos
+					// está trabajando.
+					const subText = role === 'viewer' ? '' : 'Modo Administrador';
 
 					const vw = document.createElement('div');
 					vw.id = 'role-welcome-overlay';
@@ -240,8 +242,8 @@ const { title } = Astro.props;
 								text-shadow: 0 0 25px rgba(255,255,255,0.5); animation: vw-fadein 1s ease forwards;
 							}
 							.vw-text-sub {
-								color: ${subText === 'Solo Lectura' ? '#f59e0b' : '#10b981'}; font-size: 15px; font-weight: 700; letter-spacing: 5px; text-transform: uppercase; 
-								margin-top: 10px; animation: vw-fadein 1.5s ease forwards; text-shadow: 0 0 15px ${subText === 'Solo Lectura' ? 'rgba(245,158,11,0.5)' : 'rgba(16,185,129,0.5)'};
+								color: #10b981; font-size: 15px; font-weight: 700; letter-spacing: 5px; text-transform: uppercase;
+								margin-top: 10px; animation: vw-fadein 1.5s ease forwards; text-shadow: 0 0 15px rgba(16,185,129,0.5);
 							}
 							@keyframes vw-spin1 { 0% { transform: rotateZ(0deg) rotateX(70deg) rotateZ(0deg); } 100% { transform: rotateZ(360deg) rotateX(70deg) rotateZ(360deg); } }
 							@keyframes vw-spin2 { 0% { transform: rotateZ(120deg) rotateX(70deg) rotateZ(0deg); } 100% { transform: rotateZ(480deg) rotateX(70deg) rotateZ(360deg); } }
@@ -256,7 +258,7 @@ const { title } = Astro.props;
 							<div class="vw-core"></div>
 						</div>
 						<div class="vw-text-title">Bienvenido</div>
-						<div class="vw-text-sub">${subText}</div>
+						${subText ? `<div class="vw-text-sub">${subText}</div>` : ''}
 					`;
 					document.body.appendChild(vw);
 					setTimeout(() => {
