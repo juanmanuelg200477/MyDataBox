@@ -21,6 +21,19 @@ function rolDe(user) {
     return user?.user_metadata?.role ?? 'admin';
 }
 
+// El identificador se genera aquí y no en la base de datos a propósito.
+// Pedirlo de vuelta con .select() obligaría a Postgres a comprobar la
+// política de lectura sobre la fila recién creada, y esa política solo
+// deja leer al dueño: a todos los demás les rechazaba el registro entero.
+function nuevoId() {
+    if (globalThis.crypto?.randomUUID) return crypto.randomUUID();
+    // Respaldo para navegadores que no exponen randomUUID.
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, caracter => {
+        const azar = Math.random() * 16 | 0;
+        return (caracter === 'x' ? azar : (azar & 0x3 | 0x8)).toString(16);
+    });
+}
+
 export function esOwner(user) {
     return rolDe(user) === 'owner';
 }
@@ -37,20 +50,20 @@ export async function registrarSesion(user) {
     if (filaId) {
         await refrescarSesion();
     } else {
+        const idNuevo = nuevoId();
         try {
-            const { data, error } = await supabase
+            const { error } = await supabase
                 .from('user_sessions')
                 .insert({
+                    id:         idNuevo,
                     user_id:    user.id,
                     user_email: user.email ?? null,
                     user_role:  rolDe(user),
                     user_agent: navigator.userAgent?.slice(0, 300) ?? null
-                })
-                .select('id')
-                .single();
+                });
 
             if (error) { console.warn('[sesiones] no se pudo registrar:', error.message); return; }
-            try { sessionStorage.setItem(CLAVE_FILA, data.id); } catch {}
+            try { sessionStorage.setItem(CLAVE_FILA, idNuevo); } catch {}
         } catch (err) {
             console.warn('[sesiones] no se pudo registrar:', err?.message ?? err);
         }
