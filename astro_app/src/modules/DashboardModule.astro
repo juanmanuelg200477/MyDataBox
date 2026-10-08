@@ -264,7 +264,20 @@ body.viewer-mode .db-backup { display:none; }
 :global(.dbc-donut) {
   flex:1;min-height:0;display:flex;align-items:center;gap:16px;overflow:hidden;
 }
-:global(.dbc-svg-wrap) { flex-shrink:0;position:relative; }
+/* El número del centro se coloca sobre el marco (inset:0), así que el
+   marco y el dibujo tienen que medir EXACTAMENTE lo mismo: cualquier
+   diferencia descoloca el número. Antes el marco llevaba 150px fijos en
+   un style en línea y en teléfono solo se encogía el SVG, de modo que el
+   número se iba abajo y a la derecha la mitad de esa diferencia.
+   Ahora el tamaño sale de una sola variable, que las media queries sí
+   pueden cambiar porque ya no hay nada en línea que las pise. El alto no
+   se declara: con display:block y height:auto el SVG lo deduce de su
+   viewBox y el marco se ajusta a él al milímetro. */
+:global(.dbc-svg-wrap) {
+  flex-shrink:0; position:relative;
+  width: var(--dbc-donut, 150px);
+}
+:global(.dbc-svg-wrap svg) { display:block; width:100%; height:auto; }
 :global(.dbc-center) {
   position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
   pointer-events:none;
@@ -394,10 +407,9 @@ body.viewer-mode .db-backup { display:none; }
   .db-ring         { width: 52px; height: 52px; }
   .db-ring svg     { width: 52px; height: 52px; }
 
-  /* El donut se dibuja a 150px fijos desde JS; se reescala por CSS
-     (tiene viewBox) para dejarle sitio a la leyenda. */
+  /* Se encoge el donut para dejarle sitio a la leyenda. */
   :global(.dbc-donut)        { gap: 12px; }
-  :global(.dbc-svg-wrap svg) { width: 124px; height: 124px; }
+  :global(.dbc-svg-wrap)     { --dbc-donut: 124px; }
   :global(.dbc-c-num)        { font-size: 20px; }
 
   /* Cuatro columnas de KPI eran ilegibles a este ancho */
@@ -418,7 +430,7 @@ body.viewer-mode .db-backup { display:none; }
      mejor el donut arriba y la leyenda entera debajo. */
   :global(.dbc-donut)        { flex-direction: column; align-items: center; gap: 10px; }
   :global(.dbc-legend)       { width: 100%; }
-  :global(.dbc-svg-wrap svg) { width: 132px; height: 132px; }
+  :global(.dbc-svg-wrap)     { --dbc-donut: 132px; }
 }
 
 /* ── Dispositivos táctiles ──────────────────────────────── */
@@ -698,7 +710,14 @@ body.viewer-mode .db-backup { display:none; }
   gap: 22px;
   width: 100%;
 }
-:global(.dbp-svg-host) { position: relative; flex-shrink: 0; }
+/* Mismo criterio que .dbc-svg-wrap: marco y dibujo del mismo tamaño, o
+   el número del centro se descoloca. El min() hace que en pantallas
+   estrechas se encoja en lugar de salirse. */
+:global(.dbp-svg-host) {
+  position: relative; flex-shrink: 0;
+  width: min(220px, 100%);
+}
+:global(.dbp-svg-host svg) { display: block; width: 100%; height: auto; }
 :global(.dbp-svg-center) {
   position: absolute; inset: 0;
   display: flex; flex-direction: column;
@@ -993,9 +1012,6 @@ body.viewer-mode .db-backup { display:none; }
     align-items: stretch;
   }
 
-  /* El donut se dibuja a 220px fijos desde JS y además con
-     overflow="visible": sin este tope se salía del contenedor. */
-  :global(.dbp-svg-host svg) { max-width: 100%; height: auto; }
   :global(.dbp-donut-wrap)   { gap: 16px; }
   :global(.dbp-c-n)          { font-size: 26px; }
 

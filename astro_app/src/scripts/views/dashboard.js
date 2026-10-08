@@ -110,8 +110,10 @@ function buildDonut(items, centerNum, centerLbl, size = 150) {
     }).join('');
 
     return `<div class="dbc-donut">
-        <div class="dbc-svg-wrap" style="width:${size}px;height:${size}px">
-            <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" overflow="visible">
+        <div class="dbc-svg-wrap">
+            <!-- Solo viewBox: el tamaño en pantalla lo decide el CSS, para que
+                 el marco y el dibujo midan siempre lo mismo (ver .dbc-svg-wrap). -->
+            <svg viewBox="0 0 ${size} ${size}" overflow="visible">
                 <circle cx="${cx}" cy="${cy}" r="${R}"
                     fill="none" stroke="var(--surface-3)"
                     stroke-width="${size * 0.115}"/>

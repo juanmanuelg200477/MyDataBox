@@ -258,8 +258,10 @@ function buildDonutLarge(items, centerNum, centerLbl) {
 
     return `
         <div class="dbp-donut-wrap">
-            <div class="dbp-svg-host" style="width:${size}px;height:${size}px">
-                <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" overflow="visible">
+            <div class="dbp-svg-host">
+                <!-- Solo viewBox: el tamaño en pantalla lo decide el CSS, para que
+                     el marco y el dibujo midan siempre lo mismo (ver .dbp-svg-host). -->
+                <svg viewBox="0 0 ${size} ${size}" overflow="visible">
                     <circle cx="${cx}" cy="${cy}" r="${R}" fill="none"
                         stroke="var(--surface-3)" stroke-width="${size * 0.11}"/>
                     ${svgSegs}
