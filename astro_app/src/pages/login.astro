@@ -12,7 +12,7 @@ const BRANCHES = [
     {
         id: 'infrastructure',
         label: 'Infrastructure',
-        desc: 'Regiones, bastidores, dispositivos y enlaces',
+        desc: 'Regiones, bastidores y dispositivos',
         color: '#3b82f6',
         ready: true,
         home: '/'
@@ -20,7 +20,7 @@ const BRANCHES = [
     {
         id: 'support',
         label: 'Support',
-        desc: 'Mesa de ayuda y seguimiento de tickets',
+        desc: 'Mesa de ayuda y tickets',
         color: '#f59e0b',
         ready: false,
         home: '/support'
@@ -28,7 +28,7 @@ const BRANCHES = [
     {
         id: 'servers',
         label: 'Servers',
-        desc: 'Servidores, servicios y respaldos',
+        desc: 'Servidores y servicios',
         color: '#a855f7',
         ready: false,
         home: '/servers'
@@ -82,7 +82,9 @@ const BRANCHES = [
             overflow: hidden;
             display: flex;
             align-items: center;
-            padding: 64px;
+            /* El hueco de abajo es el de la franja de ondas: el texto se
+               centra en lo que queda y nunca se le encima. */
+            padding: 64px 64px 36vh;
             background:
                 radial-gradient(120% 90% at 15% 20%, rgba(59,130,246,0.16), transparent 60%),
                 radial-gradient(90% 80% at 85% 90%, rgba(168,85,247,0.14), transparent 62%),
@@ -90,10 +92,15 @@ const BRANCHES = [
         }
 
         /* El lienzo de la animación vive dentro de la columna, no en toda
-           la página: ese era el encargo, que el diseño quede a la izquierda. */
+           la página: ese era el encargo, que el diseño quede a la izquierda.
+           Y ocupa solo la franja de abajo, por debajo del texto: a pantalla
+           completa las ondas cruzaban por encima del título y la firma. */
         #threads-container {
             position: absolute;
-            inset: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 32vh;
             z-index: 0;
         }
         #threads-container canvas { display: block; }
@@ -155,10 +162,13 @@ const BRANCHES = [
             height: 9px;
             border-radius: 50%;
             flex-shrink: 0;
-            background: var(--branch-color, rgba(255,255,255,0.35));
-            box-shadow: 0 0 0 0 var(--branch-color, rgba(255,255,255,0.35));
+            /* color (no solo background) porque el halo del latido se dibuja
+               con currentColor; sin esto heredaba el blanco del body y salía
+               un aro enorme. */
+            color: rgba(255, 255, 255, 0.3);
+            background: currentColor;
             animation: branchPulse 2.4s ease-out infinite;
-            transition: background 0.35s ease;
+            transition: color 0.35s ease;
         }
         @keyframes branchPulse {
             0%   { box-shadow: 0 0 0 0 currentColor; opacity: 1; }
@@ -278,6 +288,13 @@ const BRANCHES = [
 
         .lg-card > * { position: relative; z-index: 1; }
 
+        /* El selector tiene que ir POR ENCIMA del correo y la contraseña.
+           Con el z-index:1 de arriba quedaban todos empatados y, al ir
+           después en el documento, los campos se pintaban sobre el menú
+           desplegado: se veía entrecortado y además interceptaban los
+           clics, que era lo que hacía tan difícil elegir una rama. */
+        .lg-card > .lg-branch-picker { z-index: 30; }
+
         .lg-card-head h2 {
             margin: 0 0 4px;
             font-size: 23px;
@@ -368,13 +385,16 @@ const BRANCHES = [
             padding: 6px;
             list-style: none;
             border-radius: 15px;
-            background: rgba(20, 14, 32, 0.78);
-            backdrop-filter: blur(26px) saturate(180%);
-            -webkit-backdrop-filter: blur(26px) saturate(180%);
+            /* Opaco a propósito. El desenfoque de fondo no sirve aquí: la
+               tarjeta ya tiene el suyo, y uno anidado no difumina lo que se
+               pinta dentro de ella, así que los campos de abajo se veían
+               atravesando el menú. Este tono es el de la tarjeta ya
+               asentada sobre el fondo violeta. */
+            background: #191330;
             border: 1px solid rgba(255, 255, 255, 0.13);
             box-shadow:
                 0 22px 46px -14px rgba(0, 0, 0, 0.8),
-                inset 0 1px 0 rgba(255, 255, 255, 0.16);
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
             transform-origin: top center;
             animation: menuIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
         }
@@ -384,12 +404,17 @@ const BRANCHES = [
         }
         .lg-branch-menu[hidden] { display: none; }
 
+        /* El <li> no pinta nada: el botón lo llena por completo, para que
+           toda la fila responda al clic y no solo el texto. */
+        .lg-branch-menu li { display: block; margin: 0; }
+
         .lg-branch-opt {
             display: flex;
             align-items: center;
             gap: 11px;
             width: 100%;
-            padding: 10px 11px;
+            min-height: 54px;
+            padding: 10px 12px;
             border: none;
             border-radius: 11px;
             background: none;
@@ -425,7 +450,12 @@ const BRANCHES = [
             display: block;
             font-size: 11.5px;
             color: rgba(255, 255, 255, 0.42);
-            margin-top: 1px;
+            margin-top: 2px;
+            /* Si la descripción no cabe, se recorta con puntos suspensivos
+               en vez de pasar por debajo de la etiqueta de estado. */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .lg-opt-tag {
             flex-shrink: 0;
@@ -695,10 +725,13 @@ const BRANCHES = [
             }
 
             /* El lienzo pasa a cubrir la pantalla entera por detrás de todo:
-               en una franja estrecha las ondas no se leen. */
+               en una franja estrecha las ondas no se leen. El height:auto
+               es obligatorio, porque con top, bottom Y height fijados a la
+               vez el navegador ignora el bottom y se quedaría en la franja. */
             #threads-container {
                 position: fixed;
                 inset: 0;
+                height: auto;
             }
 
             .lg-brand {
@@ -1286,19 +1319,25 @@ const BRANCHES = [
             let targetMouse = [0.5, 0.5];
 
             // Setup tracking relative to mouse pos for mathematical distortion
+            const limitar = v => Math.min(Math.max(v, 0), 1);
+
             function handleMouseMove(e) {
                 const rect = container.getBoundingClientRect();
                 const x = (e.clientX - rect.left) / rect.width;
                 const y = 1.0 - (e.clientY - rect.top) / rect.height;
-                targetMouse = [x, y];
+                targetMouse = [limitar(x), limitar(y)];
             }
 
             function handleMouseLeave() {
                 targetMouse = [0.5, 0.5];
             }
 
-            container.addEventListener('mousemove', handleMouseMove);
-            container.addEventListener('mouseleave', handleMouseLeave);
+            // El lienzo es solo la franja de abajo, pero las ondas deben
+            // responder al cursor en toda la columna: escuchando únicamente
+            // sobre la franja, se quedaban quietas en el resto del panel.
+            const zonaRaton = container.closest('.lg-brand') ?? container;
+            zonaRaton.addEventListener('mousemove', handleMouseMove);
+            zonaRaton.addEventListener('mouseleave', handleMouseLeave);
 
             let animationFrameId;
 
