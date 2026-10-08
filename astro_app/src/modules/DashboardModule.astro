@@ -589,27 +589,17 @@ import TechText from '../components/TechText.jsx';
    sobre lo transparente. */
 :global(.dbp-overlay) {
   position: fixed; inset: 0; z-index: var(--z-preview);
-  /* El desenfoque se queda suave (el grueso lo hace la ventana), pero el
-     fondo se apaga: menos brillo y algo más de velo. Así el cristal de
-     la ventana resalta por contraste en vez de competir con el
-     dashboard iluminado de detrás. */
-  background: rgba(15, 23, 42, 0.36);
-  backdrop-filter: blur(9px) saturate(118%) brightness(0.86);
-  -webkit-backdrop-filter: blur(9px) saturate(118%) brightness(0.86);
+  /* Velo suave: lo justo para separar la ventana del dashboard sin
+     oscurecerlo ni borrarlo. El grueso del difuminado lo hace la propia
+     ventana, no esta capa. */
+  background: rgba(15, 23, 42, 0.24);
+  backdrop-filter: blur(9px) saturate(125%);
+  -webkit-backdrop-filter: blur(9px) saturate(125%);
   display: flex; align-items: center; justify-content: center;
   padding: 24px;
   opacity: 0;
   transition: opacity .22s ease;
   --dbp-accent: #3b82f6;
-
-  /* Gris de los textos secundarios SOLO dentro de esta ventana
-     (porcentajes, etiquetas, cabeceras de tabla, nombres tenues).
-     Sobre el cristal claro, el gris del tema pesa demasiado y ensucia;
-     aquí se aclara. Redefinir el token alcanza de una vez a todo lo que
-     cuelga del diálogo, sin tocar el resto de la aplicación.
-     No se aclara más porque es texto pequeño y ahí empieza a costar
-     leerlo. */
-  --text-muted: #7f8ca0;
 }
 :global(.dbp-overlay.dbp-show) { opacity: 1; }
 
