@@ -137,17 +137,31 @@ const TechText = ({
     let pulse = 0;
     let placed = false;
     let dragging = -1;
+    let lastCursor = '';
     const pointer = { x: 0, y: 0, inside: false };
     const grab = { x: 0, y: 0 };
     const lens = { x: 0, y: 0 };
     const frame = { x1: 0, y1: 0, x2: 0, y2: 0, alpha: 0, index: -1 };
 
+    // Fuente heredada, resuelta una vez y guardada. family() se llama en
+    // CADA fotograma (forma parte de la clave de maquetación), y antes
+    // pedía getComputedStyle cada vez: con estilos pendientes en la página
+    // eso obliga al navegador a recalcularlos al momento, 60 veces por
+    // segundo. Solo se vuelve a leer cuando puede haber cambiado: al
+    // cambiar de tamaño y al terminar de cargar una fuente.
+    let inheritedFamily = '';
+
     const refreshFonts = () => {
+      inheritedFamily = '';
       layoutKey = '';
       wakeRef.current();
     };
 
-    const family = s => s.fontFamily || getComputedStyle(container).fontFamily || 'sans-serif';
+    const family = s => {
+      if (s.fontFamily) return s.fontFamily;
+      if (!inheritedFamily) inheritedFamily = getComputedStyle(container).fontFamily || 'sans-serif';
+      return inheritedFamily;
+    };
     const fontFor = (s, size) => `${s.fontWeight} ${size}px ${family(s)}`;
 
     const setFont = (target, s, size) => {
@@ -564,7 +578,16 @@ const TechText = ({
         else glyph.outline = target;
       });
 
-      if (s.draggable) container.style.cursor = dragging >= 0 ? 'grabbing' : focus >= 0 && pointer.inside ? 'grab' : '';
+      // Solo se escribe cuando cambia: asignarlo en cada fotograma, aunque
+      // fuera el mismo valor, invalidaba los estilos del contenedor 60
+      // veces por segundo.
+      if (s.draggable) {
+        const cursor = dragging >= 0 ? 'grabbing' : focus >= 0 && pointer.inside ? 'grab' : '';
+        if (cursor !== lastCursor) {
+          lastCursor = cursor;
+          container.style.cursor = cursor;
+        }
+      }
 
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.globalCompositeOperation = 'source-over';
@@ -606,6 +629,7 @@ const TechText = ({
     wakeRef.current = wake;
 
     const resize = () => {
+      inheritedFamily = '';
       width = Math.max(1, container.clientWidth);
       height = Math.max(1, container.clientHeight);
       dpr = Math.min(window.devicePixelRatio || 1, 2);

@@ -99,8 +99,9 @@ const calculateSpotlightValues = radius => ({
   fadeDistance: radius * 0.75,
 });
 
-const updateCardGlowProperties = (card, mouseX, mouseY, glow, radius) => {
-  const rect = card.getBoundingClientRect();
+// Recibe la medida ya tomada en vez de pedirla: quien llama mide todas
+// las tarjetas primero y escribe después (ver GlobalSpotlight).
+const updateCardGlowProperties = (card, rect, mouseX, mouseY, glow, radius) => {
   card.style.setProperty('--glow-x', `${((mouseX - rect.left) / rect.width) * 100}%`);
   card.style.setProperty('--glow-y', `${((mouseY - rect.top) / rect.height) * 100}%`);
   card.style.setProperty('--glow-intensity', glow.toString());
@@ -231,30 +232,68 @@ const GlobalSpotlight = ({ gridRef, disableAnimations = false, enabled = true, s
     document.body.appendChild(spot);
     spotRef.current = spot;
 
-    const onMove = e => {
-      if (!spotRef.current || !gridRef.current) return;
+    // ── Rendimiento ───────────────────────────────────────────
+    // Esto escucha el ratón en TODO el documento, y en Dispositivos hay dos
+    // instancias (categorías y subcategorías), así que cualquier movimiento
+    // en cualquier parte de la página lo pagaba dos veces. Tres arreglos que
+    // no cambian lo que se ve:
+    //  1. Se procesa como mucho una vez por fotograma (requestAnimationFrame),
+    //     con la última posición: es la que se vería en pantalla de todos modos.
+    //  2. Se miden TODAS las tarjetas y después se escriben TODOS los estilos.
+    //     Antes se alternaba medir-escribir tarjeta por tarjeta, y cada medida
+    //     tras una escritura obligaba al navegador a recalcular la maquetación.
+    //  3. Fuera de la rejilla (o con la rejilla oculta, que mide 0) solo se
+    //     apaga el foco al salir, una vez, en vez de crear una animación
+    //     nueva en cada movimiento.
+    let frame = 0;
+    let lastEvent = null;
+    let wasInside = false;
+
+    const process = () => {
+      frame = 0;
+      const e = lastEvent;
+      if (!e || !spotRef.current || !gridRef.current) return;
       const section = gridRef.current.closest('.bento-section');
       const rect = section?.getBoundingClientRect();
-      const inside = rect && e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
+      const inside = !!rect && rect.width > 0 &&
+        e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
       const cards = gridRef.current.querySelectorAll('.magic-bento-card');
+
       if (!inside) {
-        gsap.to(spotRef.current, { opacity: 0, duration: 0.3, ease: 'power2.out' });
-        cards.forEach(c => c.style.setProperty('--glow-intensity', '0'));
+        if (wasInside) {
+          wasInside = false;
+          gsap.to(spotRef.current, { opacity: 0, duration: 0.3, ease: 'power2.out' });
+          cards.forEach(c => c.style.setProperty('--glow-intensity', '0'));
+        }
         return;
       }
+      wasInside = true;
+
       const { proximity, fadeDistance } = calculateSpotlightValues(spotlightRadius);
+
+      // Lecturas
+      const rects = Array.from(cards, c => c.getBoundingClientRect());
       let minDist = Infinity;
-      cards.forEach(card => {
-        const r = card.getBoundingClientRect();
+      const glows = rects.map(r => {
         const dist = Math.max(0, Math.hypot(e.clientX - (r.left + r.width/2), e.clientY - (r.top + r.height/2)) - Math.max(r.width, r.height)/2);
         minDist = Math.min(minDist, dist);
-        updateCardGlowProperties(card, e.clientX, e.clientY, dist <= proximity ? 1 : dist <= fadeDistance ? (fadeDistance - dist)/(fadeDistance - proximity) : 0, spotlightRadius);
+        return dist <= proximity ? 1 : dist <= fadeDistance ? (fadeDistance - dist)/(fadeDistance - proximity) : 0;
       });
+
+      // Escrituras
+      cards.forEach((card, i) => updateCardGlowProperties(card, rects[i], e.clientX, e.clientY, glows[i], spotlightRadius));
+
       gsap.to(spotRef.current, { left: e.clientX, top: e.clientY, duration: 0.1, ease: 'power2.out' });
       const ta = minDist <= proximity ? 0.8 : minDist <= fadeDistance ? ((fadeDistance - minDist)/(fadeDistance - proximity)) * 0.8 : 0;
       gsap.to(spotRef.current, { opacity: ta, duration: ta > 0 ? 0.2 : 0.5, ease: 'power2.out' });
     };
+
+    const onMove = e => {
+      lastEvent = e;
+      if (!frame) frame = requestAnimationFrame(process);
+    };
     const onLeave = () => {
+      wasInside = false;
       gridRef.current?.querySelectorAll('.magic-bento-card').forEach(c => c.style.setProperty('--glow-intensity', '0'));
       if (spotRef.current) gsap.to(spotRef.current, { opacity: 0, duration: 0.3, ease: 'power2.out' });
     };
@@ -262,6 +301,7 @@ const GlobalSpotlight = ({ gridRef, disableAnimations = false, enabled = true, s
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseleave', onLeave);
     return () => {
+      if (frame) cancelAnimationFrame(frame);
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseleave', onLeave);
       spotRef.current?.parentNode?.removeChild(spotRef.current);

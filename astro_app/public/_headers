@@ -1,7 +1,18 @@
 # Cabeceras que aplica Cloudflare Pages al servir el sitio.
-# Deliberadamente mínimas: sin CSP, porque la app carga fuentes de Google,
-# GSAP desde cdnjs y habla con Supabase, y una CSP mal ajustada rompe eso.
+# Deliberadamente mínimas: sin CSP, porque la app carga fuentes de Google
+# y habla con Supabase, y una CSP mal ajustada rompe eso.
 /*
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
+
+# Los JS y CSS que genera Astro llevan una huella del contenido en el
+# nombre (p. ej. supabase.aCI9rdYt.js): si el archivo cambia, cambia el
+# nombre. Por eso se pueden guardar en caché de forma permanente sin riesgo
+# de servir una versión vieja; cada despliegue nuevo apunta a nombres nuevos.
+# Sin esta regla, Cloudflare los servía con max-age=0 y el navegador tenía
+# que volver a preguntar por cada uno en cada carga de página.
+# El HTML NO entra aquí: se sigue validando siempre, y es él quien dice qué
+# archivos con huella tocan.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable

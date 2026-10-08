@@ -93,6 +93,13 @@ const items = [
 <script>
   // Vanilla JS + GSAP translation for CardNav
 
+  // GSAP se importa del paquete y no del CDN. Antes venía de cdnjs con un
+  // <script> en el <head> de todas las páginas: bloqueaba el pintado
+  // mientras se descargaba y además duplicaba la copia que MagicBento ya
+  // empaqueta. Importándolo aquí, Vite comparte una sola copia entre los
+  // dos y la carga sin bloquear.
+  import { gsap } from 'gsap';
+
   // El handler de resize se guarda a nivel de módulo: este script se evalúa
   // una sola vez por documento, pero el callback de abajo corre en CADA
   // navegación. Sin esta referencia, cada navegación dejaba otro listener
@@ -100,11 +107,6 @@ const items = [
   let _resizeHandler = null;
 
   document.addEventListener('astro:page-load', () => {
-    if (!window.gsap) {
-        console.warn('GSAP is missing. Navigation animations will not work.');
-        return;
-    }
-
     const navContainer = document.querySelector('.card-nav-container');
     const navEl = document.getElementById('card-nav');
     const hamburger = document.getElementById('hamburger-menu-cn');

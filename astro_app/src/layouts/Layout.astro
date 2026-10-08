@@ -25,8 +25,15 @@ const { title } = Astro.props;
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<title>{title} — DataBox IT</title>
+		<!-- preconnect: abre la conexión con Google Fonts mientras el
+		     navegador aún lee el HTML, en vez de esperar a descubrir la hoja
+		     de estilos. Las fuentes llegan antes y el texto se asienta antes. -->
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 		<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" is:inline></script>
+		<!-- GSAP ya no se carga aquí desde el CDN: lo importa CardNav del
+		     paquete (ver CardNav.astro). Este <script> bloqueaba el pintado
+		     de todas las páginas mientras se descargaba. -->
 		<ClientRouter />
 		<script is:inline>
 			// Bloqueo síncrono ultra-rápido para prevenir flash de UI

@@ -224,8 +224,20 @@ function incidentFromDb(row) {
 
 // ── LOAD (async) ────────────────────────────────────────────
 // Llamado en cada page-load desde los módulos Astro.
+//
+// Si ya hay una carga en marcha, quien llame se suma a esa misma en vez de
+// lanzar otras 8 consultas idénticas en paralelo (pasaba, por ejemplo, al
+// abrir el buscador global mientras la página aún cargaba). Cada llamada
+// fuera de ese solape sigue trayendo datos frescos, como siempre.
+let _loadInFlight = null;
 
-export async function load() {
+export function load() {
+    if (_loadInFlight) return _loadInFlight;
+    _loadInFlight = _loadFromSupabase().finally(() => { _loadInFlight = null; });
+    return _loadInFlight;
+}
+
+async function _loadFromSupabase() {
     try {
         const [
             { data: regions,      error: e1 },

@@ -1317,13 +1317,23 @@ import TechText from '../components/TechText.jsx';
     initDashboard();
 
     // ── Cursor spotlight on cards ─────────────────────────
+    // Se actualiza como mucho una vez por fotograma, con la última posición
+    // del ratón. Antes se medía y se escribía en cada evento: cada escritura
+    // obliga a repintar la tarjeta, y con el cristal (backdrop-filter) eso
+    // incluye volver a difuminar lo que tiene detrás. Visualmente es igual,
+    // porque la pantalla no muestra más de un fotograma a la vez.
     document.querySelectorAll('.db-card').forEach(card => {
+      let frame = 0, lastX = 0, lastY = 0;
       card.addEventListener('mousemove', e => {
-        const rect = card.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        card.style.setProperty('--sx', `${x}px`);
-        card.style.setProperty('--sy', `${y}px`);
+        lastX = e.clientX;
+        lastY = e.clientY;
+        if (frame) return;
+        frame = requestAnimationFrame(() => {
+          frame = 0;
+          const rect = card.getBoundingClientRect();
+          card.style.setProperty('--sx', `${lastX - rect.left}px`);
+          card.style.setProperty('--sy', `${lastY - rect.top}px`);
+        });
       });
     });
 
