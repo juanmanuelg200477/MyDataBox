@@ -127,9 +127,22 @@ import TechText from '../components/TechText.jsx';
 /* ── Base ───────────────────────────────────── */
 .db {
   height: calc(100vh - 130px);
-  display: flex; flex-direction: column; gap: 10px;
+  display: flex; flex-direction: column; gap: 12px;
   overflow: hidden;
   animation: dbIn .4s cubic-bezier(0.4,0,0.2,1);
+  /* Luz ambiental detrás de las tarjetas. Hace el papel del fondo de
+     pantalla en iOS: un cristal sobre un gris plano no tiene nada que
+     difuminar y solo parece una tarjeta algo más gris. Va muy tenue a
+     propósito: debe notarse a través del cristal, no por sí sola.
+     La barra de cabecera es opaca, así que no le afecta. */
+  /* Los centros y tamaños están calculados para que cada mancha se
+     desvanezca ANTES de llegar al borde de .db: si la cortara el borde,
+     se vería una línea recta donde acaba el color. */
+  background:
+    radial-gradient(32% 44% at 24% 62%, rgba(59,130,246,.20), transparent 70%),
+    radial-gradient(30% 40% at 50% 44%, rgba(139,92,246,.16), transparent 70%),
+    radial-gradient(32% 44% at 76% 64%, rgba(20,184,166,.16), transparent 70%),
+    radial-gradient(24% 26% at 60% 78%, rgba(245,158,11,.12), transparent 70%);
 }
 @keyframes dbIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
 
@@ -245,37 +258,118 @@ import TechText from '../components/TechText.jsx';
 .db-kv:hover::after { width:30px; }
 
 /* ── Rows ───────────────────────────────────── */
-.db-row { flex:1;min-height:0;display:grid;gap:10px; }
+.db-row { flex:1;min-height:0;display:grid;gap:12px; }
 .db-row-1 { grid-template-columns:1fr 1fr 1fr; }
 .db-row-2 { grid-template-columns:2fr 1fr 1fr 1fr; }
 
 /* ── Cards ──────────────────────────────────── */
+/* ── Cristal de las tarjetas ──────────────────────────────────
+   Tres capas, como en iOS:
+   1. Lámina translúcida con desenfoque de lo que hay detrás (la luz
+      ambiental de .db).
+   2. Brillo: una franja de luz arriba y un reflejo diagonal, metidos en
+      el propio fondo. En un ::before se pintarían ENCIMA del contenido.
+   3. Canto en relieve: borde claro y sombras interiores — luz arriba y
+      en los laterales, sombra fina abajo. Es lo que da el aspecto 3D.
+
+   La sombra de reposo va en una variable porque se repite: en el hover,
+   y en los táctiles, donde el hover se anula y hay que volver a ella. */
 .db-card {
-  background:var(--surface);border:1px solid var(--border);border-radius:14px;
-  padding:14px 16px;box-shadow:var(--shadow-sm);
+  /* Tokens locales: las filas, pistas de las barras, anillos de los
+     donuts y bordes que cuelgan de la tarjeta pasan a versiones
+     translúcidas de una vez, sin tocar regla por regla. Superficies
+     sólidas encima del cristal lo taparían y lo harían parecer opaco. */
+  --surface-2: rgba(255,255,255,.62);
+  --surface-3: rgba(15,23,42,.065);
+  --border:    rgba(15,23,42,.08);
+
+  /* El canto es de DOS tonos: una línea oscura finísima por fuera y el
+     borde claro por dentro. Sobre un fondo casi blanco, un borde solo
+     blanco es invisible y la tarjeta se ve plana; el contraste entre las
+     dos líneas es lo que hace leer el relieve. Las sombras interiores
+     rematan el bisel: luz arriba y a los lados, sombra abajo. */
+  --db-card-rim:
+    0 0 0 1px rgba(15,23,42,.07),
+    inset 0 1px 0 rgba(255,255,255,1),
+    inset 0 2px 6px -2px rgba(255,255,255,.9),
+    inset 1px 0 0 rgba(255,255,255,.6),
+    inset -1px 0 0 rgba(255,255,255,.35),
+    inset 0 -1px 0 rgba(15,23,42,.07),
+    inset 0 -8px 14px -10px rgba(15,23,42,.08);
+  --db-card-shadow:
+    0 2px 6px rgba(15,23,42,.06),
+    0 18px 40px -18px rgba(15,23,42,.30),
+    var(--db-card-rim);
+
+  /* Lámina más translúcida que antes para que la luz de color se note a
+     través, con el brillo encima: franja satinada en el tercio superior
+     y un reflejo en la esquina, como el de una lámina curva. */
+  background:
+    linear-gradient(180deg,
+      rgba(255,255,255,.78) 0%,
+      rgba(255,255,255,.22) 40%,
+      rgba(255,255,255,0) 62%),
+    linear-gradient(125deg,
+      rgba(255,255,255,.55) 0%,
+      rgba(255,255,255,0) 30%),
+    rgba(255,255,255,.46);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255,255,255,.9);
+  border-radius: 20px;
+  padding:14px 16px;
+  box-shadow: var(--db-card-shadow);
   display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;
   position:relative;transition:box-shadow .3s ease,transform .3s ease,border-color .3s ease;
   --sx:50%;--sy:50%; /* spotlight position */
 }
+/* Línea de color arriba: se desvanece en los extremos y brilla un poco,
+   como luz que entra por el canto del vidrio. */
 .db-card::before {
-  content:'';position:absolute;top:0;left:16px;right:16px;height:2px;
-  background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 30%,transparent));
-  border-radius:0 0 2px 2px;opacity:.75;
-  transition: opacity .3s ease, width .3s ease;
+  content:'';position:absolute;top:0;left:22px;right:22px;height:2px;
+  background:linear-gradient(90deg,
+    transparent,
+    var(--accent) 28%,
+    var(--accent) 72%,
+    transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius:0 0 2px 2px;opacity:.7;
+  transition: opacity .3s ease;
 }
+.db-card:hover::before { opacity: 1; }
 /* Spotlight overlay */
 .db-card::after {
   content:'';
-  position:absolute;inset:0;border-radius:14px;
+  position:absolute;inset:0;border-radius:inherit;
   background: radial-gradient(300px circle at var(--sx) var(--sy), color-mix(in srgb, var(--accent) 8%, transparent), transparent 70%);
   opacity:0;transition:opacity .35s ease;
   pointer-events:none;z-index:0;
 }
 .db-card:hover::after { opacity:1; }
 .db-card:hover {
-  box-shadow: 0 12px 40px rgba(0,0,0,0.18), 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
-  transform: translateY(-4px) scale(1.005);
-  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+  box-shadow:
+    0 2px 4px rgba(15,23,42,.06),
+    0 22px 48px -16px rgba(15,23,42,.28),
+    0 0 0 1px color-mix(in srgb, var(--accent) 26%, transparent),
+    0 0 28px -8px color-mix(in srgb, var(--accent) 45%, transparent),
+    var(--db-card-rim);
+  transform: translateY(-4px);
+  border-color: rgba(255,255,255,.95);
+}
+
+/* Sin desenfoque de fondo la lámina translúcida dejaría ver el gris tal
+   cual: se vuelve blanca y conserva el canto. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .db-card { background: linear-gradient(180deg, #ffffff, #f8fafc); }
+}
+
+/* Piezas internas con su propio relieve de vidrio */
+.db-card :global(.dbc-isp-row) { box-shadow: inset 0 1px 0 rgba(255,255,255,.9); }
+.db-card :global(.dbc-isp-row:hover) { background: rgba(255,255,255,.88); }
+.db-card :global(.dbc-act-row:hover) { box-shadow: inset 0 1px 0 rgba(255,255,255,.9); }
+.db-card :global(.dbc-inc-kpi) { box-shadow: inset 0 1px 0 rgba(255,255,255,.85); }
+.db-card :global(.dbc-inc-kpi:hover) {
+  box-shadow: 0 6px 16px rgba(15,23,42,.1), inset 0 1px 0 rgba(255,255,255,.85);
 }
 .db-card-hdr  { flex-shrink:0;margin-bottom:10px;display:flex;align-items:flex-start;justify-content:space-between; }
 .db-card-title{ font-size:13px;font-weight:700;color:var(--text-main); }
@@ -473,10 +567,12 @@ import TechText from '../components/TechText.jsx';
 
   /* Elevaciones y foco de luz solo estorban al tocar (y el :hover se
      queda "pegado" tras el toque en varios navegadores móviles). */
+  /* Vuelta a la sombra de reposo del cristal, no a la de antes: con
+     --shadow-sm el toque le quitaba el canto en relieve. */
   .db-card:hover {
     transform: none;
-    box-shadow: var(--shadow-sm);
-    border-color: var(--border);
+    box-shadow: var(--db-card-shadow);
+    border-color: rgba(255,255,255,.9);
   }
   .db-card:hover::after { opacity: 0; }
   .db-kv:hover { transform: none; }
@@ -545,7 +641,7 @@ import TechText from '../components/TechText.jsx';
 /* ── Clickable card hint ────────────────────────────── */
 .db-card[data-preview] { cursor: pointer; }
 .db-card[data-preview]:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
   outline-offset: 3px;
 }
 .db-expand-hint {
