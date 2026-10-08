@@ -1,5 +1,39 @@
 ---
 // src/pages/login.astro
+//
+// Las ramas se declaran UNA sola vez aquí y la lista del selector se pinta
+// desde el servidor. El guion del cliente las vuelve a leer de los atributos
+// data-* del propio menú, así que no hay una segunda copia que se pueda
+// desincronizar.
+//
+//   ready:false  → la rama todavía no existe; se avisa y no se intenta entrar.
+//   home         → a dónde va el usuario cuando la rama sí está lista.
+const BRANCHES = [
+    {
+        id: 'infrastructure',
+        label: 'Infrastructure',
+        desc: 'Regiones, bastidores, dispositivos y enlaces',
+        color: '#3b82f6',
+        ready: true,
+        home: '/'
+    },
+    {
+        id: 'support',
+        label: 'Support',
+        desc: 'Mesa de ayuda y seguimiento de tickets',
+        color: '#f59e0b',
+        ready: false,
+        home: '/support'
+    },
+    {
+        id: 'servers',
+        label: 'Servers',
+        desc: 'Servidores, servicios y respaldos',
+        color: '#a855f7',
+        ready: false,
+        home: '/servers'
+    }
+];
 ---
 
 <!doctype html>
@@ -10,105 +44,86 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Login — DataBox IT</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
+
+    <!-- is:global a propósito: esta página es un documento completo e
+         independiente (tiene su propio <html>), así que su CSS no sale de
+         aquí y no hay nada que aislar. A cambio, los estilos sí alcanzan a
+         los avisos que se crean desde el guion, que con el ámbito de Astro
+         se quedarían sin aplicar. -->
+    <style is:global>
+        *, *::before, *::after { box-sizing: border-box; }
+
         body, html {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
             font-family: 'DM Sans', sans-serif;
-            background-color: #0D0716;
-            overflow: hidden;
+            background-color: #0a0611;
             color: #fff;
+            overflow: hidden;
         }
 
-        #threads-container {
-            position: absolute;
-            top: 0;
-            left: 0;
+        /* ════════════════════════════════════════════════════════════
+           ESTRUCTURA — identidad a la izquierda, acceso a la derecha
+           ════════════════════════════════════════════════════════════ */
+
+        .lg-shell {
+            display: grid;
+            grid-template-columns: 1.05fr 1fr;
             width: 100%;
             height: 100%;
-            z-index: 1;
         }
 
-        /* Prevent pointer-events on the canvas from completely catching if we click cards */
-        #threads-container canvas {
-            display: block;
-        }
+        /* ── Columna izquierda: marca + animación ─────────────────── */
 
-        .login-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 2;
+        .lg-brand {
+            position: relative;
+            overflow: hidden;
             display: flex;
             align-items: center;
-            justify-content: center;
-            pointer-events: none; /* Let clicks pass to canvas if not on card */
+            padding: 64px;
+            background:
+                radial-gradient(120% 90% at 15% 20%, rgba(59,130,246,0.16), transparent 60%),
+                radial-gradient(90% 80% at 85% 90%, rgba(168,85,247,0.14), transparent 62%),
+                #0d0716;
         }
 
-        .login-card {
-            pointer-events: auto;
-            background: rgba(13, 7, 22, 0.4);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 40px;
-            border-radius: 20px;
-            width: 360px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-            /* Spotlight Setup */
-            position: relative;
-            overflow: hidden;
-            --mouse-x: 50%;
-            --mouse-y: 50%;
-            --spotlight-color: rgba(255, 255, 255, 0.12); /* Gris/Blanco tenue */
-        }
-
-        .login-card::before {
-            content: '';
+        /* El lienzo de la animación vive dentro de la columna, no en toda
+           la página: ese era el encargo, que el diseño quede a la izquierda. */
+        #threads-container {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), var(--spotlight-color), transparent 80%);
-            opacity: 0;
-            transition: opacity 0.5s ease;
-            pointer-events: none;
+            inset: 0;
             z-index: 0;
         }
+        #threads-container canvas { display: block; }
 
-        .login-card:hover::before,
-        .login-card:focus-within::before {
-            opacity: 1;
-        }
-
-        /* Elevating content so the spotlight stays below text */
-        .login-header, .form-group, .btn-login {
-            position: relative;
+        /* Difumina el borde donde la animación se encuentra con el panel de
+           acceso, para que el corte entre columnas no se note. */
+        .lg-brand::after {
+            content: '';
+            position: absolute;
+            inset: 0;
             z-index: 1;
+            pointer-events: none;
+            background: linear-gradient(90deg, transparent 55%, rgba(10,6,17,0.85) 100%);
         }
 
-        .login-header {
-            text-align: center;
+        .lg-brand-inner {
+            position: relative;
+            z-index: 2;
+            max-width: 470px;
+            /* Deja pasar el ratón al lienzo: las ondas reaccionan al cursor
+               y un bloque de texto encima las dejaría inertes. */
+            pointer-events: none;
             user-select: none;
         }
 
-        .login-header h1 {
-            margin: 0;
-            font-size: 26px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
+        .lg-logo-row {
             display: flex;
-            justify-content: center;
             align-items: center;
-            gap: 8px;
+            gap: 14px;
+            margin-bottom: 26px;
         }
 
         @keyframes atomSpinLogin {
@@ -116,38 +131,355 @@
             to   { transform: rotate(360deg); }
         }
 
-        .login-header p {
-            margin: 6px 0 0 0;
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.5);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
+        .lg-title {
+            margin: 0;
+            font-size: 46px;
             font-weight: 700;
+            letter-spacing: -1.6px;
+            line-height: 1;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 55%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
+
+        .lg-branch-line {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            margin-bottom: 14px;
+        }
+
+        .lg-branch-pulse {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            background: var(--branch-color, rgba(255,255,255,0.35));
+            box-shadow: 0 0 0 0 var(--branch-color, rgba(255,255,255,0.35));
+            animation: branchPulse 2.4s ease-out infinite;
+            transition: background 0.35s ease;
+        }
+        @keyframes branchPulse {
+            0%   { box-shadow: 0 0 0 0 currentColor; opacity: 1; }
+            70%  { box-shadow: 0 0 0 11px transparent; opacity: .75; }
+            100% { box-shadow: 0 0 0 0 transparent; opacity: 1; }
+        }
+
+        #branch-name {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 4.5px;
+            color: rgba(255, 255, 255, 0.62);
+            transition: color 0.35s ease;
+        }
+
+        #branch-desc {
+            margin: 0 0 30px;
+            font-size: 15px;
+            line-height: 1.65;
+            color: rgba(255, 255, 255, 0.42);
+            min-height: 50px;
+        }
+
+        .lg-rule {
+            width: 56px;
+            height: 2px;
+            border-radius: 2px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.45), transparent);
+            margin-bottom: 22px;
+        }
+
+        .lg-foot {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.28);
+            letter-spacing: 0.3px;
+        }
+
+        /* ── Columna derecha: acceso ──────────────────────────────── */
+
+        .lg-access {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 32px;
+            overflow: hidden;
+            background: #0a0611;
+        }
+
+        /* Manchas de color desenfocadas detrás del cristal. Sin algo que
+           refractar, el desenfoque no se aprecia y la tarjeta parece plana. */
+        .lg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            pointer-events: none;
+            opacity: 0.55;
+        }
+        .lg-orb-a {
+            width: 420px; height: 420px;
+            top: -90px; right: -110px;
+            background: radial-gradient(circle, #2563eb, transparent 70%);
+        }
+        .lg-orb-b {
+            width: 380px; height: 380px;
+            bottom: -120px; left: -80px;
+            background: radial-gradient(circle, #7c3aed, transparent 70%);
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           TARJETA DE CRISTAL
+           Capas: fondo translúcido + desenfoque de lo que hay detrás +
+           un filo claro arriba que imita el reflejo del borde.
+           ════════════════════════════════════════════════════════════ */
+
+        .lg-card {
+            position: relative;
+            z-index: 2;
+            width: min(416px, 100%);
+            padding: 36px 34px 30px;
+            border-radius: 26px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            background:
+                linear-gradient(160deg,
+                    rgba(255,255,255,0.13) 0%,
+                    rgba(255,255,255,0.04) 45%,
+                    rgba(255,255,255,0.08) 100%);
+            backdrop-filter: blur(34px) saturate(185%);
+            -webkit-backdrop-filter: blur(34px) saturate(185%);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow:
+                0 32px 70px -22px rgba(0, 0, 0, 0.85),
+                inset 0 1px 0 rgba(255, 255, 255, 0.30),
+                inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+            --mouse-x: 50%;
+            --mouse-y: 50%;
+        }
+
+        /* Reflejo que sigue al cursor, como una lámina de vidrio real. */
+        .lg-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: radial-gradient(circle at var(--mouse-x) var(--mouse-y),
+                        rgba(255,255,255,0.10), transparent 70%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+        .lg-card:hover::before,
+        .lg-card:focus-within::before { opacity: 1; }
+
+        .lg-card > * { position: relative; z-index: 1; }
+
+        .lg-card-head h2 {
+            margin: 0 0 4px;
+            font-size: 23px;
+            font-weight: 700;
+            letter-spacing: -0.6px;
+        }
+        .lg-card-head p {
+            margin: 0;
+            font-size: 13.5px;
+            color: rgba(255, 255, 255, 0.45);
+        }
+
+        /* ── Selector de rama ─────────────────────────────────────── */
+
+        .lg-branch-picker { position: relative; }
+
+        .lg-branch-btn {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            width: 100%;
+            padding: 10px 13px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.055);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.92);
+            font-family: inherit;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .lg-branch-btn:hover {
+            background: rgba(255, 255, 255, 0.09);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .lg-branch-btn[aria-expanded="true"] {
+            border-color: rgba(59, 130, 246, 0.55);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.14);
+        }
+        .lg-branch-btn:focus-visible {
+            outline: 2px solid rgba(59, 130, 246, 0.8);
+            outline-offset: 2px;
+        }
+
+        .lg-branch-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.3);
+            transition: background 0.25s ease, box-shadow 0.25s ease;
+        }
+        .lg-branch-btn.chosen .lg-branch-dot {
+            background: var(--branch-color);
+            box-shadow: 0 0 9px var(--branch-color);
+        }
+
+        #branch-btn-label { flex: 1; text-align: left; }
+
+        .lg-branch-caret {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+            color: rgba(255, 255, 255, 0.45);
+            transition: transform 0.25s ease;
+        }
+        .lg-branch-btn[aria-expanded="true"] .lg-branch-caret { transform: rotate(180deg); }
+
+        /* Aviso de que falta elegir rama */
+        @keyframes branchNudge {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .lg-branch-btn.nudge {
+            animation: branchNudge 0.42s ease;
+            border-color: rgba(248, 113, 113, 0.65);
+        }
+
+        .lg-branch-menu {
+            position: absolute;
+            top: calc(100% + 7px);
+            left: 0;
+            right: 0;
+            z-index: 10;
+            margin: 0;
+            padding: 6px;
+            list-style: none;
+            border-radius: 15px;
+            background: rgba(20, 14, 32, 0.78);
+            backdrop-filter: blur(26px) saturate(180%);
+            -webkit-backdrop-filter: blur(26px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.13);
+            box-shadow:
+                0 22px 46px -14px rgba(0, 0, 0, 0.8),
+                inset 0 1px 0 rgba(255, 255, 255, 0.16);
+            transform-origin: top center;
+            animation: menuIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes menuIn {
+            from { opacity: 0; transform: translateY(-7px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .lg-branch-menu[hidden] { display: none; }
+
+        .lg-branch-opt {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            width: 100%;
+            padding: 10px 11px;
+            border: none;
+            border-radius: 11px;
+            background: none;
+            color: inherit;
+            font-family: inherit;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.16s ease;
+        }
+        .lg-branch-opt:hover,
+        .lg-branch-opt:focus-visible {
+            background: rgba(255, 255, 255, 0.07);
+            outline: none;
+        }
+        .lg-branch-opt[aria-selected="true"] { background: rgba(255, 255, 255, 0.1); }
+
+        .lg-opt-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            background: var(--branch-color);
+            box-shadow: 0 0 9px var(--branch-color);
+        }
+        .lg-opt-txt { flex: 1; min-width: 0; }
+        .lg-opt-name {
+            display: block;
+            font-size: 13.5px;
+            font-weight: 700;
+            letter-spacing: -0.1px;
+        }
+        .lg-opt-desc {
+            display: block;
+            font-size: 11.5px;
+            color: rgba(255, 255, 255, 0.42);
+            margin-top: 1px;
+        }
+        .lg-opt-tag {
+            flex-shrink: 0;
+            font-size: 9.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 3px 8px;
+            border-radius: 20px;
+        }
+        .lg-opt-tag.on {
+            color: #6ee7b7;
+            background: rgba(16, 185, 129, 0.14);
+            border: 1px solid rgba(16, 185, 129, 0.28);
+        }
+        .lg-opt-tag.off {
+            color: #fcd34d;
+            background: rgba(245, 158, 11, 0.13);
+            border: 1px solid rgba(245, 158, 11, 0.26);
+        }
+
+        /* ── Campos ───────────────────────────────────────────────── */
 
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 7px;
         }
 
         .form-group label {
-            font-size: 12px;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.6);
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.52);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
         }
 
         .form-group input {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 12px 16px;
-            border-radius: 10px;
-            color: white;
+            background: rgba(255, 255, 255, 0.055);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 12px 15px;
+            border-radius: 12px;
+            color: #fff;
             font-family: inherit;
-            font-size: 15px;
-            transition: all 0.3s ease;
+            font-size: 14.5px;
+            transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+        }
+        .form-group input::placeholder { color: rgba(255, 255, 255, 0.3); }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: rgba(59, 130, 246, 0.6);
+            background: rgba(255, 255, 255, 0.085);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         }
 
         /* ── Campo de contraseña con botón de ver ── */
@@ -195,14 +527,16 @@
            Chrome pinta de claro los campos que autocompleta. Eso rompia el
            diseno oscuro y, sobre fondo blanco, el ojo blanco desaparecia.
            El box-shadow interior gigante es la forma estandar de recuperar
-           el fondo, porque background-color no se puede sobrescribir aqui. */
+           el fondo, porque background-color no se puede sobrescribir aqui.
+           Aqui el relleno es opaco por obligacion: el autorrelleno no admite
+           transparencia, asi que se usa un tono que encaja con el cristal. */
         .form-group input:-webkit-autofill,
         .form-group input:-webkit-autofill:hover,
         .form-group input:-webkit-autofill:focus,
         .form-group input:-webkit-autofill:active {
             -webkit-text-fill-color: #fff;
-            -webkit-box-shadow: 0 0 0 1000px #11111a inset;
-            box-shadow: 0 0 0 1000px #11111a inset;
+            -webkit-box-shadow: 0 0 0 1000px #1a1526 inset;
+            box-shadow: 0 0 0 1000px #1a1526 inset;
             caret-color: #fff;
             /* El retardo enorme impide que Chrome vuelva a pintar su fondo */
             transition: background-color 9999s ease-in-out 0s;
@@ -212,89 +546,297 @@
             caret-color: #fff;
         }
 
-        .form-group input:focus {
-            outline: none;
-            border-color: rgba(59, 130, 246, 0.6);
-            background: rgba(0, 0, 0, 0.55);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-        }
+        /* ── Botón y error ────────────────────────────────────────── */
 
         .btn-login {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: #fff;
             border: none;
             padding: 14px;
-            border-radius: 10px;
+            border-radius: 13px;
             font-family: inherit;
             font-size: 15px;
             font-weight: 700;
             cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            margin-top: 10px;
-            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+            transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+                        box-shadow 0.22s ease, background 0.22s ease;
+            margin-top: 2px;
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.38),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.25);
             letter-spacing: -0.1px;
         }
-
-        .btn-login:hover {
+        .btn-login:hover:not(:disabled) {
             transform: translateY(-2px);
             background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.5);
+            box-shadow: 0 10px 28px rgba(37, 99, 235, 0.5),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.25);
         }
-
-        .btn-login:active {
-            transform: translateY(0);
-        }
-        
-        .login-error {
-            font-size: 13px;
-            color: #f87171;
-            text-align: center;
-            min-height: 18px;
-            font-weight: 500;
-            position: relative;
-            z-index: 1;
-        }
-
+        .btn-login:active:not(:disabled) { transform: translateY(0); }
         .btn-login:disabled {
             opacity: 0.6;
             cursor: not-allowed;
-            transform: none !important;
+            transform: none;
+        }
+
+        .login-error {
+            font-size: 12.5px;
+            color: #f87171;
+            text-align: center;
+            min-height: 17px;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           AVISOS — esquina inferior derecha
+           ════════════════════════════════════════════════════════════ */
+
+        .lg-toasts {
+            position: fixed;
+            right: 22px;
+            bottom: 22px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .lg-toast {
+            pointer-events: auto;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            width: min(344px, calc(100vw - 44px));
+            padding: 14px 15px;
+            border-radius: 16px;
+            background: rgba(24, 18, 38, 0.82);
+            backdrop-filter: blur(26px) saturate(180%);
+            -webkit-backdrop-filter: blur(26px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.13);
+            box-shadow:
+                0 20px 44px -12px rgba(0, 0, 0, 0.8),
+                inset 0 1px 0 rgba(255, 255, 255, 0.16);
+            animation: toastIn 0.34s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(26px) scale(0.96); }
+            to   { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        .lg-toast.out {
+            animation: toastOut 0.26s ease forwards;
+        }
+        @keyframes toastOut {
+            to { opacity: 0; transform: translateX(26px) scale(0.96); }
+        }
+
+        .lg-toast-ico {
+            flex-shrink: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9px;
+            background: rgba(245, 158, 11, 0.16);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #fcd34d;
+        }
+        .lg-toast-ico svg { width: 16px; height: 16px; }
+
+        .lg-toast-txt { flex: 1; min-width: 0; }
+        .lg-toast-title {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: -0.1px;
+        }
+        .lg-toast-body {
+            display: block;
+            font-size: 12px;
+            line-height: 1.45;
+            color: rgba(255, 255, 255, 0.56);
+            margin-top: 2px;
+        }
+
+        .lg-toast-x {
+            flex-shrink: 0;
+            width: 22px;
+            height: 22px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            border-radius: 6px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 17px;
+            line-height: 1;
+            cursor: pointer;
+            transition: color 0.18s ease, background 0.18s ease;
+        }
+        .lg-toast-x:hover { color: #fff; background: rgba(255, 255, 255, 0.09); }
+
+        /* ════════════════════════════════════════════════════════════
+           TELÉFONO Y TABLETA
+           Se apila: la marca arriba en versión compacta y el acceso debajo.
+           ════════════════════════════════════════════════════════════ */
+
+        @media (max-width: 980px) {
+            body, html { overflow-y: auto; }
+
+            .lg-shell {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+                min-height: 100%;
+                height: auto;
+            }
+
+            /* El lienzo pasa a cubrir la pantalla entera por detrás de todo:
+               en una franja estrecha las ondas no se leen. */
+            #threads-container {
+                position: fixed;
+                inset: 0;
+            }
+
+            .lg-brand {
+                padding: 42px 24px 10px;
+                justify-content: center;
+                text-align: center;
+                background: none;
+                overflow: visible;
+            }
+            .lg-brand::after { display: none; }
+            .lg-brand-inner { max-width: 420px; }
+            .lg-logo-row { justify-content: center; gap: 11px; margin-bottom: 18px; }
+            .lg-title { font-size: 32px; letter-spacing: -1px; }
+            .lg-branch-line { justify-content: center; }
+            #branch-name { font-size: 12px; letter-spacing: 3.5px; }
+            #branch-desc {
+                font-size: 13.5px;
+                margin-bottom: 0;
+                min-height: 0;
+            }
+            .lg-rule, .lg-foot { display: none; }
+
+            .lg-access {
+                padding: 26px 20px 42px;
+                background: none;
+                align-items: flex-start;
+            }
+            .lg-orb { display: none; }
+
+            .lg-card { padding: 28px 22px 24px; }
+
+            .lg-toasts {
+                right: 14px;
+                left: 14px;
+                bottom: 14px;
+                align-items: stretch;
+            }
+            .lg-toast { width: 100%; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .lg-branch-pulse, .lg-toast, .lg-branch-menu { animation: none; }
         }
     </style>
 </head>
 <body>
-    
-    <!-- OGL Container -->
-    <div id="threads-container"></div>
 
-    <div class="login-overlay">
-        <div class="login-card" id="login-card">
-            <div class="login-header">
-                    <h1>
-                        <svg class="atom-logo-login" viewBox="0 0 48 48" width="34" height="34" fill="none" xmlns="http://www.w3.org/2000/svg" style="animation:atomSpinLogin 10s linear infinite;filter:drop-shadow(0 0 6px rgba(203,213,225,0.4));">
-                            <defs>
-                                <linearGradient id="atom-orbit-lg" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stop-color="#e2e8f0" stop-opacity="0.9"/>
-                                    <stop offset="50%" stop-color="#f8fafc" stop-opacity="0.7"/>
-                                    <stop offset="100%" stop-color="#cbd5e1" stop-opacity="0.9"/>
-                                </linearGradient>
-                                <radialGradient id="atom-core-lg" cx="50%" cy="40%" r="50%">
-                                    <stop offset="0%" stop-color="#ffffff"/>
-                                    <stop offset="50%" stop-color="#e2e8f0"/>
-                                    <stop offset="100%" stop-color="#94a3b8"/>
-                                </radialGradient>
-                            </defs>
-                            <ellipse cx="24" cy="24" rx="20" ry="8" stroke="url(#atom-orbit-lg)" stroke-width="1.3" transform="rotate(0 24 24)"/>
-                            <ellipse cx="24" cy="24" rx="20" ry="8" stroke="url(#atom-orbit-lg)" stroke-width="1.3" transform="rotate(60 24 24)"/>
-                            <ellipse cx="24" cy="24" rx="20" ry="8" stroke="url(#atom-orbit-lg)" stroke-width="1.3" transform="rotate(-60 24 24)"/>
-                            <circle cx="24" cy="24" r="4.5" fill="url(#atom-core-lg)"/>
-                            <circle cx="24" cy="24" r="3" fill="#f1f5f9" opacity="0.5"/>
-                        </svg>
-                        DataBox IT
-                    </h1>
+    <div class="lg-shell">
+
+        <!-- ══ Identidad + animación ══════════════════════════════ -->
+        <aside class="lg-brand">
+            <div id="threads-container"></div>
+
+            <div class="lg-brand-inner">
+                <div class="lg-logo-row">
+                    <svg class="atom-logo-login" viewBox="0 0 48 48" width="42" height="42" fill="none" xmlns="http://www.w3.org/2000/svg" style="animation:atomSpinLogin 10s linear infinite;filter:drop-shadow(0 0 7px rgba(203,213,225,0.45));">
+                        <defs>
+                            <linearGradient id="atom-orbit-lg" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#e2e8f0" stop-opacity="0.9"/>
+                                <stop offset="50%" stop-color="#f8fafc" stop-opacity="0.7"/>
+                                <stop offset="100%" stop-color="#cbd5e1" stop-opacity="0.9"/>
+                            </linearGradient>
+                            <radialGradient id="atom-core-lg" cx="50%" cy="40%" r="50%">
+                                <stop offset="0%" stop-color="#ffffff"/>
+                                <stop offset="50%" stop-color="#e2e8f0"/>
+                                <stop offset="100%" stop-color="#94a3b8"/>
+                            </radialGradient>
+                        </defs>
+                        <ellipse cx="24" cy="24" rx="20" ry="8" stroke="url(#atom-orbit-lg)" stroke-width="1.3" transform="rotate(0 24 24)"/>
+                        <ellipse cx="24" cy="24" rx="20" ry="8" stroke="url(#atom-orbit-lg)" stroke-width="1.3" transform="rotate(60 24 24)"/>
+                        <ellipse cx="24" cy="24" rx="20" ry="8" stroke="url(#atom-orbit-lg)" stroke-width="1.3" transform="rotate(-60 24 24)"/>
+                        <circle cx="24" cy="24" r="4.5" fill="url(#atom-core-lg)"/>
+                        <circle cx="24" cy="24" r="3" fill="#f1f5f9" opacity="0.5"/>
+                    </svg>
+                    <h1 class="lg-title">DataBox IT</h1>
+                </div>
+
+                <div class="lg-branch-line">
+                    <span class="lg-branch-pulse" id="branch-pulse"></span>
                     <p id="branch-name">Branch Module</p>
                 </div>
-                
+
+                <p id="branch-desc">Elige una rama para continuar.</p>
+
+                <div class="lg-rule"></div>
+                <div class="lg-foot">Cooperativa Integral de Producción Madre y Maestra, R.L.</div>
+            </div>
+        </aside>
+
+        <!-- ══ Acceso ═════════════════════════════════════════════ -->
+        <main class="lg-access">
+            <div class="lg-orb lg-orb-a"></div>
+            <div class="lg-orb lg-orb-b"></div>
+
+            <section class="lg-card" id="login-card">
+                <div class="lg-card-head">
+                    <h2>Bienvenido</h2>
+                    <p>Selecciona tu rama e inicia sesión.</p>
+                </div>
+
+                <!-- Selector de rama: va antes de las credenciales porque
+                     elegir rama es el primer paso obligatorio. -->
+                <div class="lg-branch-picker" id="branch-picker">
+                    <button type="button" class="lg-branch-btn" id="branch-btn"
+                            aria-haspopup="listbox" aria-expanded="false" aria-controls="branch-menu">
+                        <span class="lg-branch-dot"></span>
+                        <span id="branch-btn-label">Branch</span>
+                        <svg class="lg-branch-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </button>
+
+                    <ul class="lg-branch-menu" id="branch-menu" role="listbox" aria-label="Ramas disponibles" hidden>
+                        {BRANCHES.map(b => (
+                            <li role="presentation">
+                                <button type="button" class="lg-branch-opt" role="option"
+                                        aria-selected="false"
+                                        data-id={b.id}
+                                        data-label={b.label}
+                                        data-desc={b.desc}
+                                        data-color={b.color}
+                                        data-ready={String(b.ready)}
+                                        data-home={b.home}
+                                        style={`--branch-color:${b.color}`}>
+                                    <span class="lg-opt-dot"></span>
+                                    <span class="lg-opt-txt">
+                                        <span class="lg-opt-name">{b.label}</span>
+                                        <span class="lg-opt-desc">{b.desc}</span>
+                                    </span>
+                                    <span class={`lg-opt-tag ${b.ready ? 'on' : 'off'}`}>
+                                        {b.ready ? 'Disponible' : 'En proceso'}
+                                    </span>
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+
                 <div class="form-group">
                     <label for="username">Correo electrónico</label>
                     <input type="email" id="username" placeholder="correo@ejemplo.com" autocomplete="email" />
@@ -320,23 +862,132 @@
                 <div class="login-error" id="login-error"></div>
 
                 <button class="btn-login" id="login-btn">Ingresar</button>
-        </div>
+            </section>
+        </main>
     </div>
 
+    <div class="lg-toasts" id="lg-toasts" aria-live="polite" aria-atomic="false"></div>
+
     <script>
-        // ── Autenticación con Supabase ─────────────────────────
+        // ════════════════════════════════════════════════════════════
+        //  SELECCIÓN DE RAMA + AUTENTICACIÓN
+        // ════════════════════════════════════════════════════════════
         import { supabase } from '../scripts/supabase.js';
 
+        // ── Avisos (esquina inferior derecha) ──────────────────────
+        // En inglés a propósito: son los mensajes de estado de las ramas.
+        // Va en este mismo bloque y no en uno aparte porque cada <script>
+        // de Astro se compila como un módulo independiente: desde otro
+        // bloque esta función no existiría.
+        function pushToast(title, body) {
+            const cont = document.getElementById('lg-toasts');
+            if (!cont) return;
+
+            const el = document.createElement('div');
+            el.className = 'lg-toast';
+            el.setAttribute('role', 'status');
+            el.innerHTML = `
+                <span class="lg-toast-ico">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12.5"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                </span>
+                <span class="lg-toast-txt">
+                    <span class="lg-toast-title"></span>
+                    <span class="lg-toast-body"></span>
+                </span>
+                <button class="lg-toast-x" aria-label="Dismiss">&times;</button>`;
+
+            // textContent y no innerHTML: el texto lleva el nombre de la rama.
+            el.querySelector('.lg-toast-title').textContent = title;
+            el.querySelector('.lg-toast-body').textContent  = body;
+
+            const cerrar = () => {
+                if (!el.isConnected) return;
+                el.classList.add('out');
+                el.addEventListener('animationend', () => el.remove(), { once: true });
+            };
+            el.querySelector('.lg-toast-x').onclick = cerrar;
+
+            cont.appendChild(el);
+            setTimeout(cerrar, 5200);
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
-			sessionStorage.removeItem('auth_cleared');
-			sessionStorage.removeItem('databox_role');
+            sessionStorage.removeItem('auth_cleared');
+            sessionStorage.removeItem('databox_role');
+            sessionStorage.removeItem('databox_branch');
+
             // Si ya hay sesión activa, ir directo al dashboard
             const { data: { session } } = await supabase.auth.getSession();
             if (session) { window.location.href = '/'; return; }
 
-            const btn       = document.getElementById('login-btn');
+            const btn        = document.getElementById('login-btn');
             const emailInput = document.getElementById('username');
             const passInput  = document.getElementById('password');
+            const errorEl    = document.getElementById('login-error');
+
+            // ── Selector de rama ──────────────────────────────────
+            const picker    = document.getElementById('branch-picker');
+            const branchBtn = document.getElementById('branch-btn');
+            const branchMenu= document.getElementById('branch-menu');
+            const btnLabel  = document.getElementById('branch-btn-label');
+            const nameEl    = document.getElementById('branch-name');
+            const descEl    = document.getElementById('branch-desc');
+            const pulseEl   = document.getElementById('branch-pulse');
+            const opciones  = [...branchMenu.querySelectorAll('.lg-branch-opt')];
+
+            // Ninguna rama viene preseleccionada: elegir es obligatorio.
+            let rama = null;
+
+            const abrirMenu = (abrir) => {
+                branchMenu.hidden = !abrir;
+                branchBtn.setAttribute('aria-expanded', String(abrir));
+                if (abrir) opciones[0]?.focus();
+            };
+
+            branchBtn.onclick = () => abrirMenu(branchMenu.hidden);
+
+            opciones.forEach(opt => {
+                opt.onclick = () => {
+                    rama = {
+                        id:    opt.dataset.id,
+                        label: opt.dataset.label,
+                        desc:  opt.dataset.desc,
+                        color: opt.dataset.color,
+                        ready: opt.dataset.ready === 'true',
+                        home:  opt.dataset.home
+                    };
+
+                    opciones.forEach(o => o.setAttribute('aria-selected', String(o === opt)));
+
+                    btnLabel.textContent = rama.label;
+                    branchBtn.classList.add('chosen');
+                    branchBtn.classList.remove('nudge');
+                    branchBtn.style.setProperty('--branch-color', rama.color);
+
+                    // El entorno entero se tiñe de la rama elegida.
+                    nameEl.textContent = `Branch ${rama.label}`;
+                    descEl.textContent = rama.desc;
+                    pulseEl.style.setProperty('--branch-color', rama.color);
+                    pulseEl.style.color = rama.color;
+
+                    errorEl.textContent = '';
+                    abrirMenu(false);
+                    branchBtn.focus();
+                };
+            });
+
+            // Cerrar al pulsar fuera o con Escape
+            document.addEventListener('click', e => {
+                if (!picker.contains(e.target)) abrirMenu(false);
+            });
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && !branchMenu.hidden) {
+                    abrirMenu(false);
+                    branchBtn.focus();
+                }
+            });
 
             // ── Ver / ocultar contraseña ──
             const pwdToggle = document.getElementById('pwd-toggle');
@@ -356,9 +1007,47 @@
                     passInput.setSelectionRange(fin, fin);
                 };
             }
-            const errorEl    = document.getElementById('login-error');
+
+            // ── Permisos de rama ──────────────────────────────────
+            // Si la cuenta trae una lista explícita en sus metadatos, manda
+            // esa. Si no, el dueño entra a todas y el resto solo a
+            // Infraestructura, que es la única construida.
+            //
+            // OJO: esto es un control de interfaz. Cuando las otras ramas
+            // tengan datos propios habrá que protegerlas también con RLS en
+            // la base, igual que se hizo con el inventario.
+            function ramasPermitidas(user) {
+                const meta = user?.user_metadata ?? {};
+                if (Array.isArray(meta.branches) && meta.branches.length) {
+                    return meta.branches.map(b => String(b).toLowerCase());
+                }
+                return meta.role === 'owner'
+                    ? opciones.map(o => o.dataset.id)
+                    : ['infrastructure'];
+            }
 
             const doLogin = async () => {
+                // 1. La rama primero: sin ella no se miran las credenciales.
+                if (!rama) {
+                    errorEl.textContent = 'Elige una rama antes de iniciar sesión.';
+                    branchBtn.classList.remove('nudge');
+                    void branchBtn.offsetWidth;   // reinicia la animación
+                    branchBtn.classList.add('nudge');
+                    abrirMenu(true);
+                    return;
+                }
+
+                // 2. Ramas que todavía no existen: se avisa y se para aquí.
+                //    No tiene sentido comprobar una contraseña contra algo
+                //    que no está construido.
+                if (!rama.ready) {
+                    pushToast(
+                        'Branch in progress',
+                        `The ${rama.label} branch is still under construction and cannot be accessed yet.`
+                    );
+                    return;
+                }
+
                 const email    = emailInput.value.trim();
                 const password = passInput.value;
 
@@ -371,7 +1060,12 @@
                 btn.textContent = 'Ingresando…';
                 errorEl.textContent = '';
 
-                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+                const restaurar = () => {
+                    btn.disabled    = false;
+                    btn.textContent = 'Ingresar';
+                };
 
                 if (error) {
                     // Antes cualquier fallo decía "contraseña incorrecta", así que
@@ -385,13 +1079,22 @@
                     };
                     errorEl.textContent = MOTIVOS[error.code] ?? `No se pudo iniciar sesión: ${error.message}`;
                     console.error('[login]', error.code ?? '(sin código)', error.message);
-
-                    btn.disabled    = false;
-                    btn.textContent = 'Ingresar';
+                    restaurar();
                     return;
                 }
 
-                window.location.href = '/';
+                // 3. La cuenta es válida, pero ¿es de esta rama? Si no, se
+                //    cierra la sesión recién abierta para no dejarla viva.
+                const permitidas = ramasPermitidas(data?.user);
+                if (!permitidas.includes(rama.id)) {
+                    await supabase.auth.signOut();
+                    errorEl.textContent = `Tu cuenta no tiene acceso a la rama ${rama.label}.`;
+                    restaurar();
+                    return;
+                }
+
+                sessionStorage.setItem('databox_branch', rama.id);
+                window.location.href = rama.home;
             };
 
             btn.addEventListener('click', doLogin);
@@ -402,24 +1105,21 @@
             );
         });
     </script>
-    
+
     <script>
-        // Spotlight Logic
+        // Reflejo de la tarjeta siguiendo al cursor
         document.addEventListener('DOMContentLoaded', () => {
             const card = document.getElementById('login-card');
-            if(!card) return;
+            if (!card) return;
 
             card.addEventListener('mousemove', (e) => {
                 const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-
-                card.style.setProperty('--mouse-x', `${x}px`);
-                card.style.setProperty('--mouse-y', `${y}px`);
+                card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+                card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
             });
         });
     </script>
-    
+
     <script>
         import { Renderer, Program, Mesh, Triangle, Color } from 'ogl';
 
@@ -553,7 +1253,7 @@
             container.appendChild(gl.canvas);
 
             const geometry = new Triangle(gl);
-            
+
             const program = new Program(gl, {
                 vertex: vertexShader,
                 fragment: fragmentShader,
@@ -573,6 +1273,7 @@
 
             function resize() {
                 const { clientWidth, clientHeight } = container;
+                if (!clientWidth || !clientHeight) return;
                 renderer.setSize(clientWidth, clientHeight);
                 program.uniforms.iResolution.value.r = clientWidth;
                 program.uniforms.iResolution.value.g = clientHeight;
@@ -607,13 +1308,13 @@
                 currentMouse[1] += smoothing * (targetMouse[1] - currentMouse[1]);
                 program.uniforms.uMouse.value[0] = currentMouse[0];
                 program.uniforms.uMouse.value[1] = currentMouse[1];
-                
+
                 program.uniforms.iTime.value = t * 0.001;
 
                 renderer.render({ scene: mesh });
                 animationFrameId = requestAnimationFrame(update);
             }
-            
+
             animationFrameId = requestAnimationFrame(update);
         });
     </script>

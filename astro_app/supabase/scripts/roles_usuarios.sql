@@ -38,3 +38,25 @@ select email,
        raw_user_meta_data
 from auth.users
 order by email;
+
+
+-- ════════════════════════════════════════════════════════════════
+--  Ramas por cuenta  (opcional, para más adelante)
+--
+--  El login pide elegir rama antes de las credenciales. Si la cuenta
+--  no trae lista propia, se aplica la regla por defecto:
+--      owner  → todas las ramas
+--      resto  → solo infrastructure
+--
+--  Con eso basta hoy. Cuando haya que dar acceso a la medida —por
+--  ejemplo, alguien que solo atienda Support— se le pone su lista:
+--
+--      update auth.users as u
+--      set raw_user_meta_data = coalesce(u.raw_user_meta_data, '{}'::jsonb)
+--                               || jsonb_build_object('branches',
+--                                    jsonb_build_array('support'))
+--      where u.email = 'correo@comayma.com';
+--
+--  Identificadores válidos: 'infrastructure', 'support', 'servers'.
+--  Igual que con el rol, hay que cerrar sesión y volver a entrar.
+-- ════════════════════════════════════════════════════════════════
