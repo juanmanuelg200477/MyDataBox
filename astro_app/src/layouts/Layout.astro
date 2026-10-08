@@ -127,6 +127,7 @@ const { title } = Astro.props;
 		<script>
 			import { supabase } from '../scripts/supabase.js';
 			import { initGlobalSearch, closeSearch } from '../scripts/globalSearch.js';
+			import { registrarSesion, cerrarSesionRegistro } from '../scripts/sessionLog.js';
 
 				// ── Detectar token de recovery en el hash ─────────
 			// Cuando Supabase redirige tras "Reset Password", pone
@@ -186,6 +187,12 @@ const { title } = Astro.props;
 						document.documentElement.classList.remove('page-loading');
 					}, 300);
 				}
+
+				// ── Registro de sesión ─────────────────────────
+				// Abre la fila en el primer page-load tras entrar y la
+				// refresca en los siguientes. No se espera (await) para no
+				// retrasar el pintado: es telemetría, no datos del usuario.
+				registrarSesion(session.user);
 
 				// ── Rol: refrescar desde sesión activa ─────────
 				const role = session.user?.user_metadata?.role ?? 'admin';
@@ -286,6 +293,9 @@ const { title } = Astro.props;
 				const logoutBtn = document.getElementById('btn-logout');
 				if (logoutBtn) {
 					logoutBtn.onclick = async () => {
+						// Se cierra la fila ANTES de signOut: después ya no
+						// habría sesión y RLS rechazaría la actualización.
+						await cerrarSesionRegistro();
 						await supabase.auth.signOut();
 						sessionStorage.removeItem('auth_cleared');
 						sessionStorage.removeItem('databox_role');

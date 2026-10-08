@@ -6,12 +6,20 @@ import { icons } from '../scripts/icons.js';
         <div>
             <h1>Actividad</h1>
             <p style="font-size:13px;color:var(--text-muted);margin-top:4px;">
-                Quién cambió qué y cuándo. El historial es inmutable: no se puede editar ni borrar.
+                Quién cambió qué y cuándo. Nadie puede editarlo ni borrarlo a mano;
+                el sistema conserva automáticamente los últimos 50 registros.
             </p>
         </div>
     </div>
 
-    <div class="card">
+    <!-- La pestaña de sesiones solo se muestra al dueño. Es comodidad:
+         el control real lo hace RLS, que no deja leer la tabla a nadie más. -->
+    <div class="act-tabs" id="activity-tabs" style="display:none">
+        <button class="act-tab active" data-pane="changes">Cambios</button>
+        <button class="act-tab" data-pane="sessions">Sesiones</button>
+    </div>
+
+    <div class="card" id="activity-pane-changes">
         <div class="card-header" style="flex-wrap:wrap;row-gap:10px;">
             <h2>Registro <span id="activity-status" style="font-weight:500;font-size:12px;color:var(--text-muted);margin-left:8px"></span></h2>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
@@ -53,9 +61,68 @@ import { icons } from '../scripts/icons.js';
             <small>Los cambios que hagas en el inventario aparecerán aquí.</small>
         </div>
     </div>
+
+    <!-- ── Panel de sesiones (solo dueño) ───────────────────── -->
+    <div class="card" id="activity-pane-sessions" style="display:none">
+        <div class="card-header" style="flex-wrap:wrap;row-gap:10px;">
+            <h2>Sesiones <span id="sessions-status" style="font-weight:500;font-size:12px;color:var(--text-muted);margin-left:8px"></span></h2>
+            <button class="btn btn-outline" id="sessions-refresh" style="font-size:12.5px;">Actualizar</button>
+        </div>
+
+        <div id="sessions-table-container" style="display:none">
+            <table class="table-cards">
+                <thead>
+                    <tr><th>Usuario</th><th>Rol</th><th>Estado</th><th>Inicio</th><th>Última actividad</th><th>Cierre</th></tr>
+                </thead>
+                <tbody id="sessions-tbody"></tbody>
+            </table>
+        </div>
+
+        <div id="sessions-empty-state" class="empty-state" style="display:none">
+            <div set:html={icons.users}></div>
+            <p>Sin sesiones registradas</p>
+            <small>Aparecerán aquí cuando alguien inicie sesión.</small>
+        </div>
+    </div>
 </div>
 
 <style>
+/* ── Pestañas Cambios / Sesiones ── */
+.act-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+.act-tab {
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+.act-tab:hover { color: var(--text); }
+.act-tab.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--white);
+}
+
+/* Punto de estado de sesión */
+.ses-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+.ses-on  { background: var(--success); box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 25%, transparent); }
+.ses-off { background: var(--text-muted); }
+
 /* Reutiliza el estilo de filtros de Bastidores/Dispositivos */
 .dev-filter-select {
     padding: 8px 11px;

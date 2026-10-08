@@ -1,6 +1,8 @@
 import { fetchAuditLog } from '../auditLog.js';
-import { escapeHtml } from '../utils.js';
+import { escapeHtml, labelTableCells } from '../utils.js';
 import { toastError } from '../toast.js';
+import { supabase } from '../supabase.js';
+import { listarSesiones, esOwner } from '../sessionLog.js';
 
 // ════════════════════════════════════════════════════════════════
 //  ACTIVIDAD — visor de la bitácora de auditoría
@@ -134,8 +136,100 @@ async function loadPage({ reset = false } = {}) {
     }
 }
 
+// ── Sesiones (solo dueño) ───────────────────────────────────────
+
+function sessionRowHtml(s) {
+    const estado = s.activo
+        ? '<span class="ses-dot ses-on"></span>Conectado'
+        : '<span class="ses-dot ses-off"></span>Desconectado';
+
+    return `<tr>
+        <td style="font-size:12.5px">${escapeHtml(s.user_email ?? '—')}</td>
+        <td><span class="badge badge-purple">${escapeHtml(s.user_role ?? '—')}</span></td>
+        <td><strong>${estado}</strong></td>
+        <td style="white-space:nowrap;font-family:'JetBrains Mono',monospace;font-size:11.5px">${escapeHtml(formatWhen(s.started_at))}</td>
+        <td style="white-space:nowrap;font-family:'JetBrains Mono',monospace;font-size:11.5px">${escapeHtml(formatWhen(s.last_seen_at))}</td>
+        <td style="white-space:nowrap;font-family:'JetBrains Mono',monospace;font-size:11.5px">${s.ended_at ? escapeHtml(formatWhen(s.ended_at)) : '—'}</td>
+    </tr>`;
+}
+
+async function loadSessions() {
+    const tbody     = document.getElementById('sessions-tbody');
+    const container = document.getElementById('sessions-table-container');
+    const empty     = document.getElementById('sessions-empty-state');
+    const estado    = document.getElementById('sessions-status');
+    if (!tbody) return;
+
+    if (estado) estado.textContent = 'Cargando…';
+
+    try {
+        const sesiones = await listarSesiones();
+
+        if (!sesiones.length) {
+            container.style.display = 'none';
+            empty.style.display     = 'flex';
+            if (estado) estado.textContent = '';
+            return;
+        }
+
+        container.style.display = 'block';
+        empty.style.display     = 'none';
+        tbody.innerHTML = sesiones.map(sessionRowHtml).join('');
+        labelTableCells(tbody);
+
+        const conectados = sesiones.filter(s => s.activo).length;
+        if (estado) {
+            estado.textContent =
+                `${sesiones.length} registro${sesiones.length !== 1 ? 's' : ''} · ${conectados} conectado${conectados !== 1 ? 's' : ''}`;
+        }
+    } catch (err) {
+        container.style.display = 'none';
+        empty.style.display     = 'flex';
+        if (estado) estado.textContent = 'No se pudo cargar.';
+        toastError('No se pudo leer el historial de sesiones.', {
+            title: 'Error al cargar', detail: err?.message
+        });
+    }
+}
+
+// La pestaña solo se ofrece al dueño. Es comodidad: aunque alguien la
+// forzara, RLS no le devolvería ni una fila.
+async function setupOwnerTabs() {
+    let user = null;
+    try {
+        const { data } = await supabase.auth.getSession();
+        user = data?.session?.user ?? null;
+    } catch { return; }
+
+    if (!esOwner(user)) return;
+
+    const tabs = document.getElementById('activity-tabs');
+    if (!tabs) return;
+    tabs.style.display = 'flex';
+
+    const paneles = {
+        changes:  document.getElementById('activity-pane-changes'),
+        sessions: document.getElementById('activity-pane-sessions')
+    };
+
+    tabs.querySelectorAll('.act-tab').forEach(btn => {
+        btn.onclick = () => {
+            const destino = btn.dataset.pane;
+            tabs.querySelectorAll('.act-tab').forEach(b => b.classList.toggle('active', b === btn));
+            Object.entries(paneles).forEach(([clave, el]) => {
+                if (el) el.style.display = clave === destino ? '' : 'none';
+            });
+            if (destino === 'sessions') loadSessions();
+        };
+    });
+
+    document.getElementById('sessions-refresh')?.addEventListener('click', loadSessions);
+}
+
 export function initActivity() {
     if (!document.getElementById('activity-module')) return;
+
+    setupOwnerTabs();
 
     const entitySel = document.getElementById('activity-entity-filter');
     if (entitySel && !entitySel.dataset.filled) {
