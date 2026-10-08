@@ -582,17 +582,21 @@ body.viewer-mode .db-backup { display:none; }
      se pintaría POR ENCIMA del contenido y lo velaría. */
   background:
     linear-gradient(to bottom,
-      rgba(255, 255, 255, 0.45) 0px,
-      rgba(255, 255, 255, 0) 120px),
+      rgba(255, 255, 255, 0.55) 0px,
+      rgba(255, 255, 255, 0) 150px),
     linear-gradient(135deg,
-      rgba(255, 255, 255, 0.40) 0%,
-      rgba(255, 255, 255, 0.08) 34%,
-      rgba(255, 255, 255, 0) 55%),
-    rgba(255, 255, 255, 0.70);
-  backdrop-filter: blur(52px) saturate(170%);
-  -webkit-backdrop-filter: blur(52px) saturate(170%);
-  border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
+      rgba(255, 255, 255, 0.50) 0%,
+      rgba(255, 255, 255, 0.10) 32%,
+      rgba(255, 255, 255, 0) 52%),
+    rgba(255, 255, 255, 0.50);
+  /* brightness y contrast son la clave para bajar tanto la capa blanca:
+     aclaran y aplanan lo que hay detrás, de modo que llega como un campo
+     de color uniforme en vez de formas con contraste. Sin eso, a 0.50 el
+     dashboard se leería a través del cristal. */
+  backdrop-filter: blur(60px) saturate(180%) brightness(1.18) contrast(0.82);
+  -webkit-backdrop-filter: blur(60px) saturate(180%) brightness(1.18) contrast(0.82);
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
   box-shadow:
     0 44px 100px -22px rgba(8, 12, 24, 0.58),
     0 2px 10px rgba(8, 12, 24, 0.12),
@@ -614,6 +618,10 @@ body.viewer-mode .db-backup { display:none; }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   :global(.dbp-modal)   { background: #ffffff; }
   :global(.dbp-overlay) { background: rgba(10, 14, 28, 0.72); }
+  /* Sin cristal detrás, las piezas translúcidas se vuelven sólidas. */
+  :global(.dbp-kpi),
+  :global(.dbp-table-scroll) { background: #ffffff; }
+  :global(.dbp-chart)        { background: #f8fafc; }
 }
 :global(.dbp-overlay.dbp-show .dbp-modal) {
   transform: none;
@@ -687,22 +695,23 @@ body.viewer-mode .db-backup { display:none; }
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   padding: 16px 28px;
-  background: rgba(248, 250, 252, 0.26);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  /* Sin fondo propio: esta franja deja ver el cristal de la ventana. */
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
 }
 :global(.dbp-kpi) {
   display: flex; flex-direction: column; gap: 4px;
   padding: 12px 14px;
-  /* Casi opaca: es donde van las cifras y tienen que destacar sobre el
-     cristal, no fundirse con él. Lleva su propio reflejo arriba para
-     que parezca una pastilla de vidrio sobre el vidrio. */
+  /* Pastillas de vidrio sobre el vidrio: translúcidas, con su reflejo
+     arriba. Las cifras son grandes y en negrita, así que aguantan esta
+     opacidad sin perder nitidez. */
   background:
-    linear-gradient(to bottom, rgba(255,255,255,0.96), rgba(255,255,255,0.84));
-  border: 1px solid rgba(255, 255, 255, 0.95);
+    linear-gradient(to bottom, rgba(255,255,255,0.78), rgba(255,255,255,0.52));
+  border: 1px solid rgba(255, 255, 255, 0.8);
   box-shadow:
-    0 2px 8px rgba(15, 23, 42, 0.07),
-    inset 0 1px 0 rgba(255, 255, 255, 1);
-  border-radius: 16px;
+    0 2px 10px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  border-radius: 18px;
   border-left: 3px solid var(--c);
   transition: transform .2s ease, box-shadow .2s ease;
 }
@@ -745,8 +754,8 @@ body.viewer-mode .db-backup { display:none; }
   min-width: 0;   /* ver nota de arriba */
 }
 :global(.dbp-chart) {
-  background: rgba(248, 250, 252, 0.26);
-  border-right: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.10);
+  border-right: 1px solid rgba(255, 255, 255, 0.45);
 }
 :global(.dbp-section-hdr) {
   display: flex; align-items: center; justify-content: space-between;
@@ -933,13 +942,13 @@ body.viewer-mode .db-backup { display:none; }
 :global(.dbp-table-scroll) {
   flex: 1; min-height: 0;
   overflow: auto;
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  border-radius: 18px;
-  /* La tabla es lo más denso de leer: va casi opaca, y es lo que
-     permite que el marco de la ventana pueda ser más transparente. */
-  background: rgba(255, 255, 255, 0.93);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  /* La más sólida de las piezas: es texto pequeño y denso, y es lo que
+     permite que todo lo demás pueda ser más transparente. */
+  background: rgba(255, 255, 255, 0.78);
   box-shadow:
-    0 2px 10px rgba(15, 23, 42, 0.07),
+    0 3px 14px rgba(15, 23, 42, 0.07),
     inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 :global(.dbp-table-scroll::-webkit-scrollbar) { width: 8px; height: 8px; }
@@ -955,7 +964,8 @@ body.viewer-mode .db-backup { display:none; }
   position: sticky; top: 0; z-index: 1;
   /* Opaca por obligación, no por estética: es cabecera fija y las filas
      pasan por debajo al desplazar. Translúcida se verían a través. */
-  background: #f4f7fb;
+  background: #f2f6fb;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 :global(.dbp-table th) {
   text-align: left;
