@@ -39,6 +39,9 @@ const SUBCATEGORY_DATA = {
       { id: 'SFP',              title: 'SFP',              description: 'Módulos de Fibra Óptica', label: 'Networks', color: '#0a1e35' },
       { id: 'Firewall',         title: 'Firewall',         description: 'Seguridad Perimetral',   label: 'Networks', color: '#0f1520' },
       { id: 'Planta Telefónica',title: 'Planta Telefónica',description: 'Centralitas y PBX IP',  label: 'Networks', color: '#0c1a2e' },
+      // El identificador sigue siendo 'AP' porque es lo que llevan guardados
+      // los dispositivos ya registrados; solo cambia el nombre visible.
+      { id: 'AP',               title: 'Access Point',     description: 'Puntos de Acceso WiFi',  label: 'Networks', color: '#09243a' },
     ],
   },
   isp: {
@@ -47,7 +50,6 @@ const SUBCATEGORY_DATA = {
       { id: 'ISPs General',  title: 'ISPs General',  description: 'Proveedores de Internet',   label: 'ISP', color: '#041510' },
       { id: 'Controladoras', title: 'Controladoras', description: 'Controladoras Wireless',    label: 'ISP', color: '#0a1929' },
       { id: 'Routers',       title: 'Routers',       description: 'Enrutadores de Red',        label: 'ISP', color: '#1a1025' },
-      { id: 'AP',            title: 'AP',            description: 'Puntos de Acceso WiFi',     label: 'ISP', color: '#2b1d06' },
       { id: 'Reportes',      title: 'Reportes',      description: 'Informes y Estadísticas',   label: 'ISP', color: '#13112a' },
     ],
   },

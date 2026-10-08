@@ -4,12 +4,38 @@
 import { store, save, genId, getAllDevices } from '../../store.js';
 import { icons } from '../../icons.js';
 import { showModal, closeModal } from '../../modal.js';
+import { escapeHtml } from '../../utils.js';
 import { generatePagination, deleteStandaloneDevice } from '../devices.js';
 
 // Estado del módulo (movido desde devices.js)
 let currentPageAps = 1;
 const APS_PER_PAGE = 20;
 let apFilters = {};
+
+// ─────────────────────────────────────────────────────────────
+// Redes del AP
+//
+// Un punto de acceso publica varias redes a la vez (corporativa,
+// invitados, IoT…), cada una con su VLAN y su clave. Se guardan en
+// `ssids`, que viaja en la columna `attributes` del dispositivo: no
+// hace falta tocar la base de datos.
+//
+// Los AP registrados antes de esto tienen un solo SSID en campos
+// planos; se leen igual para no perder nada.
+// ─────────────────────────────────────────────────────────────
+function redesDe(d) {
+    if (Array.isArray(d?.ssids) && d.ssids.length) return d.ssids;
+    if (d?.ssid) return [{ ssid: d.ssid, vlan: d.vlan || '', password: d.password || '' }];
+    return [];
+}
+
+// Una línea por red, para que SSID, VLAN y contraseña queden alineados
+// entre sí en las tres columnas de la tabla.
+function columnaRedes(d, campo) {
+    const redes = redesDe(d);
+    if (!redes.length) return '—';
+    return redes.map(n => `<div>${escapeHtml(n[campo] || '—')}</div>`).join('');
+}
 
 export function renderApsTable(allDevs) {
     const tbody = document.getElementById('devices-tbody');
@@ -41,8 +67,10 @@ export function renderApsTable(allDevs) {
     const filteredDevs = devs.filter(d => {
         const regName = d.regionId ? (store.regions.find(r => r.id === d.regionId) || {}).name || '' : '';
 
+        const redesTxt = redesDe(d).map(n => `${n.ssid} ${n.vlan}`).join(' ');
+
         if (globalSearchText) {
-            const searchStr = `${d.name} ${regName} ${d.area} ${d.brand} ${d.model} ${d.serial} ${d.ip} ${d.mac} ${d.ssid} ${d.vlan}`.toLowerCase();
+            const searchStr = `${d.name} ${regName} ${d.area} ${d.brand} ${d.model} ${d.serial} ${d.ip} ${d.mac} ${redesTxt}`.toLowerCase();
             if (!searchStr.includes(globalSearchText)) {
                 return false;
             }
@@ -50,6 +78,10 @@ export function renderApsTable(allDevs) {
 
         const dropdownFiltersOK = Object.entries(apFilters).every(([key, filterValue]) => {
             if (!filterValue || key === 'globalSearch') return true;
+            // SSID y VLAN ya no son un valor suelto: basta con que alguna de
+            // las redes del AP coincida.
+            if (key === 'ssid') return redesDe(d).some(n => n.ssid === filterValue);
+            if (key === 'vlan') return redesDe(d).some(n => n.vlan === filterValue);
             const deviceValue = key === 'regionName' ? regName : d[key];
             return String(deviceValue || '') === String(filterValue);
         });
@@ -82,9 +114,9 @@ export function renderApsTable(allDevs) {
                 <td style="white-space:nowrap; font-family:'JetBrains Mono',monospace; font-size:11px;">${d.serial || '—'}</td>
                 <td style="white-space:nowrap; font-family:'JetBrains Mono',monospace; font-size:11px;">${d.ip || '—'}</td>
                 <td style="white-space:nowrap; font-family:'JetBrains Mono',monospace; font-size:11px;">${d.mac || '—'}</td>
-                <td style="white-space:nowrap; font-size:12px;">${d.ssid || '—'}</td>
-                <td style="white-space:nowrap; font-size:12px;">${d.vlan || '—'}</td>
-                <td style="white-space:nowrap; font-size:12px;">${d.password || '—'}</td>
+                <td style="white-space:nowrap; font-size:12px;">${columnaRedes(d, 'ssid')}</td>
+                <td style="white-space:nowrap; font-size:12px;">${columnaRedes(d, 'vlan')}</td>
+                <td style="white-space:nowrap; font-size:12px;">${columnaRedes(d, 'password')}</td>
                 <td style="white-space:nowrap;">
                     <button class="btn-icon btn-edit-ap" data-id="${d.id}">${icons.edit}</button>
                     <button class="btn-icon danger btn-delete-ap" data-id="${d.id}">${icons.trash}</button>
@@ -133,6 +165,10 @@ export function showApForm(id) {
     const regOpts = store.regions.map(r => `<option value="${r.id}" ${d && d.regionId === r.id ? 'selected' : ''}>${r.name}</option>`).join('');
     const areaOpts = store.areas.map(a => `<option value="${a.name}" ${d && d.area === a.name ? 'selected' : ''}>${a.name}</option>`).join('');
 
+    // Un AP nuevo arranca con una fila vacía para que se vea qué hay que llenar.
+    const redes = redesDe(d);
+    const filasIniciales = (redes.length ? redes : [{}]).map(filaRedHtml).join('');
+
     showModal('Gestión de Access Point', `
         <div class="form-row">
             <div class="form-group"><label>Nombre del AP</label><input id="fap-name" value="${d ? d.name || '' : ''}" placeholder="Ej: AP-OFICINA-01"></div>
@@ -155,14 +191,23 @@ export function showApForm(id) {
             <div class="form-group"><label>IP</label><input id="fap-ip" value="${d ? d.ip || '' : ''}" placeholder="192.168.1.50"></div>
             <div class="form-group"><label>MAC</label><input id="fap-mac" value="${d ? d.mac || '' : ''}" placeholder="AA:BB:CC:DD:EE:FF"></div>
         </div>
-        <div class="form-row">
-            <div class="form-group"><label>SSID</label><input id="fap-ssid" value="${d ? d.ssid || '' : ''}" placeholder="Nombre de la red WiFi"></div>
-            <div class="form-group"><label>VLAN</label><input id="fap-vlan" value="${d ? d.vlan || '' : ''}" placeholder="Ej: 10, 20..."></div>
+        <div style="margin-top:4px;padding-top:16px;border-top:1px dashed var(--border)">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
+                <label style="font-size:11.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin:0;">
+                    Redes WiFi (SSID)
+                </label>
+                <button type="button" class="btn btn-outline btn-sm" id="fap-ssid-add" style="font-size:12px;">+ Añadir SSID</button>
+            </div>
+            <div id="fap-ssid-list">${filasIniciales}</div>
+            <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px;">
+                Un AP puede publicar varias redes. Las filas sin nombre se descartan.
+            </div>
         </div>
-        <div class="form-group"><label>Contraseña</label><input type="text" id="fap-password" value="${d ? d.password || '' : ''}" placeholder="Contraseña de la red WiFi"></div>
     `, () => {
         const name = document.getElementById('fap-name').value.trim();
         if (!name) return alert('El nombre es requerido');
+
+        const redes = leerRedesDelFormulario();
 
         const obj = {
             name,
@@ -175,9 +220,12 @@ export function showApForm(id) {
             serial: document.getElementById('fap-serial').value.trim(),
             ip: document.getElementById('fap-ip').value.trim(),
             mac: document.getElementById('fap-mac').value.trim(),
-            ssid: document.getElementById('fap-ssid').value.trim(),
-            vlan: document.getElementById('fap-vlan').value.trim(),
-            password: document.getElementById('fap-password').value.trim(),
+            ssids: redes,
+            // Espejo en los campos planos: la tabla General y la ficha del
+            // bastidor siguen leyendo d.ssid / d.vlan / d.password.
+            ssid:     redes.map(n => n.ssid).join(', '),
+            vlan:     redes.map(n => n.vlan).filter(Boolean).join(', '),
+            password: redes.map(n => n.password).filter(Boolean).join(', ')
         };
 
         if (d) Object.assign(d, obj);
@@ -187,6 +235,48 @@ export function showApForm(id) {
         closeModal();
         renderApsTable(getAllDevices());
     }, id ? 'Guardar cambios' : 'Añadir AP');
+
+    // showModal ya dejó el diálogo en el DOM, así que el repetidor se
+    // engancha aquí mismo.
+    const lista = document.getElementById('fap-ssid-list');
+    const enlazarBorrado = () => {
+        lista.querySelectorAll('.fap-ssid-del').forEach(btn => {
+            btn.onclick = () => {
+                // Siempre queda al menos una fila: si es la última, se vacía
+                // en lugar de desaparecer y dejar el bloque huérfano.
+                if (lista.querySelectorAll('.fap-ssid-row').length === 1) {
+                    btn.closest('.fap-ssid-row').querySelectorAll('input').forEach(i => { i.value = ''; });
+                    return;
+                }
+                btn.closest('.fap-ssid-row').remove();
+            };
+        });
+    };
+    document.getElementById('fap-ssid-add').onclick = () => {
+        lista.insertAdjacentHTML('beforeend', filaRedHtml());
+        enlazarBorrado();
+        lista.lastElementChild.querySelector('.fap-ssid-name')?.focus();
+    };
+    enlazarBorrado();
+}
+
+function filaRedHtml(n = { ssid: '', vlan: '', password: '' }) {
+    return `<div class="fap-ssid-row" style="display:grid;grid-template-columns:minmax(0,1fr) 92px minmax(0,1fr) 36px;gap:10px;align-items:end;margin-bottom:10px;">
+        <div class="form-group" style="margin:0"><label>SSID</label><input class="fap-ssid-name" value="${escapeHtml(n.ssid || '')}" placeholder="Ej: COMAYMA-CORP"></div>
+        <div class="form-group" style="margin:0"><label>VLAN</label><input class="fap-ssid-vlan" value="${escapeHtml(n.vlan || '')}" placeholder="10"></div>
+        <div class="form-group" style="margin:0"><label>Contraseña</label><input class="fap-ssid-pass" value="${escapeHtml(n.password || '')}" placeholder="Clave de la red"></div>
+        <button type="button" class="btn-icon danger fap-ssid-del" title="Quitar esta red" style="margin-bottom:4px">${icons.trash}</button>
+    </div>`;
+}
+
+function leerRedesDelFormulario() {
+    return [...document.querySelectorAll('#fap-ssid-list .fap-ssid-row')]
+        .map(f => ({
+            ssid:     f.querySelector('.fap-ssid-name').value.trim(),
+            vlan:     f.querySelector('.fap-ssid-vlan').value.trim(),
+            password: f.querySelector('.fap-ssid-pass').value.trim()
+        }))
+        .filter(n => n.ssid);   // sin nombre no hay red que guardar
 }
 
 function setupApFilters(allDevs) {
@@ -242,10 +332,14 @@ function setupApFilters(allDevs) {
     const uniqueBrands = [...new Set(allAps.map(c => c.brand).filter(Boolean).sort())];
     wrapper.appendChild(createSelect('brand', 'Marca', uniqueBrands, apFilters.brand));
 
-    const uniqueSsids = [...new Set(allAps.map(c => c.ssid).filter(Boolean).sort())];
+    // Cada AP puede tener varias redes: el desplegable lista todas las que
+    // existen, no el campo suelto de cada dispositivo.
+    const todasLasRedes = allAps.flatMap(redesDe);
+
+    const uniqueSsids = [...new Set(todasLasRedes.map(n => n.ssid).filter(Boolean))].sort();
     wrapper.appendChild(createSelect('ssid', 'SSID', uniqueSsids, apFilters.ssid));
 
-    const uniqueVlans = [...new Set(allAps.map(c => c.vlan).filter(Boolean).sort())];
+    const uniqueVlans = [...new Set(todasLasRedes.map(n => n.vlan).filter(Boolean))].sort();
     wrapper.appendChild(createSelect('vlan', 'VLAN', uniqueVlans, apFilters.vlan));
 
     filterContainer.appendChild(wrapper);

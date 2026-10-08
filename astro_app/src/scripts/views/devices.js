@@ -38,7 +38,7 @@ const CATEGORY_MAP = [
         description: 'Infraestructura de Red',
         gradient: 'linear-gradient(135deg, #0284c7 0%, #082f49 100%)',
         accent: '#7dd3fc',
-        subcategories: ['Switch', 'SFP', 'Firewall', 'Planta Telefónica'],
+        subcategories: ['Switch', 'SFP', 'Firewall', 'Planta Telefónica', 'AP'],
         svgPath: `<rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><circle cx="18" cy="7" r="1" fill="currentColor"/><circle cx="14" cy="7" r="1" fill="currentColor"/>`
     },
     {
@@ -47,7 +47,7 @@ const CATEGORY_MAP = [
         description: 'Conectividad e Internet',
         gradient: 'linear-gradient(135deg, #059669 0%, #064e3b 100%)',
         accent: '#6ee7b7',
-        subcategories: ['AP', 'Controladoras', 'Routers', 'Reportes', 'ISPs General'],
+        subcategories: ['Controladoras', 'Routers', 'Reportes', 'ISPs General'],
         svgPath: `<path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/>`
     },
     {
@@ -87,6 +87,14 @@ const CATEGORY_MAP = [
         svgPath: `<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>`
     }
 ];
+
+// Nombre visible de una subcategoría cuando difiere del identificador.
+// El identificador no se toca: es el que llevan guardados los dispositivos
+// en su campo `device`, así que renombrarlo dejaría huérfano lo ya registrado.
+const SUBCAT_LABELS = {
+    'AP': 'Access Point'
+};
+const subcatLabel = s => SUBCAT_LABELS[s] ?? s;
 
 // Subcategory color palette (cycles)
 const SUBCAT_PALETTE = [
@@ -275,8 +283,8 @@ function updateBreadcrumb() {
                     ? `<button style="${linkStyle}" onmouseover="${linkHover}" onmouseout="${linkUnhover}" id="bc-cat">${catName}</button>`
                     : `<span class="dev-bc-current">${catName}</span>`}
                 <span class="dev-bc-sep">›</span>
-                <span class="dev-bc-current">${currentSubcategory === '__all__' ? 'Todos' : currentSubcategory}</span>`;
-            title.textContent = currentSubcategory === '__all__' ? 'Todos los Dispositivos' : currentSubcategory;
+                <span class="dev-bc-current">${currentSubcategory === '__all__' ? 'Todos' : subcatLabel(currentSubcategory)}</span>`;
+            title.textContent = currentSubcategory === '__all__' ? 'Todos los Dispositivos' : subcatLabel(currentSubcategory);
             // Hide add button in General/Todos view — no single device type to add
             btnAdd.style.display = currentSubcategory === '__all__' ? 'none' : 'inline-flex';
         }
