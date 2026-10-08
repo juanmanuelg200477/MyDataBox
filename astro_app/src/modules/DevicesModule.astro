@@ -15,7 +15,7 @@ import PageTitleTech from '../components/PageTitleTech.jsx';
 
     <!-- ── HEADER ─────────────────────────────────────────── -->
     <div class="page-header" id="dev-header">
-        <div style="min-width:0">
+        <div class="dev-title-head">
             <nav class="dev-breadcrumb" id="dev-breadcrumb" style="display:none"></nav>
             <!-- El <h1> sigue siendo el título de verdad: lo escribe
                  devices.js al navegar y es lo que leen los lectores de
@@ -166,6 +166,17 @@ import PageTitleTech from '../components/PageTitleTech.jsx';
     border: 0;
 }
 
+/* La cabecera es flex y esta columna no crecía: su ancho salía del
+   contenido. Con el <h1> recortado a 1px y el lienzo medido en
+   porcentaje —que para calcular el ancho intrínseco cuenta como cero—
+   la columna se quedaba en 1px, y el lienzo dibujaba el título a tamaño
+   microscópico: invisible. Creciendo ocupa el hueco libre y el
+   porcentaje ya tiene contra qué resolverse. */
+.dev-title-head {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
 .dev-title-canvas {
     width: 100%;
     height: 62px;
@@ -176,6 +187,9 @@ import PageTitleTech from '../components/PageTitleTech.jsx';
 }
 
 @media (max-width: 768px) {
+    /* Aquí la cabecera pasa a columna: sin esto la fila del título
+       volvería a encogerse al ancho de su contenido. */
+    .dev-title-head  { align-self: stretch; }
     .dev-title-canvas { height: 48px; }
 }
 
