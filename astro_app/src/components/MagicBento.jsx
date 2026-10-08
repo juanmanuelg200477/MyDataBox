@@ -42,6 +42,7 @@ const SUBCATEGORY_DATA = {
       // El identificador sigue siendo 'AP' porque es lo que llevan guardados
       // los dispositivos ya registrados; solo cambia el nombre visible.
       { id: 'AP',               title: 'Access Point',     description: 'Puntos de Acceso WiFi',  label: 'Networks', color: '#09243a' },
+      { id: 'Biométricos',      title: 'Biométricos',      description: 'Control de Acceso y Asistencia', label: 'Networks', color: '#0b2030' },
     ],
   },
   isp: {

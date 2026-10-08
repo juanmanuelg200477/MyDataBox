@@ -9,6 +9,7 @@ import { renderAntennasTable, showAntennaForm } from './devices/antennas.js';
 import { renderSwitchesTable, showSwitchForm } from './devices/switches.js';
 import { renderSfpsTable, showSfpForm } from './devices/sfp.js';
 import { renderApsTable, showApForm } from './devices/ap.js';
+import { renderBiometricosTable, showBiometricoForm } from './devices/biometricos.js';
 import { renderUpsTable, showUpsForm } from './devices/ups.js';
 import { renderSuppressorsTable, showSuppressorForm } from './devices/suppressors.js';
 import { renderPdusTable, showPduForm } from './devices/pdu.js';
@@ -38,7 +39,7 @@ const CATEGORY_MAP = [
         description: 'Infraestructura de Red',
         gradient: 'linear-gradient(135deg, #0284c7 0%, #082f49 100%)',
         accent: '#7dd3fc',
-        subcategories: ['Switch', 'SFP', 'Firewall', 'Planta Telefónica', 'AP'],
+        subcategories: ['Switch', 'SFP', 'Firewall', 'Planta Telefónica', 'AP', 'Biométricos'],
         svgPath: `<rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><circle cx="18" cy="7" r="1" fill="currentColor"/><circle cx="14" cy="7" r="1" fill="currentColor"/>`
     },
     {
@@ -175,6 +176,7 @@ export function initDevices() {
         else if (currentSubcategory === 'Switch') showSwitchForm(null);
         else if (currentSubcategory === 'SFP') showSfpForm(null);
         else if (currentSubcategory === 'AP') showApForm(null);
+        else if (currentSubcategory === 'Biométricos') showBiometricoForm(null);
         else if (currentSubcategory === 'UPS') showUpsForm(null);
         else if (currentSubcategory === 'Supresores') showSuppressorForm(null);
         else if (currentSubcategory === 'PDU') showPduForm(null);
@@ -482,6 +484,10 @@ function renderDevicesTable(subcategoryFilter) {
     }
     if (subcategoryFilter === 'AP') {
         renderApsTable(getAllDevices());
+        return;
+    }
+    if (subcategoryFilter === 'Biométricos') {
+        renderBiometricosTable(getAllDevices());
         return;
     }
     if (subcategoryFilter === 'UPS') {
@@ -1020,11 +1026,12 @@ function renderAllDevicesTable() {
         const isSwitch   = type === 'switch';
         const isSfp      = type === 'sfp';
         const isAp       = type === 'ap';
+        const isBio      = type === 'biométricos';
         const isUps      = type === 'ups';
 
         // Which columns have meaningful data per type
-        const hasIp          = isCamera || isNvr || isAntenna || isSwitch || isAp;
-        const hasMac         = isCamera || isNvr || isAntenna || isSwitch || isAp;
+        const hasIp          = isCamera || isNvr || isAntenna || isSwitch || isAp || isBio;
+        const hasMac         = isCamera || isNvr || isAntenna || isSwitch || isAp || isBio;
         const hasChannel     = isCamera;                              // NVR channel the camera is assigned to
         const hasNvrField    = isCamera;                              // NVR name for cameras
         const hasSwPort      = isCamera || isNvr || isAntenna;        // Switch port
@@ -1077,6 +1084,7 @@ function _cleanupAllSpecializedFilters() {
     [
         'cam-filters-wrapper', 'nvr-filters-wrapper', 'antenna-filters-wrapper',
         'switch-filters-wrapper', 'sfp-filters-wrapper', 'ap-filters-wrapper',
+        'bio-filters-wrapper',
         'ups-filters-wrapper', 'suppressor-filters-wrapper', 'pdu-filters-wrapper',
         'patchpanel-filters-wrapper', 'bandeja-fibra-filters-wrapper',
         'organizador-filters-wrapper', 'patchcord-filters-wrapper',
@@ -1085,7 +1093,7 @@ function _cleanupAllSpecializedFilters() {
 
     [
         'camera-pagination', 'nvr-pagination', 'antenna-pagination',
-        'switch-pagination', 'sfp-pagination', 'ap-pagination',
+        'switch-pagination', 'sfp-pagination', 'ap-pagination', 'bio-pagination',
         'ups-pagination', 'suppressor-pagination', 'pdu-pagination',
         'patchpanel-pagination', 'bandeja-fibra-pagination',
         'organizador-pagination', 'patchcord-pagination', 'patchcord-fibra-pagination'
@@ -1093,7 +1101,7 @@ function _cleanupAllSpecializedFilters() {
 
     const thead = tableContainer.querySelector('table thead');
     if (thead) {
-        ['isCamera', 'isNvr', 'isAntenna', 'isSwitch', 'isSfp', 'isAp', 'isUps',
+        ['isCamera', 'isNvr', 'isAntenna', 'isSwitch', 'isSfp', 'isAp', 'isBio', 'isUps',
          'isSuppressor', 'isPdu', 'isPatchPanel', 'isBandejaFibra', 'isOrganizador',
          'isPatchcord', 'isPatchcordFibra', 'isAllDevices'].forEach(k => delete thead.dataset[k]);
     }

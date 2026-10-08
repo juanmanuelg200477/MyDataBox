@@ -215,6 +215,17 @@
     grid-column: span 2;
     grid-row: span 2;
   }
+
+  /* 6 items: rejilla pareja de 3×2. Con un héroe 2×2 las seis tarjetas
+     no llenan la rejilla de 4 columnas y quedaban huecos sueltos. */
+  .subcat-grid.subcat-count-6 {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: auto auto;
+  }
+  .subcat-grid.subcat-count-6 .magic-bento-card:nth-child(n) {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
 }
 
 /* Border glow effect */
