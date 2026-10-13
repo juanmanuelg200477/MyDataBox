@@ -210,122 +210,201 @@
 }
 
 /* ============================================================
-   RESPONSIVE
+   TELÉFONO — pestaña lateral de ramas (estilo Edge Panel de Samsung)
+   Sustituye al botón azul flotante. La píldora de arriba queda solo
+   para escritorio y esto, solo para teléfono.
    ============================================================ */
 
+.edge-root { display: none; }
+
 @media (max-width: 768px) {
-    .card-nav-container {
-        top: auto;
-        left: auto;
-        bottom: 24px;
-        right: 24px;
-        transform: none;
-        width: 60px; /* Tamaño del FAB cerrado */
-        transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    
-    .card-nav-container.open {
-        width: 270px; /* Ancho extendido al abrir */
-    }
+    .card-nav-container { display: none; }
 
-    .card-nav {
-        /* Permite que GSAP administre el alto base=60 */
-        width: 100%;
-        border-radius: 30px; /* Forma de botón circular cerrado */
-        background: rgba(255, 255, 255, 0.75);
-        backdrop-filter: blur(24px) saturate(150%);
-        -webkit-backdrop-filter: blur(24px) saturate(150%);
-        border: 1px solid rgba(255, 255, 255, 0.6);
-        box-shadow: 0 10px 40px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255,255,255,0.4);
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        transition: border-radius 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s;
-    }
-    
-    .card-nav.open {
-        border-radius: 24px; /* Menos redondo al abrirse */
-        background: rgba(255, 255, 255, 0.85); /* Un poco más opaco para que se lean las tarjetas */
-    }
+    .edge-root { display: block; }
 
-    .card-nav-top {
-        height: 60px;
-        position: absolute;
-        bottom: 0; /* Anclado al fondo de la burbuja */
-        top: auto;
-        width: 100%;
+    /* Pestañita pegada al borde izquierdo. El botón es más ancho que la
+       barrita que se ve (::before) para atinarle fácil con el dedo; aun
+       así no pasa del margen de la página (16 px) más que unos pocos px. */
+    .edge-handle {
+        position: fixed;
+        left: 0;
+        top: 42%;
+        transform: translateY(-50%);
+        z-index: var(--z-cardnav);
+        width: 22px;
+        height: 84px;
         padding: 0;
-        justify-content: flex-end; /* Alinear a la derecha */
+        border: 0;
         background: transparent;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .hamburger-menu-cn {
-        width: 60px;
-        height: 60px;
-        padding: 0;
-        margin: 0;
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        color: white;
-        border-radius: 50%;
-        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.45);
+    .edge-handle::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 12px;
+        bottom: 12px;
+        width: 8px;
+        border-radius: 0 7px 7px 0;
+        background: rgba(72, 72, 78, 0.58);
+        backdrop-filter: blur(12px) saturate(160%);
+        -webkit-backdrop-filter: blur(12px) saturate(160%);
+        box-shadow:
+            0 4px 14px rgba(15, 23, 42, 0.22),
+            inset -1px 0 0 rgba(255, 255, 255, 0.28),
+            inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    }
+
+    .edge-handle:focus-visible { outline: none; }
+    .edge-handle:focus-visible::before { box-shadow: 0 0 0 2px var(--primary); }
+
+    /* Abierto: la pestaña se mete en el borde, como en Samsung */
+    .edge-root.open .edge-handle {
+        opacity: 0;
+        transform: translate(-12px, -50%);
+        pointer-events: none;
+    }
+
+    /* Capa invisible que recoge el toque de fuera para cerrar. No
+       oscurece: en la referencia el fondo se queda tal cual. */
+    .edge-scrim {
+        position: fixed;
+        inset: 0;
+        z-index: calc(var(--z-cardnav) - 1);
+        display: none;
+    }
+
+    .edge-root.open .edge-scrim { display: block; }
+
+    /* El panel: vidrio gris oscuro, muy redondeado, separado del borde.
+       Se centra en la misma altura que la pestaña. */
+    .edge-panel {
+        position: fixed;
+        left: 8px;
+        top: 42%;
+        z-index: var(--z-cardnav);
+        width: 86px;
+        max-height: calc(100% - 24px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 14px 8px 12px;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        border-radius: 26px;
+        background: rgba(72, 72, 78, 0.74);
+        backdrop-filter: blur(24px) saturate(170%);
+        -webkit-backdrop-filter: blur(24px) saturate(170%);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        box-shadow:
+            0 18px 48px rgba(15, 23, 42, 0.32),
+            0 4px 14px rgba(15, 23, 42, 0.16),
+            inset 0 1px 0 rgba(255, 255, 255, 0.16);
+        transform: translate(calc(-100% - 16px), -50%);
+        opacity: 0;
+        visibility: hidden;
+        transition:
+            transform 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+            opacity 0.25s ease,
+            visibility 0s linear 0.42s;
+    }
+
+    .edge-root.open .edge-panel {
+        transform: translate(0, -50%);
+        opacity: 1;
+        visibility: visible;
+        transition:
+            transform 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+            opacity 0.2s ease,
+            visibility 0s;
+    }
+
+    /* Cada elemento entra un poco después que el anterior (--i en el HTML) */
+    .edge-panel > * {
+        opacity: 0;
+        transform: translateX(-10px);
+        transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .edge-root.open .edge-panel > * {
+        opacity: 1;
+        transform: none;
+        transition-delay: calc(0.06s + var(--i, 0) * 0.04s);
+    }
+
+    .edge-app {
+        display: flex;
+        flex-direction: column;
         align-items: center;
         gap: 6px;
-        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s;
-        z-index: 10;
-        position: relative;
+        width: 100%;
+        padding: 0;
+        border: 0;
+        background: none;
+        font: inherit;
+        color: #fff;
+        text-decoration: none;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
     }
 
-    .hamburger-menu-cn:hover, .hamburger-menu-cn:active {
-        transform: scale(0.95);
-        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.5);
-    }
-    
-    /* El icono de Hamburguesa (líneas) animadas en una X */
-    .hamburger-line-cn {
-        background-color: white;
-        width: 22px;
-        height: 2px;
-        border-radius: 2px;
-        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s;
-        transform-origin: center;
-    }
-
-    .card-nav-container.open .hamburger-line-cn:first-child {
-        transform: translateY(4px) rotate(45deg);
-    }
-    
-    .card-nav-container.open .hamburger-line-cn:last-child {
-        transform: translateY(-4px) rotate(-45deg);
+    /* Ícono tipo app, con el color de la rama */
+    .edge-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        background: linear-gradient(150deg, var(--c1) 0%, var(--c2) 100%);
+        box-shadow:
+            0 6px 14px rgba(0, 0, 0, 0.28),
+            inset 0 1px 0 rgba(255, 255, 255, 0.35),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+        transition: transform 0.18s ease;
     }
 
-    .logo-container-cn, .card-nav-cta-button {
-        display: none; /* Escondemos todo texto extra */
+    .edge-icon svg { width: 25px; height: 25px; }
+
+    .edge-app:active .edge-icon { transform: scale(0.92); }
+
+    /* La rama en la que ya se está: aro blanco separado del ícono */
+    .edge-app.is-current .edge-icon {
+        outline: 2px solid rgba(255, 255, 255, 0.92);
+        outline-offset: 3px;
     }
 
-    .card-nav-content {
-        top: auto;
-        bottom: 60px; /* Posicionado por encima del FAB */
-        flex-direction: column-reverse; /* Las ramas apiladas de abajo hacia arriba */
-        align-items: stretch;
-        gap: 10px;
-        padding: 14px;
+    .edge-label {
+        font-size: 10.5px;
+        font-weight: 600;
+        line-height: 1.15;
+        letter-spacing: -0.1px;
+        color: rgba(255, 255, 255, 0.9);
+        text-align: center;
+        white-space: nowrap;
     }
 
-    .nav-card {
-        height: auto;
-        min-height: 65px;
-        flex: 1 1 auto;
-        max-height: none;
-    }
+    .edge-app:focus-visible { outline: none; }
+    .edge-app:focus-visible .edge-icon { outline: 2px solid #93c5fd; outline-offset: 3px; }
 
-    .nav-card-label {
-        font-size: 15px;
+    /* Línea de puntos, como la que separa los grupos en Samsung */
+    .edge-sep {
+        display: block;
+        width: 58px;
+        height: 3px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.7) 1.1px, transparent 1.5px) center / 7px 3px repeat-x;
     }
+}
 
-    .nav-card-person {
-        font-size: 12.5px;
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+    .edge-handle,
+    .edge-panel,
+    .edge-panel > * {
+        transition-duration: 0.01ms !important;
+        transition-delay: 0s !important;
     }
 }

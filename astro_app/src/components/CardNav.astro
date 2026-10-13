@@ -6,32 +6,51 @@ let activeBranch = "infra";
 if (currentPath.startsWith('/support')) activeBranch = "support";
 if (currentPath.startsWith('/servers')) activeBranch = "servers";
 
+// Íconos de las ramas para el panel lateral del teléfono (trazos de Lucide)
+const svg = (cuerpo: string) =>
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${cuerpo}</svg>`;
+
+// short, icon, c1/c2 → solo los usa el panel del teléfono. Los colores son
+// los mismos de cada rama en el login (azul, ámbar, morado).
 const items = [
   {
     label: "Branch Infrastructure",
+    short: "Infrastructure",
     bgColor: "#0D0716",
     textColor: "#fff",
-    onClick: "window.location.href='/login?branch=infra'",
+    href: "/login?branch=infra",
     isActive: activeBranch === "infra",
-    people: ["Juan Manuel García"]
+    people: ["Juan Manuel García"],
+    c1: "#60a5fa", c2: "#2563eb",
+    icon: svg('<rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/>')
   },
   {
-    label: "Branch Support", 
+    label: "Branch Support",
+    short: "Support",
     bgColor: "#170D27",
     textColor: "#fff",
-    onClick: "window.location.href='/login?branch=support'",
+    href: "/login?branch=support",
     isActive: activeBranch === "support",
-    people: ["Adriana González", "Luz Morales"]
+    people: ["Adriana González", "Luz Morales"],
+    c1: "#fbbf24", c2: "#d97706",
+    icon: svg('<path d="M3 11h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Zm0 0a9 9 0 1 1 18 0m0 0v5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3Z"/><path d="M21 16v2a4 4 0 0 1-4 4h-5"/>')
   },
   {
     label: "Branch Servers",
-    bgColor: "#271E37", 
+    short: "Servers",
+    bgColor: "#271E37",
     textColor: "#fff",
-    onClick: "window.location.href='/login?branch=servers'",
+    href: "/login?branch=servers",
     isActive: activeBranch === "servers",
-    people: ["Bryan Hernández"]
+    people: ["Bryan Hernández"],
+    c1: "#c084fc", c2: "#7e22ce",
+    icon: svg('<rect width="20" height="8" x="2" y="2" rx="2" ry="2"/><rect width="20" height="8" x="2" y="14" rx="2" ry="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/>')
   }
 ];
+
+// Panel del teléfono: la rama actual arriba y, tras la línea de puntos, el resto
+const actual = items.find(i => i.isActive);
+const otras  = items.filter(i => !i.isActive);
 ---
 
 <div class="card-nav-container">
@@ -71,7 +90,7 @@ const items = [
         <div
           class={`nav-card nav-card-item ${item.isActive ? 'active-branch' : 'clickable'}`}
           style={`background-color: ${item.bgColor}; color: ${item.textColor}`}
-          onclick={!item.isActive ? item.onClick : undefined}
+          onclick={!item.isActive ? `window.location.href='${item.href}'` : undefined}
         >
           <div class="nav-card-label">
             {item.label}
@@ -87,6 +106,34 @@ const items = [
         </div>
       ))}
     </div>
+  </nav>
+</div>
+
+<!-- ── Teléfono: pestaña lateral con las ramas, al estilo del Edge Panel
+     de Samsung. Sustituye al botón azul flotante; en escritorio sigue la
+     píldora de arriba y esto no se muestra (ver card-nav.css). ── -->
+<div id="edge-root" class="edge-root">
+  <div id="edge-scrim" class="edge-scrim"></div>
+  <button type="button" id="edge-handle" class="edge-handle"
+          aria-label="Abrir el panel de ramas" aria-expanded="false" aria-controls="edge-panel"></button>
+  <nav id="edge-panel" class="edge-panel" aria-label="Ramas" inert>
+    {actual && (
+      <button type="button" class="edge-app is-current" aria-current="page"
+              aria-label={`${actual.label} (rama actual)`}
+              style={`--i:0;--c1:${actual.c1};--c2:${actual.c2}`}>
+        <span class="edge-icon" set:html={actual.icon}></span>
+        <span class="edge-label">{actual.short}</span>
+      </button>
+    )}
+    <span class="edge-sep" style="--i:1" aria-hidden="true"></span>
+    {otras.map((item, idx) => (
+      <a class="edge-app" href={item.href} data-astro-reload
+         aria-label={`${item.label}: ${item.people.join(', ')}`}
+         style={`--i:${idx + 2};--c1:${item.c1};--c2:${item.c2}`}>
+        <span class="edge-icon" set:html={item.icon}></span>
+        <span class="edge-label">{item.short}</span>
+      </a>
+    ))}
   </nav>
 </div>
 
@@ -118,40 +165,13 @@ const items = [
     let isExpanded = false;
     let tl = null;
 
-    const calculateHeight = () => {
-      const isMobile = window.matchMedia('(max-width: 768px)').matches;
-      if (isMobile) {
-        const wasVisible = contentEl.style.visibility;
-        const wasPosition = contentEl.style.position;
-        const wasHeight = contentEl.style.height;
-
-        contentEl.style.visibility = 'visible';
-        contentEl.style.position = 'static';
-        contentEl.style.height = 'auto';
-        contentEl.style.width = '240px'; // Simular ancho expandido para medición exacta
-        contentEl.offsetHeight; // force reflow
-
-        const baseHeight = 60; // Mobile FAB height
-        const padding = 12;
-        const contentHeight = contentEl.scrollHeight;
-
-        contentEl.style.visibility = wasVisible;
-        contentEl.style.position = wasPosition;
-        contentEl.style.height = wasHeight;
-        contentEl.style.width = ''; // Limpiar wrap forzado
-
-        return baseHeight + contentHeight + padding;
-      }
-      return 220; // Default height for desktop cards
-    };
+    // Solo escritorio: en teléfono la píldora está oculta y las ramas van
+    // en la pestaña lateral (ver "Teléfono: pestaña lateral", más abajo).
+    const calculateHeight = () => 220; // alto con las tarjetas abiertas
 
     const createTimeline = () => {
-      const isMobile = window.matchMedia('(max-width: 768px)').matches;
-      const baseHeight = isMobile ? 60 : 46;
-      
-      gsap.set(navEl, { height: baseHeight, overflow: 'hidden' });
-      // Si es móvil, expanden desde abajo hacia arriba (y positivos significa empujar hacia abajo, entonces al invertir crecen de arriba hacia abajo. Oh wait, GSAP "from" means start offset.)
-      gsap.set(cards, { y: isMobile ? 15 : 50, opacity: 0 });
+      gsap.set(navEl, { height: 46, overflow: 'hidden' });
+      gsap.set(cards, { y: 50, opacity: 0 });
 
       const timeline = gsap.timeline({ paused: true });
 
@@ -208,5 +228,77 @@ const items = [
         tl.reverse();
       }
     });
+  });
+
+  // ── Teléfono: pestaña lateral de ramas ──────────────────────
+  // Se toca la pestañita del borde izquierdo y el panel sale de lado.
+  // Se cierra tocando fuera, deslizándolo hacia la izquierda, con Escape
+  // o tocando la rama en la que ya se está.
+  //
+  // Abrir deslizando desde el borde no se implementa a propósito: en
+  // Android con navegación por gestos, ese gesto es "atrás" y el sistema
+  // se lo queda antes que la página.
+
+  // Escape se escucha una sola vez por documento (como _resizeHandler) y
+  // cierra el panel de la página que esté montada.
+  let _cerrarPanelRamas = null;
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') _cerrarPanelRamas?.();
+  });
+
+  document.addEventListener('astro:page-load', () => {
+    const raiz    = document.getElementById('edge-root');
+    const pestana = document.getElementById('edge-handle');
+    const fondo   = document.getElementById('edge-scrim');
+    const panel   = document.getElementById('edge-panel');
+    if (!raiz || !pestana || !fondo || !panel) return;
+
+    const abrir = (e) => {
+      raiz.classList.add('open');
+      pestana.setAttribute('aria-expanded', 'true');
+      panel.inert = false;
+      // Con teclado (detail 0) el foco entra al panel; con el dedo no,
+      // para que no aparezca un anillo de foco sin motivo.
+      if (e?.detail === 0) panel.querySelector('.edge-app')?.focus();
+    };
+    const cerrar = () => {
+      if (!raiz.classList.contains('open')) return;
+      const teniaFoco = panel.contains(document.activeElement);
+      raiz.classList.remove('open');
+      pestana.setAttribute('aria-expanded', 'false');
+      panel.inert = true;
+      if (teniaFoco) pestana.focus();
+    };
+    _cerrarPanelRamas = cerrar;
+
+    pestana.addEventListener('click', abrir);
+    fondo.addEventListener('click', cerrar);
+    panel.querySelector('.is-current')?.addEventListener('click', cerrar);
+
+    // Deslizar el panel hacia la izquierda lo guarda. Mientras el dedo
+    // arrastra, el panel lo sigue; al soltar, o se va o vuelve a su sitio.
+    let x0 = null;
+    let dx = 0;
+    panel.addEventListener('touchstart', (e) => {
+      x0 = e.touches[0].clientX;
+      dx = 0;
+      panel.style.transition = 'none';
+    }, { passive: true });
+    panel.addEventListener('touchmove', (e) => {
+      if (x0 === null) return;
+      dx = Math.min(0, e.touches[0].clientX - x0);
+      panel.style.transform = `translate(${dx}px, -50%)`;
+    }, { passive: true });
+    const soltar = () => {
+      if (x0 === null) return;
+      x0 = null;
+      // Quitar los estilos en línea en la misma tarea en que se cierra:
+      // la transición arranca desde donde quedó el dedo.
+      panel.style.transition = '';
+      panel.style.transform = '';
+      if (dx < -40) cerrar();
+    };
+    panel.addEventListener('touchend', soltar);
+    panel.addEventListener('touchcancel', soltar);
   });
 </script>

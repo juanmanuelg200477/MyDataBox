@@ -1586,8 +1586,8 @@ tbody tr:last-child td {
        se escribe dentro del panel fijo. */
     body.ap-fullscreen { overflow: hidden; }
 
-    /* El boton flotante de navegacion se encimaba sobre el editor */
-    body.ap-fullscreen .card-nav-container { display: none; }
+    /* La pestaña lateral de ramas se encimaba sobre el editor */
+    body.ap-fullscreen .edge-root { display: none; }
 
     /* Modo app de Notas: la pagina de detras no debe desplazarse ni
        rebotar bajo el panel fijo que ocupa toda la pantalla. */
