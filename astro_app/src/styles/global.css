@@ -1280,6 +1280,27 @@ tbody tr:last-child td {
     background: #94a3b8;
 }
 
+/* ── Barra horizontal fija al pie de la ventana ──────────────────
+   La crea views/devices/barraHorizontalFija.js (hoy solo en Cámaras).
+   Es una copia de la barra de la tabla que queda siempre a mano, como
+   la de Excel. Arranca oculta: el script decide cuándo se ve. */
+.barra-h-fija {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    z-index: var(--z-topbar);
+    overflow-x: auto;
+    overflow-y: hidden;
+    background: rgba(248, 250, 252, 0.94);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.06);
+}
+.barra-h-fija-relleno { height: 1px; }
+/* Más gruesa que la de la tabla (5 px): va pegada al borde de la
+   ventana y con 5 px costaba atinarle con el ratón. Mismos colores. */
+.barra-h-fija::-webkit-scrollbar { height: 11px; }
+.barra-h-fija::-webkit-scrollbar-track { background: #eef2f7; }
+
 /* ============================================================
    TRANSITIONS & LINKS
    ============================================================ */

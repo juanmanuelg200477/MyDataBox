@@ -6,6 +6,7 @@ import { store, save, genId, getAllDevices } from '../../store.js';
 import { icons } from '../../icons.js';
 import { showModal, closeModal } from '../../modal.js';
 import { generatePagination, deleteStandaloneDevice, filterDeviceTable } from '../devices.js';
+import { fijarBarraHorizontal } from './barraHorizontalFija.js';
 
 // Estado del módulo (movido desde devices.js)
 let currentPageCameras = 1;
@@ -148,6 +149,9 @@ export function renderCamerasTable(allDevs) {
     );
 
     filterDeviceTable(); // Aplicar también filtro global si está activo
+
+    // Barra de desplazamiento horizontal siempre a mano al pie de la pantalla
+    fijarBarraHorizontal(tableContainer);
 }
 
 export function showCameraForm(id) {

@@ -10,6 +10,7 @@ import { renderSwitchesTable, showSwitchForm } from './devices/switches.js';
 import { renderSfpsTable, showSfpForm } from './devices/sfp.js';
 import { renderApsTable, showApForm } from './devices/ap.js';
 import { renderBiometricosTable, showBiometricoForm } from './devices/biometricos.js';
+import { quitarBarraHorizontal } from './devices/barraHorizontalFija.js';
 import { renderUpsTable, showUpsForm } from './devices/ups.js';
 import { renderSuppressorsTable, showSuppressorForm } from './devices/suppressors.js';
 import { renderPdusTable, showPduForm } from './devices/pdu.js';
@@ -1078,6 +1079,9 @@ function renderAllDevicesTable() {
 // CLEANUP: Remove all specialized filters/pagination before switching type
 // ─────────────────────────────────────────────────────────────
 function _cleanupAllSpecializedFilters() {
+    // La barra horizontal fija es solo de Cámaras: se quita al salir de ahí.
+    quitarBarraHorizontal();
+
     const tableContainer = document.getElementById('devices-table-container');
     if (!tableContainer) return;
 
