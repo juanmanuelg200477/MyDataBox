@@ -1,5 +1,7 @@
 import { store, save, logHistory, isViewer } from '../store.js';
 import { icons } from '../icons.js';
+import { rackLayout, usedUnits } from '../rackLayout.js';
+import { initRackArrange } from './rackArrange.js';
 
 export function renderRackRoute(app) {
     const params = new URLSearchParams(window.location.search);
@@ -26,31 +28,13 @@ function renderRackView(app, rackId) {
 
     const reg = store.regions.find(r => r.id === rack.regionId);
     const area = store.areas.find(a => a.id === rack.areaId);
-    const totalU = parseInt(rack.height) || 42;
+    const layout = rackLayout(rack);
+    const totalU = layout.total;
     const slotCount = rack.slots ? Object.keys(rack.slots).length : 0;
-    const pct = Math.round((slotCount / totalU) * 100);
+    // Uso de espacio en U ocupadas, no en equipos: uno de 2U llena dos
+    const pct = Math.round((usedUnits(rack) / totalU) * 100);
 
-    let rackRows = '';
-    for (let u = totalU; u >= 1; u--) {
-        const dev = rack.slots && rack.slots[u];
-        if (dev) {
-            rackRows += `<tr>
-                <td class="rack-u-num">${u}U</td>
-                <td class="rack-u-slot occupied">
-                    <a href="/rack?id=${rack.id}&u=${u}" class="rack-device" style="background:${dev.color || '#38a169'}">${dev.name} - ${dev.device}</a>
-                </td>
-            </tr>`;
-        } else {
-            rackRows += `<tr onclick="this.querySelector('a').click()" style="cursor:pointer;">
-                <td class="rack-u-num">${u}U</td>
-                <td class="rack-u-slot empty">
-                    <a href="/rack?id=${rack.id}&u=${u}" class="mobile-plus-btn-container">
-                        <span class="mobile-plus-btn">+</span>
-                    </a>
-                </td>
-            </tr>`;
-        }
-    }
+    const rackRows = rackRowsHtml(rack, layout);
 
     app.innerHTML = `<style>
         .rack-view-container {
@@ -64,6 +48,7 @@ function renderRackView(app, rackId) {
             min-width: 300px;
         }
         .rack-digital-twin {
+            position: relative; /* referencia del menú de acomodar (rackArrange.js) */
             width: 100%;
             max-width: 380px;
             background: #1a1a24;
@@ -268,11 +253,61 @@ function renderRackView(app, rackId) {
             </div>
         </div>
     </div>`;
+
+    // Desplazar y cambiar tamaño (solo PC y solo para quien puede editar)
+    if (!isViewer()) {
+        initRackArrange({
+            rack,
+            twin:  app.querySelector('.rack-digital-twin'),
+            table: app.querySelector('.dt-rack-table'),
+            renderRows: (vista) => rackRowsHtml(rack, vista),
+            onChange: () => renderRackView(app, rack.id)
+        });
+    }
+}
+
+// Filas del bastidor, de la U más alta a la 1. Un equipo de varias U se
+// dibuja como un solo bloque (rowspan) que cubre todas sus filas.
+function rackRowsHtml(rack, layout) {
+    let html = '';
+    for (let u = layout.total; u >= 1; u--) {
+        const it = layout.owner[u];
+        const num = `<td class="rack-u-num">${u}U</td>`;
+        if (!it) {
+            html += `<tr data-u="${u}" onclick="this.querySelector('a').click()" style="cursor:pointer;">
+                ${num}
+                <td class="rack-u-slot empty">
+                    <a href="/rack?id=${rack.id}&u=${u}" class="mobile-plus-btn-container">
+                        <span class="mobile-plus-btn">+</span>
+                    </a>
+                </td>
+            </tr>`;
+        } else if (u === it.top) {
+            const h = it.top - it.base + 1;
+            html += `<tr data-u="${u}">
+                ${num}
+                <td class="rack-u-slot occupied"${h > 1 ? ` rowspan="${h}"` : ''}>
+                    <a href="/rack?id=${rack.id}&u=${it.base}" class="rack-device" data-base="${it.base}" style="background:${it.dev.color || '#38a169'}">${it.dev.name} - ${it.dev.device}</a>
+                </td>
+            </tr>`;
+        } else {
+            // Fila tapada por el bloque de un equipo de varias U
+            html += `<tr data-u="${u}">${num}</tr>`;
+        }
+    }
+    return html;
 }
 
 function renderRackDevice(app, rackId, unit) {
     const rack = store.racks.find(r => String(r.id) === String(rackId));
     if (!rack) { window.location.href = '/bastidores'; return; }
+    // Una U tapada por un equipo de varias U no es un hueco libre: lleva a
+    // la ficha de ese equipo en vez de ofrecer montar otro encima.
+    const dueno = rackLayout(rack).owner[unit];
+    if (dueno && dueno.base !== unit) {
+        history.replaceState(history.state, '', `/rack?id=${rack.id}&u=${dueno.base}`);
+        return renderRackDevice(app, rackId, dueno.base);
+    }
     const existing  = rack.slots && rack.slots[unit];
     if (isViewer() && !existing) { window.location.href = `/rack?id=${rackId}`; return; }
     const rackAreaName = store.areas.find(a => a.id === rack.areaId)?.name || '';
@@ -764,10 +799,14 @@ function renderRackDevice(app, rackId, unit) {
 
         if (existing && selectedId !== 'CURRENT_MOUNTED') {
             // Return previously mounted device to global pool
+            // El tamaño en U es de su lugar en el bastidor: al salir se pierde
+            delete existing.uHeight;
             store.devices.push(existing);
         }
         if (selectedId !== 'CURRENT_MOUNTED') {
+            // Entra midiendo 1U; se agranda desde el bastidor con "Tamaño"
             rack.slots[unit] = { ...currentDevObj, color: newColor };
+            delete rack.slots[unit].uHeight;
             store.devices = store.devices.filter(d => d.id !== currentDevObj.id);
         } else {
             rack.slots[unit].color = newColor;
@@ -791,7 +830,9 @@ function renderRackDevice(app, rackId, unit) {
         if (confirm(`¿Retirar este dispositivo de la ${unit}U? Volverá al módulo de Dispositivos.`)) {
             btnDeleteRd.disabled      = true;
             btnDeleteRd.style.opacity = '0.6';
-            store.devices.push(rack.slots[unit]);
+            const retirado = rack.slots[unit];
+            delete retirado.uHeight;
+            store.devices.push(retirado);
             delete rack.slots[unit];
             if (!await save()) {
                 btnDeleteRd.disabled      = false;

@@ -2,6 +2,7 @@ import { store, save, genId } from '../store.js';
 import { icons } from '../icons.js';
 import { showModal, closeModal } from '../modal.js';
 import { labelTableCells, renderPager } from '../utils.js';
+import { usedUnits } from '../rackLayout.js';
 
 const PAGE_SIZE = 10;
 
@@ -97,7 +98,8 @@ function renderRacksTable() {
         const area = store.areas.find(x => x.id === r.areaId);
         const slotCount = r.slots ? Object.keys(r.slots).length : 0;
         const totalU = parseInt(r.height) || 42;
-        const pct = Math.round((slotCount / totalU) * 100);
+        // Espacio en U ocupadas, no en equipos: uno de 2U llena dos
+        const pct = Math.round((usedUnits(r) / totalU) * 100);
         const barColor = pct < 30 ? 'var(--success)' : pct < 70 ? 'var(--warning)' : 'var(--danger)';
         return `<tr>
             <td class="cell-index">${inicio + i + 1}</td>

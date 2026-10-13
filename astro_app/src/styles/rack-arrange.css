@@ -1,0 +1,324 @@
+/* ============================================================
+   ACOMODAR EQUIPOS EN EL BASTIDOR (solo PC) — ver rackArrange.js
+   Vidrio oscuro y pequeño, como el panel lateral del teléfono, para
+   que case con el bastidor oscuro que tiene al lado.
+   ============================================================ */
+
+/* ── Menú (Desplazar / Tamaño) y panel de tamaño ─────────────── */
+.ra-menu,
+.ra-panel {
+    position: absolute;
+    right: calc(100% + 14px);
+    z-index: 30;
+    color: #fff;
+    border-radius: 14px;
+    background: rgba(28, 28, 36, 0.62);
+    backdrop-filter: blur(18px) saturate(170%);
+    -webkit-backdrop-filter: blur(18px) saturate(170%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow:
+        0 16px 36px rgba(15, 23, 42, 0.28),
+        0 3px 10px rgba(15, 23, 42, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(10px, -50%);
+    transition:
+        opacity 0.18s ease,
+        transform 0.26s cubic-bezier(0.16, 1, 0.3, 1),
+        top 0.2s ease,
+        visibility 0s linear 0.26s;
+}
+
+/* Sin sitio a la izquierda del bastidor: sale por la derecha */
+.ra-menu.ra-lado-der,
+.ra-panel.ra-lado-der {
+    right: auto;
+    left: calc(100% + 14px);
+    transform: translate(-10px, -50%);
+}
+
+.ra-menu.visible,
+.ra-panel.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(0, -50%);
+    transition:
+        opacity 0.18s ease,
+        transform 0.26s cubic-bezier(0.16, 1, 0.3, 1),
+        top 0.2s ease,
+        visibility 0s;
+}
+
+.ra-menu {
+    min-width: 152px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ra-cap {
+    max-width: 200px;
+    padding: 4px 8px 6px;
+    font: 700 9.5px/1.2 'JetBrains Mono', monospace;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ra-op {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.92);
+    font: 600 12.5px/1 'DM Sans', sans-serif;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.ra-op:hover,
+.ra-op:focus-visible {
+    background: rgba(255, 255, 255, 0.13);
+    outline: none;
+}
+
+.ra-op svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    opacity: 0.85;
+}
+
+/* ── Panel de tamaño ─────────────────────────────────────────── */
+.ra-panel {
+    width: 196px;
+    padding: 8px 10px 10px;
+}
+
+.ra-panel .ra-cap { padding: 2px 2px 6px; }
+
+.ra-tam-medida {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0 2px 8px;
+}
+
+.ra-tam-num {
+    font: 700 22px/1 'JetBrains Mono', monospace;
+}
+
+.ra-tam-rango {
+    font: 500 11px/1 'JetBrains Mono', monospace;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.ra-tam-ctrl {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 2px;
+}
+
+.ra-tam-ctrl > span {
+    flex: 1;
+    font: 600 12px/1 'DM Sans', sans-serif;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.ra-tam-btn {
+    width: 32px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font: 700 15px/1 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.ra-tam-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.2); }
+.ra-tam-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.ra-tam-pie {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    padding-top: 9px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ra-tam-pie button {
+    flex: 1;
+    height: 28px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    font: 600 12px/1 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.ra-btn-sec { background: transparent; color: rgba(255, 255, 255, 0.82); }
+.ra-btn-sec:hover { background: rgba(255, 255, 255, 0.1); }
+.ra-btn-pri { background: var(--primary); border-color: var(--primary); color: #fff; }
+.ra-btn-pri:hover { background: #2563eb; }
+
+/* ── Aviso arriba del bastidor mientras se desplaza ──────────── */
+.ra-aviso {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    z-index: 30;
+    /* Ancho del propio texto: con left:50% el ancho automático se
+       limitaría a la mitad derecha del bastidor y partiría la frase */
+    width: max-content;
+    max-width: calc(100% - 24px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 8px 7px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    color: #fff;
+    font: 500 12px/1.35 'DM Sans', sans-serif;
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, -6px);
+    transition: opacity 0.18s ease, transform 0.22s ease, border-color 0.15s ease, visibility 0s linear 0.22s;
+}
+
+.ra-aviso.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+    transition: opacity 0.18s ease, transform 0.22s ease, border-color 0.15s ease, visibility 0s;
+}
+
+.ra-aviso.ra-mal { border-color: rgba(248, 113, 113, 0.75); }
+.ra-aviso.ra-sacudir { animation: ra-sacudir 0.36s ease; }
+
+.ra-aviso-texto { min-width: 0; }
+
+.ra-aviso button {
+    flex-shrink: 0;
+    height: 26px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font: 600 11.5px/1 'DM Sans', sans-serif;
+    cursor: pointer;
+}
+
+.ra-aviso button:hover { background: rgba(255, 255, 255, 0.2); }
+
+@keyframes ra-sacudir {
+    0%, 100% { transform: translate(-50%, 0); }
+    25%      { transform: translate(calc(-50% - 5px), 0); }
+    75%      { transform: translate(calc(-50% + 5px), 0); }
+}
+
+/* ── Guías sobre el riel: dónde caería el equipo ─────────────── */
+.ra-ghost {
+    position: absolute;
+    z-index: 5;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    border: 1.5px dashed;
+    border-radius: 4px;
+    color: #fff;
+    font: 700 11px/1 'DM Sans', sans-serif;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    transition: top 0.08s ease, height 0.08s ease;
+}
+
+/* Fondos casi opacos: encima de otro equipo, su nombre no debe
+   transparentarse y mezclarse con el de la guía */
+.ra-ghost.visible { display: flex; }
+.ra-ghost.ra-ok   { background: rgba(20, 83, 45, 0.92);  border-color: rgba(74, 222, 128, 0.95); }
+.ra-ghost.ra-swap { background: rgba(120, 72, 6, 0.94);  border-color: rgba(251, 191, 36, 0.95); }
+.ra-ghost.ra-mal  { background: rgba(127, 29, 29, 0.92); border-color: rgba(248, 113, 113, 0.95); }
+.ra-ghost.ra-pareja { border-style: dotted; background: rgba(92, 56, 6, 0.9); }
+
+/* ── Estados del equipo ──────────────────────────────────────── */
+/* Con el menú abierto conserva el realce aunque el cursor ya esté en el menú */
+.rack-u-slot.occupied a.ra-target {
+    filter: brightness(1.15);
+    transform: scale(1.02);
+    z-index: 10;
+    outline: 2px solid rgba(255, 255, 255, 0.6);
+    outline-offset: 1px;
+}
+
+/* El que se está desplazando queda como "levantado" */
+.rack-u-slot.occupied a.ra-fuente {
+    opacity: 0.45;
+    outline: 2px dashed rgba(255, 255, 255, 0.75);
+    outline-offset: -4px;
+}
+
+/* El que se está cambiando de tamaño */
+.rack-u-slot.occupied a.ra-editando {
+    outline: 2px solid rgba(255, 255, 255, 0.9);
+    outline-offset: -3px;
+    filter: brightness(1.1);
+}
+
+/* Mientras se desplaza o se cambia el tamaño, la tabla no da de alta
+   equipos: fuera el realce azul y el "+ Agregar dispositivo" de las
+   filas vacías, que además se transparentaba bajo la guía verde. */
+.ra-modo-mover tr:hover .rack-u-slot.empty a,
+.ra-modo-tamano tr:hover .rack-u-slot.empty a {
+    background: transparent;
+    box-shadow: none;
+}
+
+.ra-modo-mover .rack-u-slot.empty:hover::after,
+.ra-modo-tamano .rack-u-slot.empty:hover::after {
+    content: none;
+}
+
+/* Cursor de mira al elegir destino; normal mientras se ajusta el tamaño */
+.ra-modo-mover .rack-rails,
+.ra-modo-mover .rack-rails * {
+    cursor: crosshair !important;
+}
+
+.ra-modo-tamano .dt-rack-table,
+.ra-modo-tamano .dt-rack-table * {
+    cursor: default !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ra-menu,
+    .ra-panel,
+    .ra-aviso,
+    .ra-ghost {
+        transition-duration: 0.01ms !important;
+    }
+    .ra-aviso.ra-sacudir { animation: none; }
+}

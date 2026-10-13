@@ -1,4 +1,5 @@
 import { store, getAllDevices } from '../store.js';
+import { usedUnits } from '../rackLayout.js';
 
 export function initDashboard() {
     if (!document.getElementById('db-wrap')) return;
@@ -186,7 +187,7 @@ function renderRacksChart() {
     if (!racks.length) { el.innerHTML = '<div class="db-empty">Sin bastidores registrados</div>'; return; }
 
     const sorted = [...racks].map(r => {
-        const slots = r.slots ? Object.keys(r.slots).length : 0;
+        const slots = usedUnits(r);   // U ocupadas: un equipo de 2U cuenta dos
         const total = parseInt(r.height) || 42;
         const pct = Math.round((slots / total) * 100);
         return { ...r, slots, total, pct };

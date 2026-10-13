@@ -1,6 +1,7 @@
 import { store, getAllDevices } from '../store.js';
 import { icons } from '../icons.js';
 import { escapeHtml } from '../utils.js';
+import { usedUnits } from '../rackLayout.js';
 
 // ════════════════════════════════════════════════════════════════
 //  DASHBOARD CARD PREVIEW
@@ -420,7 +421,7 @@ const BUILDERS = {
     racks() {
         const racks = store.racks || [];
         const data = racks.map(r => {
-            const slots = r.slots ? Object.keys(r.slots).length : 0;
+            const slots = usedUnits(r);   // U ocupadas: un equipo de 2U cuenta dos
             const total = parseInt(r.height) || 42;
             const pct = Math.round((slots / total) * 100);
             const reg = store.regions.find(x => x.id === r.regionId)?.name || '—';

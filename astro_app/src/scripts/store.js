@@ -423,9 +423,38 @@ async function _syncDevicesAndRacks(currentRacks, currentDevices, prevRacks, pre
         .map(({ d }) => d.id);
 
     const ops = [];
-    if (toUpsert.length) ops.push(supabase.from('devices').upsert(toUpsert));
+    if (toUpsert.length) ops.push(_upsertDevices(toUpsert));
     if (toDelete.length) ops.push(supabase.from('devices').delete().in('id', toDelete));
     if (ops.length) await Promise.all(ops);
+}
+
+// Intercambiar dos equipos de U en un bastidor (A pasa a la U de B y B a la
+// de A) viaja en un solo upsert. Si la tabla tuviera una restricción UNIQUE
+// sobre (rack_id, rack_unit), Postgres la revisa fila por fila y la primera
+// chocaría con la segunda aunque al final no quede nada repetido. Solo en
+// ese caso se reintenta en dos pasos: primero se liberan las U de los
+// equipos del lote y luego se escribe todo. Sin esa restricción basta el
+// primer intento y nada cambia.
+//
+// Cualquier otro rechazo se deja como estaba: Supabase lo devuelve en
+// `error` sin lanzar, y no se convierte en excepción porque a quien solo
+// consulta la base le niega toda escritura (RLS) y vería avisos de error
+// por guardados automáticos que no le tocan.
+async function _upsertDevices(rows) {
+    const { error } = await supabase.from('devices').upsert(rows);
+    if (!error) return;
+    const choqueDeU = error.code === '23505' && /rack_unit/.test(`${error.message} ${error.details ?? ''}`);
+    if (!choqueDeU) {
+        console.warn('[DataBox] devices upsert:', error.message);
+        return;
+    }
+    // Aquí sí se avisa si algo falla: quien llega a este paso está
+    // reacomodando un bastidor y debe saber si no se guardó.
+    const montados = rows.filter(r => r.rack_id && r.rack_unit !== null).map(r => r.id);
+    const { error: e1 } = await supabase.from('devices').update({ rack_unit: null }).in('id', montados);
+    if (e1) throw new Error(e1.message);
+    const { error: e2 } = await supabase.from('devices').upsert(rows);
+    if (e2) throw new Error(e2.message);
 }
 
 // ── HELPERS PÚBLICOS (sin cambios de firma) ─────────────────
