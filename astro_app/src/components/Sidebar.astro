@@ -24,6 +24,10 @@ const infraLinks = [
     { name: 'Dispositivos', path: '/dispositivos', view: 'devices', icon: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/><circle cx="18" cy="7" r="1"/><circle cx="18" cy="14" r="1"/>' }
 ];
 
+const gestionLinks = [
+    { name: 'Proyectos', path: '/proyectos', view: 'projects', icon: '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M8 14h8"/><path d="M8 10h3"/>' }
+];
+
 function isActive(path: string) {
     if (path === '/' && currentPath === '/') return true;
     if (path !== '/' && currentPath.startsWith(path)) return true;
@@ -104,6 +108,14 @@ if (currentPath.startsWith('/support')) {
 
             <div class="sidebar-section">Infraestructura</div>
             {infraLinks.map(link => (
+                <a href={link.path} class={`sidebar-item ${isActive(link.path) ? 'active' : ''}`} data-astro-prefetch>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" set:html={link.icon}></svg>
+                    {link.name}
+                </a>
+            ))}
+
+            <div class="sidebar-section">Gestión</div>
+            {gestionLinks.map(link => (
                 <a href={link.path} class={`sidebar-item ${isActive(link.path) ? 'active' : ''}`} data-astro-prefetch>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" set:html={link.icon}></svg>
                     {link.name}

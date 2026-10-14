@@ -1,0 +1,124 @@
+---
+import TechText from '../components/TechText.jsx';
+import '../styles/projects.css';
+---
+<!-- ═══════════════════════════════════════════════════════════
+     PROYECTOS — cotizaciones con su documento y su contexto.
+     Mismo lenguaje visual que el Dashboard: cabecera oscura con el
+     nombre en TechText y tarjetas de cristal. Las tarjetas las arma
+     scripts/views/projects.js; los estilos están en styles/projects.css.
+     ═══════════════════════════════════════════════════════════ -->
+<div class="pj" id="pj-wrap">
+
+    <header class="pj-hero">
+        <div class="pj-hero-glow"></div>
+        <div class="pj-hero-grid"></div>
+        <div class="pj-hero-sheen"></div>
+
+        <div class="pj-brand">
+            <div class="pj-brand-canvas">
+                <TechText
+                    client:only="react"
+                    text="Proyectos"
+                    align="left"
+                    fontSize={44}
+                    fontWeight={800}
+                    letterSpacing={-0.03}
+                    color="#ffffff"
+                    accentColor="#93c5fd"
+                    reach={110}
+                    specks={12}
+                    strokeWidth={1.2}
+                    labels={false}
+                />
+            </div>
+            <div class="pj-brand-sub">Cotizaciones y propuestas · cada una con su contexto</div>
+        </div>
+
+        <div class="pj-sep"></div>
+
+        <div class="pj-kv-row">
+            <div class="pj-kv" style="--kc:#60a5fa"><span class="pj-kv-n" id="pj-k-total">0</span><span class="pj-kv-l">Proyectos</span></div>
+            <div class="pj-kv" style="--kc:#fbbf24"><span class="pj-kv-n" id="pj-k-eval">0</span><span class="pj-kv-l">Por decidir</span></div>
+            <div class="pj-kv" style="--kc:#34d399"><span class="pj-kv-n" id="pj-k-aprob">0</span><span class="pj-kv-l">Aprobados</span></div>
+            <div class="pj-kv pj-kv-ancho" style="--kc:#22d3ee">
+                <span class="pj-kv-n" id="pj-k-monto">Q 0</span>
+                <span class="pj-kv-extra" id="pj-k-monto-extra"></span>
+                <span class="pj-kv-l">Monto por aprobar</span>
+            </div>
+            <div class="pj-kv" style="--kc:#a78bfa"><span class="pj-kv-n" id="pj-k-docs">0</span><span class="pj-kv-l">Documentos</span></div>
+        </div>
+    </header>
+
+    <div class="db-loading" id="pj-cargando">
+        <div class="db-spinner"></div>
+        <span>Cargando proyectos…</span>
+    </div>
+
+    <div id="pj-cuerpo" class="pj-cuerpo" hidden>
+        <div class="pj-barra">
+            <label class="pj-buscar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <input id="pj-buscar" type="search" placeholder="Buscar proyecto, proveedor o contexto…" autocomplete="off" aria-label="Buscar proyectos">
+            </label>
+            <select id="pj-orden" class="pj-select" aria-label="Ordenar proyectos">
+                <option value="recientes">Más recientes</option>
+                <option value="fecha">Fecha de cotización</option>
+                <option value="monto">Mayor monto</option>
+                <option value="nombre">Nombre (A–Z)</option>
+            </select>
+            <button type="button" class="pj-btn-vidrio" id="pj-presentar" title="Enseñar los proyectos uno a uno en pantalla completa">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h20"/><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/><path d="m7 21 5-5 5 5"/></svg>
+                Presentar
+            </button>
+            <button type="button" class="pj-btn-primario pj-editor" id="pj-nuevo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                Nuevo proyecto
+            </button>
+        </div>
+
+        <div class="pj-chips" id="pj-filtros" role="toolbar" aria-label="Filtrar por estado"></div>
+
+        <div class="pj-lista" id="pj-lista"></div>
+
+        <div class="pj-vacio" id="pj-vacio" hidden>
+            <div class="pj-vacio-ico">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M12 10v6"/><path d="M9 13h6"/></svg>
+            </div>
+            <h2>Aún no hay proyectos</h2>
+            <p>Crea el primero, súbele su cotización y escribe su contexto: así, al verlo, se recuerda de qué se trata y en qué va.</p>
+            <button type="button" class="pj-btn-primario pj-editor" id="pj-vacio-nuevo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                Crear el primer proyecto
+            </button>
+        </div>
+    </div>
+
+    <!-- Si la migración aún no se aplicó -->
+    <div class="pj-aviso-grande" id="pj-preparar" hidden>
+        <h2>Proyectos necesita su espacio en la base de datos</h2>
+        <p>Es un paso único: crea las tablas de proyectos y el almacén privado donde se guardan los documentos.</p>
+        <ol>
+            <li>Abre una terminal en la carpeta <code>astro_app</code>.</li>
+            <li>Ejecuta <code>npx supabase db push</code>.</li>
+            <li>Recarga esta página.</li>
+        </ol>
+        <p class="pj-aviso-nota">También puedes pegar el archivo <code>supabase/migrations/20261014120000_proyectos.sql</code> en Supabase → SQL Editor → Run.</p>
+    </div>
+
+    <div class="pj-aviso-grande" id="pj-fallo" hidden>
+        <h2>No se pudieron cargar los proyectos</h2>
+        <p data-detalle></p>
+        <button type="button" class="pj-btn-primario" data-reintentar>Reintentar</button>
+    </div>
+</div>
+
+<script>
+    import { initProjects } from '../scripts/views/projects.js';
+    document.addEventListener('astro:page-load', () => {
+        // Guard de ruta: el listener vive en document y se dispara en TODA
+        // navegación posterior.
+        if (window.location.pathname.replace(/\/$/, '') !== '/proyectos') return;
+        initProjects();
+    });
+</script>

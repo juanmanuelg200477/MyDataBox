@@ -19,7 +19,9 @@ const ENTITY_LABELS = {
     rack:         'Bastidor',
     device:       'Dispositivo',
     isp_link:     'Enlace ISP',
-    isp_incident: 'Incidente ISP'
+    isp_incident: 'Incidente ISP',
+    project:      'Proyecto',
+    project_file: 'Documento de proyecto'
 };
 
 const ACTIONS = {
