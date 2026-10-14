@@ -8,7 +8,7 @@
 // ════════════════════════════════════════════════════════════════
 import { isViewer } from '../store.js';
 import { toastSuccess, toastError } from '../toast.js';
-import { escapeHtml as esc } from '../utils.js';
+import { escapeHtml as esc, renderPager } from '../utils.js';
 import { showModal, closeModal } from '../modal.js';
 import {
     ESTADOS, colorDeEstado, ACEPTA, tipoDe, validarArchivo, SinPreparar,
@@ -38,7 +38,9 @@ const I = {
     der:       svg('<path d="m9 18 6-6-6-6"/>'),
     archivo:   svg('<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>'),
     imagen:    svg('<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/>'),
-    carpeta:   svg('<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>')
+    carpeta:   svg('<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>'),
+    minimizar: svg('<polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" x2="21" y1="10" y2="3"/><line x1="3" x2="10" y1="21" y2="14"/>'),
+    maximizar: svg('<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" x2="14" y1="3" y2="10"/><line x1="3" x2="10" y1="21" y2="14"/>')
 };
 
 const iconoTipo = (f) => {
@@ -125,12 +127,24 @@ export async function initProjects() {
         filtro: '',
         busqueda: '',
         orden: 'recientes',
+        vista: vistaGuardada(),  // 'tarjetas' (completa) | 'mini' (minimizada)
+        pagina: 1,               // solo la vista minimizada pagina
         sel: new Map(),          // id de proyecto → id del documento que se ve
-        io: null,
-        escuchas: []
+        escuchas: [],
+        // Las vistas previas se cargan cuando el visor se acerca a la pantalla
+        io: new IntersectionObserver((entradas) => {
+            for (const e of entradas) {
+                if (!e.isIntersecting) continue;
+                st.io.unobserve(e.target);
+                const p = proyecto(e.target.closest('.pj-card').dataset.id);
+                const f = p && archivoVisto(p);
+                if (f) mostrarArchivo(e.target, f);
+            }
+        }, { rootMargin: '500px 0px' })
     };
 
     conectarControles();
+    pintarBotonVista();
 
     try {
         st.proyectos = await loadProjects();
@@ -150,12 +164,27 @@ document.addEventListener('astro:before-swap', limpiar);
 
 function limpiar() {
     if (!st) return;
-    st.io?.disconnect();
-    document.querySelectorAll('#pj-lista [data-visor]').forEach(soltarVisor);
-    st.escuchas.forEach(([obj, ev, fn, op]) => obj.removeEventListener(ev, fn, op));
+    const viejo = st;
+    st = null;   // desde aquí nada vuelve a pintar (la ficha repinta al cerrarse)
     cerrarCapas();
+    viejo.io.disconnect();
+    document.querySelectorAll('#pj-lista [data-visor]').forEach(soltarVisor);
+    viejo.escuchas.forEach(([obj, ev, fn, op]) => obj.removeEventListener(ev, fn, op));
+    clearTimeout(tVistazo);
+    document.getElementById('pj-vistazo')?.remove();
     liberarUrls();
-    st = null;
+}
+
+// La vista elegida se recuerda en este navegador (es comodidad de cada quien)
+const VISTA_KEY = 'databox:proyectos:vista';
+
+function vistaGuardada() {
+    try { return localStorage.getItem(VISTA_KEY) === 'mini' ? 'mini' : 'tarjetas'; }
+    catch { return 'tarjetas'; }
+}
+
+function guardarVista(vista) {
+    try { localStorage.setItem(VISTA_KEY, vista); } catch { /* modo privado */ }
 }
 
 function escuchar(obj, ev, fn, op) {
@@ -169,17 +198,26 @@ const tarjeta = (id) => document.getElementById(`pj-${id}`);
 
 // ── Controles fijos (barra de herramientas) ─────────────────────
 function conectarControles() {
+    // Buscar, filtrar u ordenar cambia lo que hay: se vuelve a la página 1
     let tBusqueda = 0;
     document.getElementById('pj-buscar')?.addEventListener('input', (e) => {
         clearTimeout(tBusqueda);
-        tBusqueda = setTimeout(() => { st.busqueda = e.target.value; pintarLista(); }, 150);
+        tBusqueda = setTimeout(() => { st.busqueda = e.target.value; st.pagina = 1; pintarLista(); }, 150);
     });
-    document.getElementById('pj-orden')?.addEventListener('change', (e) => { st.orden = e.target.value; pintarLista(); });
+    document.getElementById('pj-orden')?.addEventListener('change', (e) => { st.orden = e.target.value; st.pagina = 1; pintarLista(); });
     document.getElementById('pj-filtros')?.addEventListener('click', (e) => {
         const chip = e.target.closest('[data-estado]');
         if (!chip) return;
         st.filtro = chip.dataset.estado;
+        st.pagina = 1;
         pintarFiltros();
+        pintarLista();
+    });
+    document.getElementById('pj-vista')?.addEventListener('click', () => {
+        st.vista = st.vista === 'mini' ? 'tarjetas' : 'mini';
+        st.pagina = 1;
+        guardarVista(st.vista);
+        pintarBotonVista();
         pintarLista();
     });
     document.getElementById('pj-nuevo')?.addEventListener('click', () => formularioProyecto());
@@ -187,35 +225,11 @@ function conectarControles() {
     document.getElementById('pj-presentar')?.addEventListener('click', () => presentar(0));
 
     const lista = document.getElementById('pj-lista');
-    lista?.addEventListener('click', alClicLista);
-    lista?.addEventListener('keydown', (e) => {
-        if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-acc="ver"]')) {
-            e.preventDefault();
-            e.target.click();
-        }
-    });
+    if (lista) {
+        conectarLista(lista);
+        conectarVistazo(lista);
+    }
 
-    // Arrastrar archivos sobre la columna de documentos de una tarjeta
-    const hayArchivos = (e) => e.dataTransfer?.types?.includes('Files');
-    lista?.addEventListener('dragover', (e) => {
-        const doc = e.target.closest('.pj-doc');
-        if (!doc || !hayArchivos(e) || isViewer()) return;
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'copy';
-        doc.classList.add('pj-arrastrando');
-    });
-    lista?.addEventListener('dragleave', (e) => {
-        const doc = e.target.closest('.pj-doc');
-        if (doc && !doc.contains(e.relatedTarget)) doc.classList.remove('pj-arrastrando');
-    });
-    lista?.addEventListener('drop', (e) => {
-        const doc = e.target.closest('.pj-doc');
-        if (!doc || !hayArchivos(e)) return;
-        e.preventDefault();
-        doc.classList.remove('pj-arrastrando');
-        if (isViewer()) return;
-        subirArchivos(proyecto(doc.closest('.pj-card').dataset.id), [...e.dataTransfer.files]);
-    });
     // Un archivo soltado fuera de una tarjeta no debe hacer que el navegador
     // abandone la página para abrirlo.
     const evitar = (e) => { if (hayArchivos(e)) e.preventDefault(); };
@@ -223,7 +237,48 @@ function conectarControles() {
     escuchar(document, 'drop', evitar);
 }
 
+const hayArchivos = (e) => e.dataTransfer?.types?.includes('Files');
+
+// Clics, teclado y arrastrar archivos sobre tarjetas. Sirve para la lista
+// y para la ficha, que lleva la misma tarjeta dentro de una ventana.
+function conectarLista(el) {
+    el.addEventListener('click', alClicLista);
+    el.addEventListener('keydown', (e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-acc="ver"]')) {
+            e.preventDefault();
+            e.target.click();
+        }
+    });
+    el.addEventListener('dragover', (e) => {
+        const doc = e.target.closest('.pj-doc');
+        if (!doc || !hayArchivos(e) || isViewer()) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        doc.classList.add('pj-arrastrando');
+    });
+    el.addEventListener('dragleave', (e) => {
+        const doc = e.target.closest('.pj-doc');
+        if (doc && !doc.contains(e.relatedTarget)) doc.classList.remove('pj-arrastrando');
+    });
+    el.addEventListener('drop', (e) => {
+        const doc = e.target.closest('.pj-doc');
+        if (!doc || !hayArchivos(e)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        doc.classList.remove('pj-arrastrando');
+        if (isViewer()) return;
+        subirArchivos(proyecto(doc.closest('.pj-card').dataset.id), [...e.dataTransfer.files]);
+    });
+}
+
 async function alClicLista(e) {
+    // Vista minimizada: la miniatura abre el proyecto completo en una ficha
+    const mini = e.target.closest('.pj-mini');
+    if (mini) {
+        abrirFicha(proyecto(mini.dataset.id));
+        return;
+    }
+
     const btn = e.target.closest('[data-acc]');
     if (!btn) return;
     const card = btn.closest('.pj-card');
@@ -311,8 +366,10 @@ function pintarLista() {
     const vacio = document.getElementById('pj-vacio');
     if (!lista) return;
 
-    st.io?.disconnect();
-    lista.querySelectorAll('[data-visor]').forEach(soltarVisor);
+    // Los visores de la lista se sueltan; los de una ficha abierta, no
+    lista.querySelectorAll('[data-visor]').forEach(v => { st.io.unobserve(v); soltarVisor(v); });
+    ocultarVistazo();
+    lista.classList.toggle('pj-lista-mini', st.vista === 'mini');
 
     if (!st.proyectos.length) {
         lista.innerHTML = '';
@@ -322,24 +379,164 @@ function pintarLista() {
     vacio.hidden = true;
 
     const ps = visibles();
-    lista.innerHTML = ps.length
-        ? ps.map(tarjetaHtml).join('')
-        : `<div class="pj-sin-resultados">Ningún proyecto coincide con la búsqueda o el filtro.</div>`;
-
-    // Las vistas previas se cargan cuando la tarjeta se acerca a la pantalla
-    st.io = new IntersectionObserver((entradas) => {
-        for (const e of entradas) {
-            if (!e.isIntersecting) continue;
-            st.io.unobserve(e.target);
-            const p = proyecto(e.target.closest('.pj-card').dataset.id);
-            const f = p && archivoVisto(p);
-            if (f) mostrarArchivo(e.target, f);
-        }
-    }, { rootMargin: '500px 0px' });
+    if (!ps.length) {
+        lista.innerHTML = `<div class="pj-sin-resultados">Ningún proyecto coincide con la búsqueda o el filtro.</div>`;
+        return;
+    }
+    if (st.vista === 'mini') {
+        pintarMinis(lista, ps);
+        return;
+    }
+    lista.innerHTML = ps.map(tarjetaHtml).join('');
     lista.querySelectorAll('[data-visor]').forEach(v => st.io.observe(v));
 }
 
+// ── Vista minimizada: miniaturas, 15 por página ─────────────────
+const POR_PAGINA = 15;
+
+function pintarMinis(lista, ps) {
+    const paginas = Math.max(1, Math.ceil(ps.length / POR_PAGINA));
+    st.pagina = Math.min(Math.max(1, st.pagina), paginas);
+    const desde = (st.pagina - 1) * POR_PAGINA;
+    const pagina = ps.slice(desde, desde + POR_PAGINA);
+
+    lista.innerHTML = `<div class="pj-minis">${pagina.map(miniHtml).join('')}</div>
+        <div class="pj-minis-pie">
+            <span class="pj-minis-cuenta">Mostrando ${desde + 1}–${desde + pagina.length} de ${ps.length}</span>
+            <div class="pj-paginador" id="pj-paginador"></div>
+        </div>`;
+
+    renderPager(lista.querySelector('#pj-paginador'), {
+        page: st.pagina,
+        totalPages: paginas,
+        onChange: (n) => {
+            st.pagina = n;
+            pintarLista();
+            document.getElementById('pj-filtros')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    });
+}
+
+// Palabras que no cuentan para las iniciales ("Compra DE cámara" → CC)
+const RELLENO = new Set(['de', 'del', 'la', 'las', 'el', 'los', 'y', 'e', 'en', 'para', 'por', 'con', 'a', 'al', 'un', 'una', 'o']);
+
+function iniciales(nombre) {
+    const palabras = nombre.split(/\s+/).filter(Boolean);
+    const utiles = palabras.filter(w => !RELLENO.has(sinAcentos(w)));
+    return (utiles.length ? utiles : palabras).slice(0, 2).map(w => [...w][0]).join('').toUpperCase() || '•';
+}
+
+function miniHtml(p) {
+    const color = colorDeEstado(p.status);
+    return `<button type="button" class="pj-mini" id="pjm-${p.id}" data-id="${p.id}" style="--accent:${color}"
+            aria-label="Abrir ${esc(p.name)}">
+        <span class="pj-mini-cabeza">
+            <span class="pj-mini-ico" aria-hidden="true">${esc(iniciales(p.name))}</span>
+            <span class="pj-mini-nombre">${esc(p.name)}</span>
+        </span>
+        <span class="pj-mini-pie">
+            <span class="pj-estado" style="--c:${color}">${esc(p.status)}</span>
+            ${p.amount != null ? `<span class="pj-mini-monto">${monto(p.amount, p.currency)}</span>` : ''}
+        </span>
+    </button>`;
+}
+
+function pintarBotonVista() {
+    const b = document.getElementById('pj-vista');
+    if (!b || !st) return;
+    const mini = st.vista === 'mini';
+    b.innerHTML = mini ? `${I.maximizar}<span>Expandir todo</span>` : `${I.minimizar}<span>Minimizar todo</span>`;
+    b.setAttribute('aria-pressed', String(mini));
+    b.title = mini
+        ? 'Ver cada proyecto completo, con su documento y su contexto'
+        : 'Ver solo los nombres, para encontrar un proyecto más rápido';
+}
+
+// ── Vistazo del contexto al pasar el cursor por una miniatura ────
+// Solo en PC: con el dedo no hay "encima", y tocar ya abre la ficha.
+let tVistazo = 0;
+
+function conectarVistazo(lista) {
+    if (!window.matchMedia?.('(hover: hover) and (pointer: fine)').matches) return;
+    lista.addEventListener('mouseover', (e) => {
+        const mini = e.target.closest('.pj-mini');
+        if (!mini || mini.contains(e.relatedTarget)) return;
+        clearTimeout(tVistazo);
+        tVistazo = setTimeout(() => mostrarVistazo(mini), 260);
+    });
+    lista.addEventListener('mouseout', (e) => {
+        const mini = e.target.closest('.pj-mini');
+        if (!mini || mini.contains(e.relatedTarget)) return;
+        clearTimeout(tVistazo);
+        ocultarVistazo();
+    });
+    escuchar(window, 'scroll', ocultarVistazo, { passive: true });
+    escuchar(window, 'resize', ocultarVistazo, { passive: true });
+}
+
+function mostrarVistazo(mini) {
+    const p = st && proyecto(mini.dataset.id);
+    if (!p || !mini.isConnected) return;
+
+    let v = document.getElementById('pj-vistazo');
+    if (!v) {
+        v = document.createElement('div');
+        v.id = 'pj-vistazo';
+        v.className = 'pj-vistazo';
+        v.setAttribute('aria-hidden', 'true');   // es un adelanto; la ficha tiene lo mismo
+        document.body.appendChild(v);
+    }
+    const hay = Boolean(p.context || p.nextStep);
+    v.style.setProperty('--accent', colorDeEstado(p.status));
+    v.innerHTML = `<div class="pj-vis-cab">
+            <span class="pj-vis-tit">${I.nota}Contexto</span>
+            ${hay && p.contextUpdatedAt ? `<span class="pj-vis-fecha">Escrito ${haceCuanto(p.contextUpdatedAt)}</span>` : ''}
+        </div>
+        <div class="pj-vis-nombre">${esc(p.name)}</div>
+        ${p.nextStep ? `<div class="pj-paso pj-paso-mini">
+            <span class="pj-paso-ico">${I.bandera}</span>
+            <div><span class="pj-paso-l">Próximo paso</span><p>${esc(p.nextStep)}</p></div>
+        </div>` : ''}
+        ${p.context ? `<div class="pj-vis-texto">${textoBonito(p.context)}</div>` : ''}
+        ${hay ? '' : `<p class="pj-vis-vacio">Este proyecto todavía no tiene contexto.</p>`}`;
+
+    // Si el texto es largo se corta con un desvanecido: es un vistazo,
+    // el contexto completo está al abrir el proyecto.
+    const texto = v.querySelector('.pj-vis-texto');
+    v.classList.add('midiendo');
+    if (texto) texto.classList.toggle('cortado', texto.scrollHeight > texto.clientHeight + 2);
+
+    // A la derecha de la miniatura; si no cabe, a la izquierda; y si
+    // tampoco (pantallas estrechas), debajo.
+    const r = mini.getBoundingClientRect();
+    const ancho = v.offsetWidth;
+    const alto = v.offsetHeight;
+    const hueco = 14;
+    let left = r.right + hueco;
+    let top = r.top;
+    if (left + ancho > innerWidth - 10) left = r.left - hueco - ancho;
+    if (left < 10) {
+        left = Math.min(Math.max(10, r.left), innerWidth - ancho - 10);
+        top = r.bottom + hueco;
+    }
+    top = Math.min(Math.max(64, top), innerHeight - alto - 10);
+    v.style.left = `${Math.round(left)}px`;
+    v.style.top = `${Math.round(top)}px`;
+    v.classList.remove('midiendo');
+    void v.offsetWidth;   // que la transición arranque desde la posición nueva
+    v.classList.add('visible');
+}
+
+function ocultarVistazo() {
+    clearTimeout(tVistazo);
+    document.getElementById('pj-vistazo')?.classList.remove('visible');
+}
+
 function repintarTarjeta(p) {
+    // La miniatura (si la hay) también refleja el cambio
+    const mini = document.getElementById(`pjm-${p.id}`);
+    if (mini) mini.outerHTML = miniHtml(p);
+
     const vieja = tarjeta(p.id);
     if (!vieja) return;
     soltarVisor(vieja.querySelector('[data-visor]'));
@@ -644,9 +841,11 @@ function formularioProyecto(p = null) {
                 closeModal();
                 pintarResumen();
                 pintarFiltros();
-                // Si con el estado nuevo ya no entra en el filtro, la lista cambia
+                // La tarjeta (en la lista o en la ficha) y su miniatura se
+                // actualizan; si con el estado nuevo ya no entra en el filtro,
+                // además cambia la lista.
+                repintarTarjeta(p);
                 if (st.filtro && p.status !== st.filtro) pintarLista();
-                else repintarTarjeta(p);
                 toastSuccess('Datos del proyecto guardados.');
             } else {
                 const nuevo = await createProject(datos);
@@ -656,8 +855,16 @@ function formularioProyecto(p = null) {
                 st.busqueda = '';
                 const buscar = document.getElementById('pj-buscar');
                 if (buscar) buscar.value = '';
-                pintarTodo();
-                tarjeta(nuevo.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                if (st.vista === 'mini') {
+                    // A la página donde quedó, y se abre para ver cómo sube lo adjunto
+                    const pos = visibles().findIndex(x => x.id === nuevo.id);
+                    st.pagina = Math.floor(Math.max(0, pos) / POR_PAGINA) + 1;
+                    pintarTodo();
+                    abrirFicha(nuevo);
+                } else {
+                    pintarTodo();
+                    tarjeta(nuevo.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
                 if (archivos.length) await subirArchivos(nuevo, archivos);
                 else toastSuccess(`Proyecto «${nuevo.name}» creado.`);
             }
@@ -713,7 +920,8 @@ async function eliminarProyecto(p) {
         await deleteProject(p);
         st.proyectos = st.proyectos.filter(x => x.id !== p.id);
         st.sel.delete(p.id);
-        const card = tarjeta(p.id);
+        cerrarFichaDe(p.id);   // si se borró desde la ficha, esta se va
+        const card = tarjeta(p.id) ?? document.getElementById(`pjm-${p.id}`);
         if (card) {
             soltarVisor(card.querySelector('[data-visor]'));
             card.classList.add('pj-saliendo');
@@ -760,17 +968,34 @@ function confirmar({ titulo, mensaje, boton }) {
     });
 }
 
-// ── Ver en grande ───────────────────────────────────────────────
-let capaActual = null;
+// ── Capas: ver en grande, ficha y presentación ──────────────────
+// Pueden abrirse unas encima de otras (ver en grande desde la ficha o desde
+// la presentación). Se apilan: Escape y las flechas son siempre de la de
+// arriba, y al salir de la página se cierran todas.
+const capas = [];
+
+function apilar(capa, cerrar) {
+    capas.push({ capa, cerrar });
+    document.body.style.overflow = 'hidden';
+}
+
+function desapilar(capa) {
+    const i = capas.findIndex(c => c.capa === capa);
+    if (i >= 0) capas.splice(i, 1);
+    if (!capas.length) document.body.style.overflow = '';
+}
+
+// Los diálogos de confirmar y los formularios van por encima de cualquier capa
+const esLaDeArriba = (capa) =>
+    capas[capas.length - 1]?.capa === capa && !document.querySelector('.pj-dialogo, .form-overlay');
 
 function cerrarCapas() {
-    capaActual?.cerrar();
-    capaActual = null;
+    [...capas].reverse().forEach(c => c.cerrar());
+    capas.length = 0;
 }
 
 function abrirGrande(p, archivo) {
     if (!archivo) return;
-    cerrarCapas();
     let i = Math.max(0, p.files.findIndex(f => f.id === archivo.id));
     const capa = document.createElement('div');
     capa.className = 'pjv-capa';
@@ -801,6 +1026,7 @@ function abrirGrande(p, archivo) {
     const mover = (d) => { i = (i + d + p.files.length) % p.files.length; mostrar(); };
 
     const teclas = (e) => {
+        if (!esLaDeArriba(capa)) return;
         if (e.key === 'Escape') { e.preventDefault(); cerrar(); }
         else if (e.key === 'ArrowLeft' && p.files.length > 1) mover(-1);
         else if (e.key === 'ArrowRight' && p.files.length > 1) mover(1);
@@ -809,9 +1035,7 @@ function abrirGrande(p, archivo) {
         document.removeEventListener('keydown', teclas, true);
         soltarVisor(visor);
         capa.remove();
-        // Si se abrió desde la presentación, esta sigue abierta debajo
-        if (!document.querySelector('.pj-pres')) document.body.style.overflow = '';
-        if (capaActual?.capa === capa) capaActual = null;
+        desapilar(capa);
     };
     capa.addEventListener('click', async (e) => {
         const c = e.target.closest('[data-c]')?.dataset.c;
@@ -833,9 +1057,56 @@ function abrirGrande(p, archivo) {
     // En pantalla completa solo se ve lo que está dentro del elemento a
     // pantalla completa (la presentación): ahí tiene que ir la capa.
     (document.fullscreenElement ?? document.body).appendChild(capa);
-    document.body.style.overflow = 'hidden';
-    capaActual = { capa, cerrar };
+    apilar(capa, cerrar);
     mostrar();
+}
+
+// ── Ficha: un proyecto completo encima de la vista minimizada ───
+// Es la misma tarjeta de la vista completa, con todas sus acciones
+// (documentos, contexto, editar, eliminar) dentro de una ventana.
+function abrirFicha(p) {
+    if (!p) return;
+    ocultarVistazo();
+    const capa = document.createElement('div');
+    capa.className = 'pj-ficha';
+    capa.setAttribute('role', 'dialog');
+    capa.setAttribute('aria-modal', 'true');
+    capa.setAttribute('aria-label', p.name);
+    capa.innerHTML = `<div class="pj-ficha-marco">
+            <button type="button" class="pj-ficha-cerrar" data-c="cerrar" aria-label="Cerrar">${I.x}</button>
+            <div class="pj-ficha-cuerpo">${tarjetaHtml(p)}</div>
+        </div>`;
+    const cuerpo = capa.querySelector('.pj-ficha-cuerpo');
+    conectarLista(cuerpo);
+
+    const teclas = (e) => {
+        if (esLaDeArriba(capa) && e.key === 'Escape') { e.preventDefault(); cerrar(); }
+    };
+    const cerrar = () => {
+        document.removeEventListener('keydown', teclas, true);
+        cuerpo.querySelectorAll('[data-visor]').forEach(soltarVisor);
+        capa.remove();
+        desapilar(capa);
+        // Lo que se cambió dentro (nombre, estado, monto) se ve en la lista
+        if (st) pintarLista();
+    };
+    capa.addEventListener('click', (e) => {
+        if (e.target === capa || e.target.closest('[data-c="cerrar"]')) cerrar();
+    });
+
+    document.addEventListener('keydown', teclas, true);
+    document.body.appendChild(capa);
+    apilar(capa, cerrar);
+    const visor = cuerpo.querySelector('[data-visor]');
+    const f = archivoVisto(p);
+    if (visor && f) mostrarArchivo(visor, f);
+    capa.querySelector('.pj-ficha-cerrar').focus({ preventScroll: true });
+}
+
+// Cierra la ficha en la que esté la tarjeta del proyecto (si está en una)
+function cerrarFichaDe(id) {
+    const ficha = tarjeta(id)?.closest('.pj-ficha');
+    capas.find(c => c.capa === ficha)?.cerrar();
 }
 
 // ── Modo presentación: un proyecto por pantalla ─────────────────
@@ -898,7 +1169,7 @@ function presentar(inicio) {
 
     const teclas = (e) => {
         // Con un documento abierto en grande encima, las teclas son suyas
-        if (document.querySelector('.pjv-capa')) return;
+        if (!esLaDeArriba(capa)) return;
         if (e.key === 'Escape') { e.preventDefault(); cerrar(); }
         else if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); mover(1); }
         else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); mover(-1); }
@@ -907,9 +1178,8 @@ function presentar(inicio) {
         document.removeEventListener('keydown', teclas, true);
         escena.querySelectorAll('[data-visor]').forEach(soltarVisor);
         capa.remove();
-        document.body.style.overflow = '';
+        desapilar(capa);
         if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-        if (capaActual?.capa === capa) capaActual = null;
     };
 
     capa.addEventListener('click', (e) => {
@@ -926,25 +1196,14 @@ function presentar(inicio) {
                 st.sel.set(p.id, acc.dataset.archivo);
                 escena.querySelectorAll('.pj-tab').forEach(t => t.classList.toggle('activo', t.dataset.archivo === acc.dataset.archivo));
                 mostrarArchivo(escena.querySelector('[data-visor]'), archivoVisto(p));
-            } else if (acc?.dataset.acc === 'grande') abrirGrandeSobre(p);
+            } else if (acc?.dataset.acc === 'grande') abrirGrande(p, archivoVisto(p));   // se apila encima
             else if (acc?.dataset.acc === 'descargar') archivoVisto(p) && descargar(archivoVisto(p)).catch(err => toastError(err.message));
         }
     });
 
-    // "Ver en grande" desde la presentación: se abre encima sin cerrarla
-    const abrirGrandeSobre = (p) => {
-        const previa = capaActual;
-        capaActual = null;
-        abrirGrande(p, archivoVisto(p));
-        const grande = capaActual;
-        capaActual = previa;
-        grande.capa.classList.add('pjv-capa-encima');
-    };
-
     document.addEventListener('keydown', teclas, true);
     document.body.appendChild(capa);
-    document.body.style.overflow = 'hidden';
-    capaActual = { capa, cerrar };
+    apilar(capa, cerrar);
     // Pantalla completa de verdad si el navegador lo permite (lo pide el clic)
     capa.requestFullscreen?.().catch(() => {});
     mostrar();

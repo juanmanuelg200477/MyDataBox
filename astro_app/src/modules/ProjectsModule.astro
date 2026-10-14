@@ -67,6 +67,9 @@ import '../styles/projects.css';
                 <option value="monto">Mayor monto</option>
                 <option value="nombre">Nombre (A–Z)</option>
             </select>
+            <!-- Minimizar / expandir todo: el texto e icono los pone projects.js
+                 según la vista activa (se recuerda en este navegador). -->
+            <button type="button" class="pj-btn-vidrio" id="pj-vista" aria-pressed="false">Minimizar todo</button>
             <button type="button" class="pj-btn-vidrio" id="pj-presentar" title="Enseñar los proyectos uno a uno en pantalla completa">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h20"/><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/><path d="m7 21 5-5 5 5"/></svg>
                 Presentar
