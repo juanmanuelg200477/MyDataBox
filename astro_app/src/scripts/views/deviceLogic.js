@@ -1,5 +1,4 @@
-import { store, save, genId, getAllDevices, logHistory } from '../store.js';
-import { icons } from '../icons.js';
+import { store, save, getAllDevices, logHistory } from '../store.js';
 import { showModal, closeModal } from '../modal.js';
 
 export function initDeviceProfile(app, activeTab = 'dt-details') {
@@ -84,7 +83,6 @@ export function initDeviceProfile(app, activeTab = 'dt-details') {
                          <tr><td class="td-lbl">Rack</td><td><span class="badge badge-teal">${dev.rack ? `${dev.rack} (U${dev.rackUnit})` : 'INDIVIDUAL'}</span></td></tr>
                          <tr><td class="td-lbl">Descripción</td><td>${dev.description || '—'}</td></tr>
                          <tr><td class="td-lbl">Comentario</td><td>${dev.comment || '—'}</td></tr>
-                         <tr><td class="td-lbl">Etiqueta de Activo</td><td>—</td></tr>
                      </table>
                 </div>
                 <div class="card" style="flex:1;min-width:300px">
@@ -93,7 +91,6 @@ export function initDeviceProfile(app, activeTab = 'dt-details') {
                          <tr><td class="td-lbl">Estado</td><td><span class="badge ${dev.status === 'Activo' || dev.status === 'Disponible' ? 'badge-active' : 'badge-warning'}">${dev.status || '—'}</span></td></tr>
                          <tr><td class="td-lbl">Marca</td><td>${dev.brand || '—'}</td></tr>
                          <tr><td class="td-lbl">Modelo</td><td>${dev.model || '—'}</td></tr>
-                         <tr><td class="td-lbl">Plataforma</td><td>Cisco IOS / Vendor</td></tr>
                          <tr><td class="td-lbl">Número de Serie</td><td><strong style="font-family:'JetBrains Mono'">${dev.serial || '—'}</strong></td></tr>
                          <tr><td class="td-lbl">IP Principal</td><td><strong style="font-family:'JetBrains Mono'">${dev.ip || '—'}</strong></td></tr>
                          <tr><td class="td-lbl">MAC Principal</td><td><strong style="font-family:'JetBrains Mono'">${dev.mac || '—'}</strong></td></tr>
@@ -460,33 +457,4 @@ function openPortConfig(app, realObj, unifiedDevContext, portName) {
             if (p.sfpDeviceId) paintSfpSpecs(p.sfpDeviceId);
         }
     }
-}
-
-function syncSfpToGlobal(p, portName, parentName, areaContext, regionContext) {
-    if (!p.sfpDeviceId) { p.sfpDeviceId = genId(); }
-
-    // Auto crear categoría de seguridad si no existe
-    if (!store.categories.find(c => c.name === 'SFP')) {
-        store.categories.push({ id: genId(), name: 'SFP' });
-    }
-
-    let dev = store.devices.find(d => d.id === p.sfpDeviceId);
-    if (!dev) {
-        dev = {
-            id: p.sfpDeviceId,
-            device: 'SFP',
-            name: `SFP [${portName}] en ${parentName}`,
-            area: areaContext,
-            regionId: regionContext
-        };
-        store.devices.push(dev);
-    } else {
-        dev.name = `SFP [${portName}] en ${parentName}`;
-    }
-
-    dev.brand = p.sfpBrand;
-    dev.model = p.sfpModel;
-    dev.serial = p.sfpSerial;
-    dev.description = `Módulo transceptor instalado en ${parentName} (${portName}). Velocidad: ${p.sfpSpeed}`;
-    dev.status = p.status === 'up' ? 'Activo' : 'En reposo';
 }

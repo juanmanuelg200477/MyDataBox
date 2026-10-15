@@ -22,7 +22,7 @@ import {
 } from '../../notesStore.js';
 import { escapeHtml, formatDate, toast, nwPrompt, nwConfirm } from './notesApp.js';
 import { shapeBounds, boundsAll, distPointToSegment, pointInPolygon, translateShape, getHandles, moveHandle } from './blueprint-geometry.js';
-import { drawSymbol, roundRect, arrowHead, drawArrow } from './blueprint-draw.js';
+import { drawSymbol, roundRect, drawArrow } from './blueprint-draw.js';
 import { injectStyles } from './blueprint-styles.js';
 
 // ── Constantes ──────────────────────────────────────────────────
@@ -1913,9 +1913,6 @@ function drawAngleArc(ctx, vertex, fromAngle, toAngle) {
     ctx.fillText(text, lx, ly);
     ctx.restore();
 }
-
-
-
 
 // ────────────────────────────────────────────────────────────────
 //  Export

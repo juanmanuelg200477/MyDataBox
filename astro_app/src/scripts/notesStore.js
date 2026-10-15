@@ -397,16 +397,3 @@ export function globalSearch(query) {
         )
     };
 }
-
-// ════════════════════════════════════════════════════════════════
-//  EXPORT JSON (descarga backup local)
-// ════════════════════════════════════════════════════════════════
-export function exportData() {
-    return JSON.stringify({
-        folders: _cache.folders,
-        notes: _cache.notes,
-        credentials: _cache.credentials,
-        commands: _cache.commands,
-        drawings: _cache.drawings
-    }, null, 2);
-}
