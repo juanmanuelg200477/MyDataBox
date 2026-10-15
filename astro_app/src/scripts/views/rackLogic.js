@@ -412,6 +412,35 @@ function renderRackDevice(app, rackId, unit) {
             transition: transform 0.15s;
         }
         .rd-color-swatch:hover { transform: scale(1.08); }
+        .rd-ports-btn {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-top: 20px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.03));
+            color: var(--text);
+            text-decoration: none;
+            transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+        }
+        .rd-ports-btn:hover { border-color: var(--primary); box-shadow: 0 6px 18px -8px rgba(59, 130, 246, 0.6); transform: translateY(-1px); }
+        .rd-ports-ico {
+            display: grid;
+            place-items: center;
+            flex: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--primary);
+            color: #fff;
+        }
+        .rd-ports-ico svg { width: 22px; height: 22px; }
+        .rd-ports-txt { flex: 1; display: grid; gap: 2px; min-width: 0; }
+        .rd-ports-txt strong { font-size: 14px; }
+        .rd-ports-txt small { font-size: 12px; color: var(--text-muted); }
+        .rd-ports-flecha { font-size: 24px; line-height: 1; color: var(--primary); }
         .rd-actions-container {
             display: flex;
             justify-content: flex-end;
@@ -715,6 +744,23 @@ function renderRackDevice(app, rackId, unit) {
             }
         }
 
+        // ── Puertos ────────────────────────────────────────────
+        // Los del equipo montado se ven y se les asigna host en su ficha de
+        // dispositivo (la misma de Dispositivos, que ya sabe tratar equipos
+        // de bastidor por su id rack_<bastidor>_<U>).
+        const eth = parseInt(devObj.ports, 10) || 0;
+        const fib = parseInt(devObj.fiberPorts, 10) || 0;
+        const nIfs = devObj.interfaces ? Object.keys(devObj.interfaces).length : 0;
+        const portsBlock = devObj === existing && (eth || fib || nIfs) ? `
+            <a class="rd-ports-btn" href="/device?id=${encodeURIComponent(`rack_${rack.id}_${unit}`)}&tab=interfaces">
+                <span class="rd-ports-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10v4M10 10v4M14 10v4M18 10v4"/></svg></span>
+                <span class="rd-ports-txt">
+                    <strong>Ver puertos y hosts</strong>
+                    <small>${nIfs ? `${nIfs} puertos` : [eth ? `${eth} Ethernet` : '', fib ? `${fib} de fibra` : ''].filter(Boolean).join(' · ')}${isViewer() ? '' : ' · asignar hosts'}</small>
+                </span>
+                <span class="rd-ports-flecha">›</span>
+            </a>` : '';
+
         // ── Color picker ───────────────────────────────────────
         const colorRow = isViewer() ? '' : `
             <div class="rd-color-row">
@@ -732,6 +778,7 @@ function renderRackDevice(app, rackId, unit) {
                 <div class="rd-card-body">
                     ${identityBlock}
                     ${techBlock}
+                    ${portsBlock}
                     ${extraBlocks}
                     ${colorRow}
                 </div>

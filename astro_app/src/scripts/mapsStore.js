@@ -179,11 +179,14 @@ export async function deleteMapForever(mapa) {
 export async function purgeTrash(mapas) {
     const limite = Date.now() - DIAS_PAPELERA * 86400000;
     const viejos = mapas.filter(m => m.deletedAt && new Date(m.deletedAt).getTime() < limite);
+    // Solo se devuelven los que de verdad se borraron: si uno falla (p. ej.
+    // sin conexión) sigue en la papelera y se reintenta la próxima vez.
+    const borrados = [];
     for (const m of viejos) {
-        try { await deleteMapForever(m); }
+        try { await deleteMapForever(m); borrados.push(m.id); }
         catch (err) { console.warn('[mapas] no se pudo purgar', m.name, err.message); }
     }
-    return viejos.map(m => m.id);
+    return borrados;
 }
 
 // ── Elementos de un mapa ────────────────────────────────────────

@@ -19,7 +19,7 @@ import {
 } from '../../mapsStore.js';
 import { estiloDispositivo, ESTILO_BASTIDOR, estiloColor, icono3d } from './iconos.js';
 import { TIPOS_INFRA, tipoInfra, ESTILOS_LINEA, GROSORES } from './catalogo.js';
-import { dialogo, confirmar, hayDialogo, esc, I, metros, sinAcentos, elegirImagen, prepararImagen, prepararPlano, extension } from './ui.js';
+import { dialogo, confirmar, hayDialogo, esc, I, metros, sinAcentos, elegirImagen, prepararImagen, prepararPlano, extension, verImagen } from './ui.js';
 import { indiceDispositivos, fichaDispositivo, fichaBastidor, fichaInfra, resumenSpecs } from './fichas.js';
 import { formularioMapa, eliminar as eliminarMapa } from './lista.js';
 
@@ -121,7 +121,8 @@ function pantallaError(msg) {
 }
 
 function capasGuardadas() {
-    const base = { dispositivos: true, bastidores: true, puntos: true, lineas: true, nombres: false, metraje: true, opacidad: 1 };
+    // nombres → equipos y bastidores (botón de arriba) · nombresInfra → puntos de infraestructura (Capas)
+    const base = { dispositivos: true, bastidores: true, puntos: true, lineas: true, nombres: false, nombresInfra: false, minimizar: false, metraje: true, opacidad: 1 };
     try { return { ...base, ...JSON.parse(localStorage.getItem(CAPAS_KEY) ?? '{}') }; } catch { return base; }
 }
 
@@ -138,11 +139,13 @@ function construir() {
             </div>
             ${E.editable ? '' : '<span class="mp-ed-lectura">Solo lectura</span>'}
             <div class="mp-ed-herr">
-                <button type="button" class="mp-ed-h" data-acc="panel" aria-label="Lista de objetos">${I.panel}<span>Objetos</span></button>
+                <button type="button" class="mp-ed-h" data-acc="panel" aria-label="Lista de objetos" title="Lista de objetos">${I.panel}<span>Objetos</span></button>
                 ${E.editable ? '<button type="button" class="mp-ed-h" data-acc="bloqueo" id="mp-h-bloqueo"></button>' : ''}
-                <button type="button" class="mp-ed-h" data-acc="capas" aria-label="Capas">${I.capas}<span>Capas</span></button>
-                <button type="button" class="mp-ed-h" data-acc="resumen" aria-label="Resumen">${I.resumen}<span>Resumen</span></button>
-                ${E.editable ? `<button type="button" class="mp-ed-h solo-ico" data-acc="ajustes" aria-label="Opciones del mapa">${I.ajustes}</button>` : ''}
+                <button type="button" class="mp-ed-h" data-acc="minimizar" aria-pressed="false" aria-label="Minimizar iconos" title="Ver los equipos y bastidores como puntos azules">${I.puntos}<span>Minimizar iconos</span></button>
+                <button type="button" class="mp-ed-h" data-acc="nombres" aria-pressed="false" aria-label="Mostrar nombres" title="Ver el nombre de todos los equipos y bastidores">${I.etiqueta}<span>Mostrar nombres</span></button>
+                <button type="button" class="mp-ed-h" data-acc="capas" aria-label="Capas" title="Capas">${I.capas}<span>Capas</span></button>
+                <button type="button" class="mp-ed-h" data-acc="resumen" aria-label="Resumen" title="Resumen del mapa">${I.resumen}<span>Resumen</span></button>
+                ${E.editable ? `<button type="button" class="mp-ed-h solo-ico" data-acc="ajustes" aria-label="Opciones del mapa" title="Opciones del mapa">${I.ajustes}</button>` : ''}
             </div>
         </header>
         <div class="mp-ed-cuerpo">
@@ -506,7 +509,7 @@ function pintarMarcas() {
         html.push(`<button type="button" class="mp-marca mp-m-${it.kind} ${pin ? 'con-pin' : ''} ${E.seleccion === it.id ? 'sel' : ''} ${E.imanId === it.id ? 'iman' : ''} ${info.perdido ? 'perdida' : ''}"
                 data-item="${it.id}" style="left:${(it.x * E.W).toFixed(1)}px;top:${(it.y * E.H).toFixed(1)}px" aria-label="${esc(info.nombre)}">
             <span class="mp-marca-ficha">${icono3d(info.estilo, { tam })}</span>
-            ${pin ? '<span class="mp-marca-pico"></span>' : ''}
+            ${pin ? '<span class="mp-marca-pico"></span><span class="mp-marca-punto"></span>' : ''}
             <span class="mp-marca-nombre">${esc(info.nombre)}</span>
         </button>`);
     }
@@ -528,8 +531,16 @@ function marcarIman(id) {
 
 function aplicarCapas() {
     const c = E.capas;
+    E.ed.classList.toggle('minimizado', c.minimizar);
     E.ed.classList.toggle('con-nombres', c.nombres);
+    E.ed.classList.toggle('con-nombres-infra', c.nombresInfra);
     E.img.style.opacity = c.opacidad;
+    for (const [acc, encendido] of [['minimizar', c.minimizar], ['nombres', c.nombres]]) {
+        const b = E.raiz.querySelector(`.mp-ed-h[data-acc="${acc}"]`);
+        b?.classList.toggle('encendido', encendido);
+        b?.setAttribute('aria-pressed', encendido);
+    }
+    // Se recuerda en este navegador para la próxima vez
     try { localStorage.setItem(CAPAS_KEY, JSON.stringify(c)); } catch { /* modo privado */ }
 }
 
@@ -597,6 +608,8 @@ async function alClic(e) {
         case 'volver':           E.alVolver(); break;
         case 'panel':            E.ed.classList.toggle('panel-abierto'); cerrarPop(); break;
         case 'bloqueo':          E.desbloqueado = !E.desbloqueado; pintarBloqueo(); pintarMarcas(); break;
+        case 'minimizar':        E.capas.minimizar = !E.capas.minimizar; aplicarCapas(); break;
+        case 'nombres':          E.capas.nombres = !E.capas.nombres; aplicarCapas(); break;
         case 'capas':
         case 'resumen':
         case 'ajustes':          alternarPop(b.dataset.acc, b); break;
@@ -872,7 +885,8 @@ function imanCerca(clientX, clientY) {
         const sx = left + v.tx + it.x * E.W * v.z;
         const sy = top + v.ty + it.y * E.H * v.z;
         let d = Math.hypot(sx - clientX, sy - clientY);
-        if (it.kind !== 'infra_point') d = Math.min(d, Math.hypot(sx - clientX, sy - (it.kind === 'rack' ? 33 : 30) - clientY));
+        // Minimizados son un punto justo en su lugar: no hay ficha arriba
+        if (it.kind !== 'infra_point' && !E.capas.minimizar) d = Math.min(d, Math.hypot(sx - clientX, sy - (it.kind === 'rack' ? 33 : 30) - clientY));
         if (d < dist) { dist = d; mejor = it; }
     }
     return mejor;
@@ -903,7 +917,10 @@ function asegurarVisible(it) {
     const xs = pts.map(p => v.tx + p[0] * v.z);
     const ys = pts.map(p => v.ty + p[1] * v.z);
     const caja = { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
-    if (it.kind !== 'infra_line') { caja.x0 -= 26; caja.x1 += 26; caja.y0 -= it.kind === 'infra_point' ? 20 : 60; caja.y1 += 12; }
+    if (it.kind !== 'infra_line') {
+        const punto = it.kind === 'infra_point' || E.capas.minimizar;
+        caja.x0 -= 26; caja.x1 += 26; caja.y0 -= punto ? 20 : 60; caja.y1 += punto ? 30 : 12;
+    }
     if (caja.x0 >= libre.x0 && caja.x1 <= libre.x1 && caja.y0 >= libre.y0 && caja.y1 <= libre.y1) return;
     let z = v.z;
     const cabe = Math.min((libre.x1 - libre.x0) / Math.max(caja.x1 - caja.x0, 1), (libre.y1 - libre.y0) / Math.max(caja.y1 - caja.y0, 1));
@@ -963,6 +980,11 @@ function alClicHoja(e) {
         case 'metraje':     if (it) guardarMetraje(it, b); break;
         case 'foto':        if (it) fotoBastidor(it); break;
         case 'foto-quitar': if (it) quitarFoto(it); break;
+        case 'foto-ver': {
+            const img = b.querySelector('img');
+            if (img?.src) verImagen(img.src, rackPorId(it?.refId)?.name ?? 'Bastidor');
+            break;
+        }
     }
 }
 
@@ -1803,7 +1825,7 @@ function popCapas() {
         ${fila('puntos', 'Puntos de infraestructura')}
         ${fila('lineas', 'Cableado y rutas')}
         ${fila('metraje', 'Metrajes')}
-        ${fila('nombres', 'Nombres en el mapa')}
+        ${fila('nombresInfra', 'Nombres de infraestructura')}
         <label class="mp-rango"><span>Opacidad del plano <b id="mp-opac-val">${Math.round(c.opacidad * 100)}%</b></span>
             <input type="range" min="0.15" max="1" step="0.05" value="${c.opacidad}" data-capa="opacidad"></label>`;
 }
@@ -1814,7 +1836,7 @@ function alCambiarCapa(e) {
     E.capas[k] = k === 'opacidad' ? Number(e.target.value) : e.target.checked;
     if (k === 'opacidad') E.pop.querySelector('#mp-opac-val').textContent = `${Math.round(E.capas.opacidad * 100)}%`;
     aplicarCapas();
-    if (k !== 'opacidad' && k !== 'nombres') pintarMapa();
+    if (k !== 'opacidad' && k !== 'nombresInfra') pintarMapa();
 }
 
 function popResumen() {

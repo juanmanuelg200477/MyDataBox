@@ -1081,6 +1081,19 @@ body.mp-ed-abierto .edge-root { display: none; }
 .mp-ed-h.abierto,
 .mp-ed.panel-abierto .mp-ed-h[data-acc="panel"] { background: rgba(10, 132, 255, 0.18); border-color: rgba(10, 132, 255, 0.35); color: #93c5fd; }
 .mp-ed-h.activo { background: rgba(245, 158, 11, 0.18); border-color: rgba(245, 158, 11, 0.42); color: #fcd34d; }
+/* Interruptores de la barra (Minimizar iconos, Mostrar nombres) encendidos */
+.mp-ed-h.encendido { background: var(--mp-azul, #0a84ff); border-color: transparent; color: #fff; box-shadow: 0 6px 16px -6px rgba(10, 132, 255, 0.8); }
+.mp-ed-h.encendido:hover { background: #2a93ff; color: #fff; }
+
+/* En escritorios angostos la barra queda solo con íconos (con su globo de ayuda) */
+@media (min-width: 1025px) and (max-width: 1180px) {
+    .mp-ed-herr .mp-ed-h { width: 36px; padding: 0; justify-content: center; }
+    .mp-ed-herr .mp-ed-h span { display: none; }
+}
+@media (max-width: 1024px) and (min-height: 501px) {
+    .mp-ed-herr .mp-ed-h { width: 38px; padding: 0; justify-content: center; }
+    .mp-ed-herr .mp-ed-h span { display: none; }
+}
 
 .mp-ed-cuerpo { position: relative; flex: 1; min-height: 0; display: flex; }
 
@@ -1494,11 +1507,45 @@ body.mp-ed-abierto .edge-root { display: none; }
     pointer-events: none;
     transition: opacity 0.15s;
 }
-.mp-ed.con-nombres .mp-marca-nombre,
+/* "Mostrar nombres" (equipos y bastidores) y, en Capas, los de infraestructura */
+.mp-ed.con-nombres .mp-marca.con-pin .mp-marca-nombre,
+.mp-ed.con-nombres-infra .mp-m-infra_point .mp-marca-nombre,
 .mp-marca.sel .mp-marca-nombre,
 .mp-marca.moviendo .mp-marca-nombre,
 .mp-marca.iman .mp-marca-nombre { opacity: 1; }
 @media (hover: hover) { .mp-marca:hover .mp-marca-nombre { opacity: 1; } }
+
+/* "Minimizar iconos": equipos y bastidores como puntos azules justo en su
+   lugar (la infraestructura conserva su ficha) */
+.mp-marca-punto { display: none; }
+.mp-ed.minimizado .mp-marca.con-pin { transform: scale(calc(1 / var(--z))) translate(-50%, -50%); }
+.mp-ed.minimizado .mp-marca.con-pin .mp-marca-ficha,
+.mp-ed.minimizado .mp-marca.con-pin .mp-marca-pico { display: none; }
+.mp-ed.minimizado .mp-marca.con-pin::after { display: none; }
+.mp-ed.minimizado .mp-marca.con-pin .mp-marca-punto {
+    position: relative;
+    display: block;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 34% 30%, #8fcbff 0%, #0a84ff 55%, #005fd1 100%);
+    box-shadow: 0 0 0 2.5px #fff, 0 2px 6px rgba(2, 6, 23, 0.5);
+    transition: transform 0.15s cubic-bezier(0.3, 0.9, 0.4, 1.3), box-shadow 0.15s;
+}
+.mp-ed.minimizado .mp-m-rack .mp-marca-punto { width: 15px; height: 15px; }
+/* Más fácil de tocar que lo que se ve */
+.mp-ed.minimizado .mp-marca-punto::before { content: ''; position: absolute; inset: -12px; border-radius: 50%; }
+@media (hover: hover) { .mp-ed.minimizado .mp-marca.con-pin:hover .mp-marca-punto { transform: scale(1.25); } }
+.mp-ed.minimizado .mp-marca.sel .mp-marca-punto {
+    transform: scale(1.3);
+    box-shadow: 0 0 0 2.5px #fff, 0 0 0 6px rgba(10, 132, 255, 0.4), 0 2px 8px rgba(2, 6, 23, 0.55);
+}
+.mp-ed.minimizado .mp-marca.sel.con-pin::before { bottom: auto; top: 50%; margin-top: -11px; }
+.mp-ed.minimizado .mp-marca.iman .mp-marca-punto { background: radial-gradient(circle at 34% 30%, #fde68a, #f59e0b 60%, #b45309); transform: scale(1.3); }
+.mp-ed.minimizado .mp-marca.moviendo .mp-marca-punto { transform: scale(1.45); }
+.mp-ed.minimizado .mp-marca.perdida .mp-marca-punto { background: #94a3b8; }
+.mp-ed.minimizado .mp-marca.con-pin .mp-marca-nombre { top: calc(100% + 7px); }
+.mp-ed.desbloqueado.minimizado .mp-marca-punto { outline: 2px dashed rgba(251, 191, 36, 0.9); outline-offset: 3px; }
 
 .mp-etq-metraje {
     position: absolute;
@@ -1741,6 +1788,85 @@ body.mp-ed-abierto .edge-root { display: none; }
     background: #0b1220;
 }
 .mp-foto img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.mp-foto-ver {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: zoom-in;
+}
+.mp-foto-ver img { transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@media (hover: hover) { .mp-foto-ver:hover img { transform: scale(1.03); } }
+.mp-foto-ver:focus-visible { outline: 3px solid var(--mp-azul); outline-offset: -3px; }
+.mp-foto-lupa {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px 4px 7px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.72);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 700;
+    pointer-events: none;
+}
+.mp-foto-lupa svg { width: 13px; height: 13px; }
+
+/* Visor de una foto a pantalla completa */
+.mp-dlg.mp-dlg-foto { place-items: stretch; padding: 0; background: rgba(2, 6, 23, 0.94); }
+.mp-dlg-foto .mp-dlg-caja {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    animation: mp-fundido 0.2s ease both;
+}
+.mp-dlg-foto .mp-dlg-cab { padding: max(12px, env(safe-area-inset-top, 0px)) 18px 10px; }
+.mp-dlg-foto .mp-dlg-cab h3 { color: #fff; }
+.mp-dlg-foto .mp-dlg-x { background: rgba(255, 255, 255, 0.14); color: #fff; }
+.mp-dlg-foto .mp-dlg-cuerpo { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0 18px 14px; overflow: hidden; }
+/* La fila y la columna miden lo mismo que el visor: así el 100% de la foto
+   es el alto disponible y nunca se sale de la pantalla */
+.mp-visor-foto {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
+    place-items: center;
+    overflow: hidden;
+    border-radius: 16px;
+}
+.mp-visor-foto img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+    cursor: zoom-in;
+    user-select: none;
+    -webkit-user-drag: none;
+    animation: mp-caja-in 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+}
+.mp-visor-foto.ampliada { display: block; overflow: auto; overscroll-behavior: contain; }
+.mp-visor-foto.ampliada img { max-width: none; max-height: none; height: auto; border-radius: 0; cursor: zoom-out; animation: none; }
+.mp-visor-pie { flex: none; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 10px; font-size: 12.5px; color: #94a3b8; }
+.mp-visor-pie a { display: inline-flex; align-items: center; gap: 6px; color: #93c5fd; font-weight: 700; text-decoration: none; }
+.mp-visor-pie a:hover { color: #bfdbfe; }
+.mp-visor-pie svg { width: 15px; height: 15px; }
 .mp-foto-acc { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 6px; }
 .mp-foto-acc .mp-btn-mini { background: rgba(15, 23, 42, 0.8); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
 .mp-foto-acc .mp-btn-mini.peligro { background: rgba(220, 38, 38, 0.85); }

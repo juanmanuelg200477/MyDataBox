@@ -99,7 +99,10 @@ export function fichaBastidor(rack, { editable, fotoUrl = null, subiendo = false
         ? '<div class="mp-foto mp-foto-cargando" role="img" aria-label="Cargando la foto del bastidor"></div>'
         : fotoUrl
         ? `<figure class="mp-foto">
-                <img src="${esc(fotoUrl)}" alt="Foto del bastidor ${esc(rack.name)}" loading="lazy">
+                <button type="button" class="mp-foto-ver" data-acc="foto-ver" aria-label="Ver la foto completa de ${esc(rack.name)}">
+                    <img src="${esc(fotoUrl)}" alt="Foto del bastidor ${esc(rack.name)}" loading="lazy">
+                    <span class="mp-foto-lupa">${I.expandir}Ver completa</span>
+                </button>
                 ${editable ? `<div class="mp-foto-acc">
                     <button type="button" class="mp-btn-mini" data-acc="foto">${I.camara}Cambiar</button>
                     <button type="button" class="mp-btn-mini peligro" data-acc="foto-quitar">${I.basura}Quitar</button>

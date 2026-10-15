@@ -111,7 +111,8 @@ export function estiloDispositivo(dev) {
     return { clave, etiqueta, c, glifo };
 }
 
-export const ESTILO_BASTIDOR = { clave: 'bastidor', etiqueta: 'Bastidor', c: P.grafito, glifo: GLIFOS.bastidor };
+// Azul claro: se distingue del azul más fuerte de las cámaras
+export const ESTILO_BASTIDOR = { clave: 'bastidor', etiqueta: 'Bastidor', c: ['#b9e4ff', '#3b9eea'], glifo: GLIFOS.bastidor };
 
 // ── Infraestructura: color propio del elemento ──────────────────
 // El usuario elige el color del elemento; la ficha se arma con ese color

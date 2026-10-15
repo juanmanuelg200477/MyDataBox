@@ -10,7 +10,9 @@ import Layout from '../layouts/Layout.astro';
             if (!window.location.pathname.startsWith('/device')) return;
             await load();
             const container = document.getElementById('app');
-            if(container) initDeviceProfile(container);
+            // ?tab=interfaces abre directo en los puertos (enlace desde el bastidor)
+            const tab = new URLSearchParams(window.location.search).get('tab') === 'interfaces' ? 'dt-interfaces' : 'dt-details';
+            if(container) initDeviceProfile(container, tab);
         });
     </script>
 </Layout>

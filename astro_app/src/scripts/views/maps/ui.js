@@ -33,7 +33,10 @@ export const I = {
     check:     svg('<path d="M20 6 9 17l-5-5"/>'),
     flecha:    svg('<path d="m9 18 6-6-6-6"/>'),
     girar:     svg('<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/>'),
-    camara:    svg('<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>')
+    camara:    svg('<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>'),
+    puntos:    svg('<circle cx="6.5" cy="8" r="2.6" fill="currentColor"/><circle cx="17.5" cy="7" r="2.6" fill="currentColor"/><circle cx="11" cy="17" r="2.6" fill="currentColor"/>'),
+    etiqueta:  svg('<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor"/>'),
+    expandir:  svg('<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/>')
 };
 
 // ── Formatos ────────────────────────────────────────────────────
@@ -129,6 +132,39 @@ export function confirmar({ titulo, mensaje, boton = 'Eliminar', peligro = true,
             ],
             alPulsar: (r) => resolver(r === 'si')
         });
+    });
+}
+
+// ── Visor de una foto completa ──────────────────────────────────
+// La foto se ve entera; un toque la acerca justo donde se tocó y otro la
+// devuelve. Tocar el fondo, la X o Escape cierran.
+export function verImagen(url, titulo) {
+    const { caja, cerrar } = dialogo({
+        oscuro: true,
+        clase: 'mp-dlg-foto',
+        titulo: esc(titulo),
+        cuerpo: `<div class="mp-visor-foto"><img src="${esc(url)}" alt="${esc(titulo)}" draggable="false"></div>
+            <div class="mp-visor-pie">
+                <span>Toca la foto para acercarla</span>
+                <a href="${esc(url)}" target="_blank" rel="noopener">${I.externo}Abrir en tamaño real</a>
+            </div>`
+    });
+    const marco = caja.querySelector('.mp-visor-foto');
+    const img = marco.querySelector('img');
+    marco.addEventListener('click', (e) => {
+        if (e.target !== img) { cerrar(); return; }
+        if (marco.classList.contains('ampliada')) {
+            marco.classList.remove('ampliada');
+            img.style.width = '';
+            return;
+        }
+        const r = img.getBoundingClientRect();
+        const fx = (e.clientX - r.left) / r.width;
+        const fy = (e.clientY - r.top) / r.height;
+        marco.classList.add('ampliada');
+        img.style.width = `${Math.round(Math.max(img.naturalWidth, r.width * 2.2))}px`;
+        marco.scrollLeft = img.offsetWidth * fx - marco.clientWidth / 2;
+        marco.scrollTop = img.offsetHeight * fy - marco.clientHeight / 2;
     });
 }
 
