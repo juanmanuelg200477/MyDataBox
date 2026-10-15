@@ -1,0 +1,19 @@
+---
+import '../styles/maps.css';
+---
+<!-- ═══════════════════════════════════════════════════════════
+     MAPAS Y RUTAS — planos de sedes con cada equipo en su lugar.
+     Todo se arma en scripts/views/maps/ (lista, editor, catálogo de
+     infraestructura) dentro de #mp-raiz; estilos en styles/maps.css.
+     ═══════════════════════════════════════════════════════════ -->
+<div class="mp-raiz" id="mp-raiz"></div>
+
+<script>
+    import { initMapas } from '../scripts/views/maps/index.js';
+    document.addEventListener('astro:page-load', () => {
+        // Guard de ruta: el listener vive en document y se dispara en TODA
+        // navegación posterior.
+        if (window.location.pathname.replace(/\/$/, '') !== '/mapas') return;
+        initMapas();
+    });
+</script>

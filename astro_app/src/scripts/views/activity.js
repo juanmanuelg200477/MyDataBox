@@ -21,7 +21,9 @@ const ENTITY_LABELS = {
     isp_link:     'Enlace ISP',
     isp_incident: 'Incidente ISP',
     project:      'Proyecto',
-    project_file: 'Documento de proyecto'
+    project_file: 'Documento de proyecto',
+    map:          'Mapa',
+    infra_element: 'Elemento de infraestructura'
 };
 
 const ACTIONS = {
