@@ -2,6 +2,7 @@
 import { ClientRouter } from 'astro:transitions';
 import Sidebar from '../components/Sidebar.astro';
 import CardNav from '../components/CardNav.astro';
+import '../styles/fonts.css';
 import '../styles/global.css';
 import '../styles/toast.css';
 import '../styles/search.css';
@@ -25,12 +26,6 @@ const { title } = Astro.props;
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<title>{title} — DataBox IT</title>
-		<!-- preconnect: abre la conexión con Google Fonts mientras el
-		     navegador aún lee el HTML, en vez de esperar a descubrir la hoja
-		     de estilos. Las fuentes llegan antes y el texto se asienta antes. -->
-		<link rel="preconnect" href="https://fonts.googleapis.com">
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-		<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 		<!-- GSAP ya no se carga aquí desde el CDN: lo importa CardNav del
 		     paquete (ver CardNav.astro). Este <script> bloqueaba el pintado
 		     de todas las páginas mientras se descargaba. -->
@@ -51,10 +46,13 @@ const { title } = Astro.props;
 		</script>
 	</head>
 	<body>
-		<!-- Page Loading Overlay: Actúa como transición entre páginas -->
+		<!-- Overlay de carga: tapa la primera carga (entrada o recarga) -->
 		<script is:inline>
-			// Se activa inmediatamente para enmascarar transiciones
-			document.documentElement.classList.add('page-loading');
+			// El overlay solo tapa la PRIMERA carga (entrada o recarga). En las
+			// navegaciones internas del ClientRouter la página anterior sigue a
+			// la vista con una barra fina arriba (ver astro:before-preparation):
+			// tapar la pantalla entera en cada clic hacía sentir lenta la app.
+			if (!window.__navInterna) document.documentElement.classList.add('page-loading');
 			// Aplicar viewer-mode SINCRÓNICAMENTE en <html> para que el CSS
 			// oculte botones de edición antes de que se renderice nada.
 			if (sessionStorage.getItem('databox_role') === 'viewer') {
@@ -73,6 +71,25 @@ const { title } = Astro.props;
 			#page-loading-overlay { display: none; }
 			html.page-loading #page-loading-overlay { display: flex !important; }
 			html.page-loading body { overflow: hidden; }
+			/* Barra de progreso de las navegaciones internas. Va en <html>
+			   porque el <body> se reemplaza en cada cambio de página. Espera
+			   un instante antes de verse: si la página llega enseguida, no
+			   aparece. */
+			html.nav-cargando::before {
+				content: '';
+				position: fixed; top: 0; left: 0; right: 0; height: 3px;
+				z-index: var(--z-transition);
+				background: linear-gradient(90deg, #3b82f6, #14b8a6, #8b5cf6);
+				box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+				transform-origin: 0 50%;
+				pointer-events: none;
+				opacity: 0;
+				animation: nav-barra 2.4s cubic-bezier(.1, .7, .3, 1) .12s forwards;
+			}
+			@keyframes nav-barra {
+				0%   { opacity: 1; transform: scaleX(0.08); }
+				100% { opacity: 1; transform: scaleX(0.92); }
+			}
 		</style>
 		<div id="page-loading-overlay" style="position:fixed;inset:0;background:#0D0716;z-index:var(--z-transition);flex-direction:column;gap:24px;align-items:center;justify-content:center;transition:opacity 0.3s ease, visibility 0.3s ease;">
 			<div style="position:relative;width:64px;height:64px;display:flex;align-items:center;justify-content:center;">
@@ -149,21 +166,29 @@ const { title } = Astro.props;
 			})();
 
 			// ── Hook de Navegación ─────────────────────────────
-			// Dispara el overlay inmediatamente antes de buscar la nueva página
+			// Al ir a otra página de la app se enciende la barra fina de
+			// arriba; el overlay completo queda para la primera carga. La
+			// marca en window la lee el script inline del <body> nuevo.
+			let quitarBarra = null;
+			const apagarBarra = () => {
+				clearTimeout(quitarBarra);
+				document.documentElement.classList.remove('nav-cargando');
+			};
 			document.addEventListener('astro:before-preparation', () => {
-				document.documentElement.classList.add('page-loading');
-				const overlay = document.getElementById('page-loading-overlay');
-				if (overlay) {
-					overlay.style.transition = 'none';
-					overlay.style.opacity = '1';
-					overlay.style.pointerEvents = 'all';
-				}
+				window.__navInterna = true;
+				document.documentElement.classList.add('nav-cargando');
+				// Por si la navegación se queda a medias (red caída, otra
+				// navegación encima): la barra nunca se queda pegada.
+				clearTimeout(quitarBarra);
+				quitarBarra = setTimeout(apagarBarra, 15000);
 			});
+			document.addEventListener('astro:after-swap', apagarBarra);
 
 			// ── Guard de sesión y Fin de Carga ──────────────────
 			// Corre en cada navegación (incluidas view transitions).
 			// Si no hay sesión activa redirige al login.
 			document.addEventListener('astro:page-load', async () => {
+				apagarBarra();
 				// El tema oscuro solo existe en /notas (ver nota del script inline).
 				if (window.location.pathname.replace(/\/$/, '') !== '/notas') {
 					document.documentElement.classList.remove('nw-dark');

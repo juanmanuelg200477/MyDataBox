@@ -14,8 +14,12 @@ import { supabase } from './supabase.js';
 const CLAVE_FILA   = 'databox_session_row';
 const MINUTOS_ACTIVO = 5;
 const LATIDO_MS    = 2 * 60 * 1000;
+// Cada cambio de pantalla refrescaba la fila: una escritura en la base por
+// clic. Con una por minuto basta para el umbral de MINUTOS_ACTIVO.
+const REFRESCO_MIN_MS = 60 * 1000;
 
 let _latido = null;
+let _ultimoRefresco = 0;
 
 function rolDe(user) {
     return user?.user_metadata?.role ?? 'admin';
@@ -48,7 +52,7 @@ export async function registrarSesion(user) {
     try { filaId = sessionStorage.getItem(CLAVE_FILA); } catch {}
 
     if (filaId) {
-        await refrescarSesion();
+        if (Date.now() - _ultimoRefresco >= REFRESCO_MIN_MS) await refrescarSesion();
     } else {
         const idNuevo = nuevoId();
         try {
@@ -64,6 +68,7 @@ export async function registrarSesion(user) {
 
             if (error) { console.warn('[sesiones] no se pudo registrar:', error.message); return; }
             try { sessionStorage.setItem(CLAVE_FILA, idNuevo); } catch {}
+            _ultimoRefresco = Date.now();
         } catch (err) {
             console.warn('[sesiones] no se pudo registrar:', err?.message ?? err);
         }
@@ -77,6 +82,7 @@ export async function refrescarSesion() {
     try { filaId = sessionStorage.getItem(CLAVE_FILA); } catch {}
     if (!filaId) return;
 
+    _ultimoRefresco = Date.now();
     try {
         await supabase
             .from('user_sessions')

@@ -51,6 +51,8 @@ const HIGHLIGHT_COLORS = [
 ];
 
 let _ctx = null;
+// Retira el listener de selección del editor de la nota anterior
+let _soltarSeleccion = null;
 
 export function renderApuntes(host) {
     host.innerHTML = `
@@ -648,9 +650,19 @@ function initEditor(note) {
     };
     contentEl.addEventListener('keyup', trackSelection);
     contentEl.addEventListener('mouseup', trackSelection);
-    document.addEventListener('selectionchange', () => {
+    // Va en document: se suelta el de la nota anterior, y este se retira
+    // solo si el editor desaparece (otra sección u otra página).
+    _soltarSeleccion?.();
+    const onSelectionChange = () => {
+        if (!contentEl.isConnected) { soltarSeleccion(); return; }
         if (document.activeElement === contentEl) trackSelection();
-    });
+    };
+    const soltarSeleccion = () => {
+        document.removeEventListener('selectionchange', onSelectionChange);
+        if (_soltarSeleccion === soltarSeleccion) _soltarSeleccion = null;
+    };
+    document.addEventListener('selectionchange', onSelectionChange);
+    _soltarSeleccion = soltarSeleccion;
 
     const restoreSelection = () => {
         if (!savedRange) return;

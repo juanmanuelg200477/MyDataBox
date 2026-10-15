@@ -227,11 +227,19 @@ function incidentFromDb(row) {
 //
 // Si ya hay una carga en marcha, quien llame se suma a esa misma en vez de
 // lanzar otras 8 consultas idénticas en paralelo (pasaba, por ejemplo, al
-// abrir el buscador global mientras la página aún cargaba). Cada llamada
-// fuera de ese solape sigue trayendo datos frescos, como siempre.
+// abrir el buscador global mientras la página aún cargaba).
+//
+// Con el ClientRouter este módulo sobrevive a las navegaciones, así que lo
+// traído hace menos de VIGENCIA_MS se reutiliza: cambiar de pantalla ya no
+// repite las 8 consultas cada vez. Los cambios propios ya están en memoria
+// (save() actualiza el store antes de sincronizar); los de otros usuarios
+// llegan en cuanto vence la vigencia, o al recargar la página.
+const VIGENCIA_MS = 60 * 1000;
 let _loadInFlight = null;
+let _cargadoEn = 0;
 
 export function load() {
+    if (_cargadoEn && Date.now() - _cargadoEn < VIGENCIA_MS) return Promise.resolve();
     if (_loadInFlight) return _loadInFlight;
     _loadInFlight = _loadFromSupabase().finally(() => { _loadInFlight = null; });
     return _loadInFlight;
@@ -288,8 +296,12 @@ async function _loadFromSupabase() {
         });
 
         _snapshot = JSON.parse(JSON.stringify(store));
+        _cargadoEn = Date.now();
 
     } catch (err) {
+        // La copia local puede estar vieja: no cuenta como carga vigente y
+        // la siguiente pantalla vuelve a intentarlo con Supabase.
+        _cargadoEn = 0;
         console.warn('[DataBox] Fallo al cargar de Supabase, usando localStorage:', err.message);
         const d = localStorage.getItem('infrabox_data');
         if (d) Object.assign(store, JSON.parse(d));
@@ -313,6 +325,9 @@ export async function save() {
         await _syncToSupabase();
         return true;
     } catch (err) {
+        // Como antes de la vigencia: lo que no llegó al servidor se descarta
+        // en la siguiente pantalla, que vuelve a leer de Supabase.
+        _cargadoEn = 0;
         console.error('[DataBox] Error al guardar:', err);
         toastError(
             'No se pudieron guardar los cambios en el servidor. Siguen visibles en esta pestaña, pero se perderán al recargar.',

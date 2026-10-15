@@ -100,6 +100,12 @@ function fmtLenFull(px) {
 // ── Estado global del editor ────────────────────────────────────
 let _ctx = null;
 
+// Limpieza del motor del lienzo vivo (listeners de documento y observer).
+// Cada plano abierto crea un motor nuevo: si el anterior no suelta sus
+// listeners, siguen respondiendo al teclado sobre el _ctx compartido y,
+// por ejemplo, un Ctrl+Z deshace un paso por cada plano abierto antes.
+let _limpiarMotor = null;
+
 // ════════════════════════════════════════════════════════════════
 //  ENTRY
 // ════════════════════════════════════════════════════════════════
@@ -495,6 +501,7 @@ function groupBy(arr, key) {
 //  CANVAS ENGINE — el motor principal
 // ════════════════════════════════════════════════════════════════
 function initCanvasEngine() {
+    _limpiarMotor?.();
     const canvas = document.getElementById('bp-canvas');
     const wrap = canvas.parentElement;
     const ctx = canvas.getContext('2d');
@@ -1056,7 +1063,10 @@ function initCanvasEngine() {
     }
 
     // ── Keyboard ─────────────────────────────────────────────
+    // Si el lienzo ya no está en la página (se cambió de sección o de
+    // página), el motor se retira solo con la primera tecla o clic.
     const onKeyDown = e => {
+        if (!canvas.isConnected) { cleanup(); return; }
         if (e.target.matches('input, textarea, [contenteditable="true"]')) return;
         if (e.key === 'Shift') { _ctx.shiftDown = true; updateOrthoIndicator(); }
         if (e.code === 'Space') {
@@ -1087,6 +1097,7 @@ function initCanvasEngine() {
         if (t) setTool(t.id);
     };
     const onKeyUp = e => {
+        if (!canvas.isConnected) { cleanup(); return; }
         if (e.key === 'Shift') { _ctx.shiftDown = false; updateOrthoIndicator(); }
         if (e.code === 'Space') {
             _ctx.spaceDown = false;
@@ -1096,12 +1107,23 @@ function initCanvasEngine() {
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('keyup', onKeyUp);
 
+    // Cerrar dropdowns al click fuera (se registra más abajo, con la toolbar)
+    const onClickFuera = e => {
+        if (!canvas.isConnected) { cleanup(); return; }
+        if (!e.target.closest('.bp-tool') && !e.target.closest('.bp-dropdown')) {
+            closeDropdowns();
+        }
+    };
+
     const cleanup = () => {
         document.removeEventListener('keydown', onKeyDown);
         document.removeEventListener('keyup', onKeyUp);
+        document.removeEventListener('click', onClickFuera);
         ro.disconnect();
+        if (_limpiarMotor === cleanup) _limpiarMotor = null;
     };
     canvas._cleanup = cleanup;
+    _limpiarMotor = cleanup;
 
     // ── Toolbar wiring ──────────────────────────────────────
     document.querySelectorAll('.bp-tool[data-tool]').forEach(b => {
@@ -1239,11 +1261,7 @@ function initCanvasEngine() {
     draw();
 
     // Cerrar dropdowns al click fuera
-    document.addEventListener('click', e => {
-        if (!e.target.closest('.bp-tool') && !e.target.closest('.bp-dropdown')) {
-            closeDropdowns();
-        }
-    });
+    document.addEventListener('click', onClickFuera);
 
     // ── Funciones internas que dependen del scope ──
     function setTool(id) {
