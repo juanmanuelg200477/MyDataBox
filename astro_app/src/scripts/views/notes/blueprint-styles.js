@@ -2,7 +2,7 @@
 //  PLANOS · Estilos inyectados
 //  Extraído de blueprint-section.js sin cambios de lógica.
 // ════════════════════════════════════════════════════════════════
-import { RULER_SIZE } from './blueprint-section.js';
+import { RULER_SIZE } from './blueprint-estado.js';
 
 export function injectStyles() {
     if (document.getElementById('bp-styles')) return;
