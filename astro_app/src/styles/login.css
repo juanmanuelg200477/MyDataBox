@@ -1,0 +1,14 @@
+/* ════════════════════════════════════════════════════════════════
+   LOGIN — estilos (índice)
+   Globales a propósito: la página es un documento completo e
+   independiente (su propio <html>), así que no hay nada que aislar, y
+   así los estilos alcanzan a los avisos que se crean desde el guion.
+   Cada parte vive en ./login/ y se importa en este orden, que es el
+   del bloque original: el resultado final es el mismo CSS.
+   ════════════════════════════════════════════════════════════════ */
+@import './login/base.css';
+@import './login/acceso.css';
+@import './login/ramas.css';
+@import './login/campos.css';
+@import './login/avisos.css';
+@import './login/responsivo.css';

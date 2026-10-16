@@ -1,0 +1,67 @@
+/* LOGIN · Tableta y teléfono — parte de login.css (ver el índice). */
+/* ════════════════════════════════════════════════════════════
+   TELÉFONO Y TABLETA
+   Se apila: la marca arriba en versión compacta y el acceso debajo.
+   ════════════════════════════════════════════════════════════ */
+
+@media (max-width: 980px) {
+    body, html { overflow-y: auto; }
+
+    .lg-shell {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        min-height: 100%;
+        height: auto;
+    }
+
+    /* El lienzo pasa a cubrir la pantalla entera por detrás de todo:
+       en una franja estrecha las ondas no se leen. El height:auto
+       es obligatorio, porque con top, bottom Y height fijados a la
+       vez el navegador ignora el bottom y se quedaría en la franja. */
+    #threads-container {
+        position: fixed;
+        inset: 0;
+        height: auto;
+    }
+
+    .lg-brand {
+        padding: 42px 24px 10px;
+        justify-content: center;
+        text-align: center;
+        background: none;
+        overflow: visible;
+    }
+    .lg-brand::after { display: none; }
+    .lg-brand-inner { max-width: 420px; }
+    .lg-logo-row { justify-content: center; gap: 11px; margin-bottom: 18px; }
+    .lg-title { font-size: 32px; letter-spacing: -1px; }
+    .lg-branch-line { justify-content: center; }
+    #branch-name { font-size: 12px; letter-spacing: 3.5px; }
+    #branch-desc {
+        font-size: 13.5px;
+        margin-bottom: 0;
+        min-height: 0;
+    }
+    .lg-rule, .lg-foot { display: none; }
+
+    .lg-access {
+        padding: 26px 20px 42px;
+        background: none;
+        align-items: flex-start;
+    }
+    .lg-orb { display: none; }
+
+    .lg-card { padding: 28px 22px 24px; }
+
+    .lg-toasts {
+        right: 14px;
+        left: 14px;
+        bottom: 14px;
+        align-items: stretch;
+    }
+    .lg-toast { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lg-branch-pulse, .lg-toast, .lg-branch-menu { animation: none; }
+}

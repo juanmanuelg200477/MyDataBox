@@ -1,0 +1,140 @@
+/* LOGIN · Campos, contraseña, autocompletado y botón — parte de login.css (ver el índice). */
+/* ── Campos ───────────────────────────────────────────────── */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.form-group label {
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.52);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.form-group input {
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 12px 15px;
+    border-radius: 12px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 14.5px;
+    transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+.form-group input::placeholder { color: rgba(255, 255, 255, 0.3); }
+
+.form-group input:focus {
+    outline: none;
+    border-color: rgba(59, 130, 246, 0.6);
+    background: rgba(255, 255, 255, 0.085);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* ── Campo de contraseña con botón de ver ── */
+.pwd-wrap {
+    position: relative;
+    display: flex;
+}
+.pwd-wrap input {
+    flex: 1;
+    min-width: 0;
+    /* Hueco a la derecha para que el texto no pase por debajo
+       del botón al escribir una contraseña larga. */
+    padding-right: 46px;
+}
+.pwd-toggle {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.45);
+    cursor: pointer;
+    transition: color 0.2s ease, background 0.2s ease;
+}
+.pwd-toggle:hover { color: rgba(255, 255, 255, 0.85); background: rgba(255, 255, 255, 0.06); }
+.pwd-toggle:focus-visible {
+    outline: 2px solid rgba(59, 130, 246, 0.8);
+    outline-offset: 2px;
+}
+.pwd-toggle svg { width: 19px; height: 19px; }
+/* Se muestra el icono contrario al estado actual */
+.pwd-toggle .pwd-eye-off { display: none; }
+.pwd-toggle.visible .pwd-eye { display: none; }
+.pwd-toggle.visible .pwd-eye-off { display: block; }
+
+/* ── Autocompletado ──
+   Chrome pinta de claro los campos que autocompleta. Eso rompia el
+   diseno oscuro y, sobre fondo blanco, el ojo blanco desaparecia.
+   El box-shadow interior gigante es la forma estandar de recuperar
+   el fondo, porque background-color no se puede sobrescribir aqui.
+   Aqui el relleno es opaco por obligacion: el autorrelleno no admite
+   transparencia, asi que se usa un tono que encaja con el cristal. */
+.form-group input:-webkit-autofill,
+.form-group input:-webkit-autofill:hover,
+.form-group input:-webkit-autofill:focus,
+.form-group input:-webkit-autofill:active {
+    -webkit-text-fill-color: #fff;
+    -webkit-box-shadow: 0 0 0 1000px #1a1526 inset;
+    box-shadow: 0 0 0 1000px #1a1526 inset;
+    caret-color: #fff;
+    /* El retardo enorme impide que Chrome vuelva a pintar su fondo */
+    transition: background-color 9999s ease-in-out 0s;
+}
+.form-group input:autofill {
+    -webkit-text-fill-color: #fff;
+    caret-color: #fff;
+}
+
+/* ── Botón y error ────────────────────────────────────────── */
+
+.btn-login {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #fff;
+    border: none;
+    padding: 14px;
+    border-radius: 13px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.22s ease, background 0.22s ease;
+    margin-top: 2px;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.38),
+                inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    letter-spacing: -0.1px;
+}
+.btn-login:hover:not(:disabled) {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    box-shadow: 0 10px 28px rgba(37, 99, 235, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.btn-login:active:not(:disabled) { transform: translateY(0); }
+.btn-login:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.login-error {
+    font-size: 12.5px;
+    color: #f87171;
+    text-align: center;
+    min-height: 17px;
+    font-weight: 500;
+    line-height: 1.4;
+}

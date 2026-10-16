@@ -1,0 +1,92 @@
+/* LOGIN · Avisos — parte de login.css (ver el índice). */
+/* ════════════════════════════════════════════════════════════
+   AVISOS — esquina inferior derecha
+   ════════════════════════════════════════════════════════════ */
+
+.lg-toasts {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.lg-toast {
+    pointer-events: auto;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: min(344px, calc(100vw - 44px));
+    padding: 14px 15px;
+    border-radius: 16px;
+    background: rgba(24, 18, 38, 0.82);
+    backdrop-filter: blur(26px) saturate(180%);
+    -webkit-backdrop-filter: blur(26px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    box-shadow:
+        0 20px 44px -12px rgba(0, 0, 0, 0.8),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    animation: toastIn 0.34s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes toastIn {
+    from { opacity: 0; transform: translateX(26px) scale(0.96); }
+    to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+.lg-toast.out {
+    animation: toastOut 0.26s ease forwards;
+}
+@keyframes toastOut {
+    to { opacity: 0; transform: translateX(26px) scale(0.96); }
+}
+
+.lg-toast-ico {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: rgba(245, 158, 11, 0.16);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #fcd34d;
+}
+.lg-toast-ico svg { width: 16px; height: 16px; }
+
+.lg-toast-txt { flex: 1; min-width: 0; }
+.lg-toast-title {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: -0.1px;
+}
+.lg-toast-body {
+    display: block;
+    font-size: 12px;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.56);
+    margin-top: 2px;
+}
+
+.lg-toast-x {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 17px;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 0.18s ease, background 0.18s ease;
+}
+.lg-toast-x:hover { color: #fff; background: rgba(255, 255, 255, 0.09); }

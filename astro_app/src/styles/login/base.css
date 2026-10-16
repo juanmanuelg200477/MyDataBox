@@ -1,0 +1,157 @@
+/* LOGIN · Base y columna izquierda (marca y animación) — parte de login.css (ver el índice). */
+*, *::before, *::after { box-sizing: border-box; }
+
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: 'DM Sans', sans-serif;
+    background-color: #0a0611;
+    color: #fff;
+    overflow: hidden;
+}
+
+/* ════════════════════════════════════════════════════════════
+   ESTRUCTURA — identidad a la izquierda, acceso a la derecha
+   ════════════════════════════════════════════════════════════ */
+
+.lg-shell {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    width: 100%;
+    height: 100%;
+}
+
+/* ── Columna izquierda: marca + animación ─────────────────── */
+
+.lg-brand {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    /* El hueco de abajo es el de la franja de ondas: el texto se
+       centra en lo que queda y nunca se le encima. */
+    padding: 64px 64px 36vh;
+    background:
+        radial-gradient(120% 90% at 15% 20%, rgba(59,130,246,0.16), transparent 60%),
+        radial-gradient(90% 80% at 85% 90%, rgba(168,85,247,0.14), transparent 62%),
+        #0d0716;
+}
+
+/* El lienzo de la animación vive dentro de la columna, no en toda
+   la página: ese era el encargo, que el diseño quede a la izquierda.
+   Y ocupa solo la franja de abajo, por debajo del texto: a pantalla
+   completa las ondas cruzaban por encima del título y la firma. */
+#threads-container {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 32vh;
+    z-index: 0;
+}
+#threads-container canvas { display: block; }
+
+/* Difumina el borde donde la animación se encuentra con el panel de
+   acceso, para que el corte entre columnas no se note. */
+.lg-brand::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent 55%, rgba(10,6,17,0.85) 100%);
+}
+
+.lg-brand-inner {
+    position: relative;
+    z-index: 2;
+    max-width: 470px;
+    /* Deja pasar el ratón al lienzo: las ondas reaccionan al cursor
+       y un bloque de texto encima las dejaría inertes. */
+    pointer-events: none;
+    user-select: none;
+}
+
+.lg-logo-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 26px;
+}
+
+@keyframes atomSpinLogin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+.lg-title {
+    margin: 0;
+    font-size: 46px;
+    font-weight: 700;
+    letter-spacing: -1.6px;
+    line-height: 1;
+    background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 55%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.lg-branch-line {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-bottom: 14px;
+}
+
+.lg-branch-pulse {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    /* color (no solo background) porque el halo del latido se dibuja
+       con currentColor; sin esto heredaba el blanco del body y salía
+       un aro enorme. */
+    color: rgba(255, 255, 255, 0.3);
+    background: currentColor;
+    animation: branchPulse 2.4s ease-out infinite;
+    transition: color 0.35s ease;
+}
+@keyframes branchPulse {
+    0%   { box-shadow: 0 0 0 0 currentColor; opacity: 1; }
+    70%  { box-shadow: 0 0 0 11px transparent; opacity: .75; }
+    100% { box-shadow: 0 0 0 0 transparent; opacity: 1; }
+}
+
+#branch-name {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 4.5px;
+    color: rgba(255, 255, 255, 0.62);
+    transition: color 0.35s ease;
+}
+
+#branch-desc {
+    margin: 0 0 30px;
+    font-size: 15px;
+    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.42);
+    min-height: 50px;
+}
+
+.lg-rule {
+    width: 56px;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.45), transparent);
+    margin-bottom: 22px;
+}
+
+.lg-foot {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.28);
+    letter-spacing: 0.3px;
+}

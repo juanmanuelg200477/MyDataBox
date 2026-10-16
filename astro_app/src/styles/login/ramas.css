@@ -1,0 +1,170 @@
+/* LOGIN · Selector de rama — parte de login.css (ver el índice). */
+/* ── Selector de rama ─────────────────────────────────────── */
+
+.lg-branch-picker { position: relative; }
+
+.lg-branch-btn {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 10px 13px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.92);
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.lg-branch-btn:hover {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+.lg-branch-btn[aria-expanded="true"] {
+    border-color: rgba(59, 130, 246, 0.55);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.14);
+}
+.lg-branch-btn:focus-visible {
+    outline: 2px solid rgba(59, 130, 246, 0.8);
+    outline-offset: 2px;
+}
+
+.lg-branch-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.3);
+    transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+.lg-branch-btn.chosen .lg-branch-dot {
+    background: var(--branch-color);
+    box-shadow: 0 0 9px var(--branch-color);
+}
+
+#branch-btn-label { flex: 1; text-align: left; }
+
+.lg-branch-caret {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.45);
+    transition: transform 0.25s ease;
+}
+.lg-branch-btn[aria-expanded="true"] .lg-branch-caret { transform: rotate(180deg); }
+
+/* Aviso de que falta elegir rama */
+@keyframes branchNudge {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-5px); }
+    40%, 80% { transform: translateX(5px); }
+}
+.lg-branch-btn.nudge {
+    animation: branchNudge 0.42s ease;
+    border-color: rgba(248, 113, 113, 0.65);
+}
+
+.lg-branch-menu {
+    position: absolute;
+    top: calc(100% + 7px);
+    left: 0;
+    right: 0;
+    z-index: 10;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    border-radius: 15px;
+    /* Opaco a propósito. El desenfoque de fondo no sirve aquí: la
+       tarjeta ya tiene el suyo, y uno anidado no difumina lo que se
+       pinta dentro de ella, así que los campos de abajo se veían
+       atravesando el menú. Este tono es el de la tarjeta ya
+       asentada sobre el fondo violeta. */
+    background: #191330;
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    box-shadow:
+        0 22px 46px -14px rgba(0, 0, 0, 0.8),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform-origin: top center;
+    animation: menuIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes menuIn {
+    from { opacity: 0; transform: translateY(-7px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.lg-branch-menu[hidden] { display: none; }
+
+/* El <li> no pinta nada: el botón lo llena por completo, para que
+   toda la fila responda al clic y no solo el texto. */
+.lg-branch-menu li { display: block; margin: 0; }
+
+.lg-branch-opt {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    min-height: 54px;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 11px;
+    background: none;
+    color: inherit;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.16s ease;
+}
+.lg-branch-opt:hover,
+.lg-branch-opt:focus-visible {
+    background: rgba(255, 255, 255, 0.07);
+    outline: none;
+}
+.lg-branch-opt[aria-selected="true"] { background: rgba(255, 255, 255, 0.1); }
+
+.lg-opt-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--branch-color);
+    box-shadow: 0 0 9px var(--branch-color);
+}
+.lg-opt-txt { flex: 1; min-width: 0; }
+.lg-opt-name {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: -0.1px;
+}
+.lg-opt-desc {
+    display: block;
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.42);
+    margin-top: 2px;
+    /* Si la descripción no cabe, se recorta con puntos suspensivos
+       en vez de pasar por debajo de la etiqueta de estado. */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.lg-opt-tag {
+    flex-shrink: 0;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    border-radius: 20px;
+}
+.lg-opt-tag.on {
+    color: #6ee7b7;
+    background: rgba(16, 185, 129, 0.14);
+    border: 1px solid rgba(16, 185, 129, 0.28);
+}
+.lg-opt-tag.off {
+    color: #fcd34d;
+    background: rgba(245, 158, 11, 0.13);
+    border: 1px solid rgba(245, 158, 11, 0.26);
+}
