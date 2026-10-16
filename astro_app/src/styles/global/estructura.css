@@ -1,0 +1,101 @@
+/* GLOBAL · Estructura: main, topbar, contenido y cabecera de página — parte de global.css (ver el índice). */
+/* ============================================================
+   MAIN LAYOUT
+   ============================================================ */
+
+.main {
+    margin-left: 0;
+    width: 100%;
+    flex: 1;
+    min-height: 100vh;
+}
+
+/* ============================================================
+   TOPBAR
+   ============================================================ */
+
+.topbar {
+    height: 54px;
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+    display: flex;
+    align-items: center;
+    padding: 0 26px;
+    position: sticky;
+    top: 0;
+    z-index: var(--z-topbar);
+    box-shadow: 0 4px 30px rgba(15, 23, 42, 0.03), inset 0 -1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.breadcrumb {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+
+.hamburger-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    transition: var(--transition);
+}
+
+.hamburger-btn:hover {
+    background: var(--surface-3);
+    color: var(--text);
+}
+
+.breadcrumb .sep {
+    color: #cbd5e1;
+    font-weight: 300;
+    font-size: 16px;
+}
+
+.breadcrumb .current {
+    color: var(--text);
+    font-weight: 700;
+}
+
+/* ============================================================
+   CONTENT
+   ============================================================ */
+
+.content {
+    padding: 28px 28px 48px;
+}
+
+/* ============================================================
+   PAGE HEADER
+   ============================================================ */
+
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 26px;
+}
+
+.page-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.6px;
+    color: var(--text);
+}
+
+.page-header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}

@@ -1,0 +1,169 @@
+/* GLOBAL · Vacío, carga, scroll, transiciones y solo lectura — parte de global.css (ver el índice). */
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+
+.empty-state {
+    text-align: center;
+    padding: 76px 24px;
+    color: var(--text-muted);
+}
+
+.empty-state svg {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 16px;
+    opacity: 0.28;
+}
+
+.empty-state p {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+    letter-spacing: -0.2px;
+}
+
+.empty-state small {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+/* ============================================================
+   ESTADO DE CARGA
+   Mismo encuadre que .empty-state: ocupa el hueco de la tabla
+   mientras Supabase responde, en vez de dejar la tarjeta vacía
+   (se percibía como una pantalla en blanco / app colgada).
+   ============================================================ */
+
+.db-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 76px 24px;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.db-spinner {
+    width: 26px;
+    height: 26px;
+    border: 2.5px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: db-spin 0.7s linear infinite;
+}
+
+@keyframes db-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .db-spinner { animation-duration: 2s; }
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* ── Barra horizontal fija al pie de la ventana ──────────────────
+   La crea views/devices/barraHorizontalFija.js (hoy solo en Cámaras).
+   Es una copia de la barra de la tabla que queda siempre a mano, como
+   la de Excel. Arranca oculta: el script decide cuándo se ve. */
+.barra-h-fija {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    z-index: var(--z-topbar);
+    overflow-x: auto;
+    overflow-y: hidden;
+    background: rgba(248, 250, 252, 0.94);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.06);
+}
+.barra-h-fija-relleno { height: 1px; }
+/* Más gruesa que la de la tabla (5 px): va pegada al borde de la
+   ventana y con 5 px costaba atinarle con el ratón. Mismos colores. */
+.barra-h-fija::-webkit-scrollbar { height: 11px; }
+.barra-h-fija::-webkit-scrollbar-track { background: #eef2f7; }
+
+/* ============================================================
+   TRANSITIONS & LINKS
+   ============================================================ */
+
+.view-transition {
+    animation: fadeIn 0.2s ease;
+}
+
+.link {
+    color: var(--primary);
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.link:hover {
+    opacity: 0.75;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+/* ── Modo solo lectura (viewer) ─────────────────────────────── */
+/* html.viewer-mode is applied synchronously before render;
+   body.viewer-mode is applied later by JS. :is() matches both. */
+:is(html, body).viewer-mode .page-header-actions,
+:is(html, body).viewer-mode [class*="btn-edit"],
+:is(html, body).viewer-mode [class*="btn-del"],
+:is(html, body).viewer-mode [id^="btn-add"],
+:is(html, body).viewer-mode #btn-save-rd,
+:is(html, body).viewer-mode #btn-delete-rd,
+:is(html, body).viewer-mode #btn-manage-types,
+:is(html, body).viewer-mode #btn-add-category,
+:is(html, body).viewer-mode #btn-add-incident,
+:is(html, body).viewer-mode #isp-add-btn,
+:is(html, body).viewer-mode .btn-toggle-port,
+:is(html, body).viewer-mode .btn-config-port,
+:is(html, body).viewer-mode .rack-u-slot.empty a {
+    display: none !important;
+}
+:is(html, body).viewer-mode .rack-u-slot.empty {
+    pointer-events: none;
+    cursor: default;
+}
+
+.viewer-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 7px;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #d97706;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+}

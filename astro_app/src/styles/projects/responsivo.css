@@ -1,0 +1,72 @@
+/* PROYECTOS · Solo lectura, tableta y teléfono — parte de projects.css (ver el índice). */
+/* ── Solo lectura (rol viewer): fuera todo lo que edita ──────── */
+:is(html, body).viewer-mode .pj-editor { display: none !important; }
+
+/* ── Tablet ──────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .pj-hero { flex-direction: column; align-items: stretch; padding: 22px 20px 16px; gap: 14px; }
+    .pj-brand { padding-right: 0; }
+    .pj-sep { display: none; }
+    .pj-kv-row { flex-wrap: wrap; }
+    .pj-kv { flex: 1 1 30%; }
+    .pj-kv-ancho { flex: 1 1 60%; }
+
+    .pj-cuerpo-card { grid-template-columns: minmax(0, 1fr); }
+    .pj-visor { height: 520px; }
+    .pj-ctx { max-height: none; }
+
+    .pj-pres-escena { padding: 4px 16px 14px; }
+    .pj-pres-cuerpo { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1.4fr) minmax(0, 1fr); }
+    .pj-pres-nav { top: auto; bottom: 10px; margin-top: 0; }
+}
+
+/* ── Teléfono ────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .pj { gap: 12px; }
+    .pj-hero { border-radius: 18px; padding: 18px 14px 12px; }
+    .pj-brand-canvas { width: 230px; height: 46px; }
+    .pj-kv { flex: 1 1 45%; padding: 10px 4px 14px; }
+    .pj-kv-n { font-size: 24px; }
+    .pj-kv-ancho { flex: 1 1 100%; order: 5; }
+    .pj-kv + .pj-kv::before { display: none; }
+
+    .pj-barra .pj-buscar { flex: 1 1 100%; }
+    .pj-select, .pj-btn-vidrio, .pj-barra .pj-btn-primario { flex: 1 1 auto; }
+
+    .pj-card { padding: 18px 16px 18px; border-radius: 22px; }
+    .pj-card-hdr { flex-direction: column; gap: 14px; margin-bottom: 16px; }
+    .pj-card-lado { width: 100%; justify-content: space-between; align-items: center; }
+    .pj-monto { align-items: flex-start; }
+    .pj-nombre { font-size: 21px; }
+    .pj-visor { height: 430px; border-radius: 16px; }
+    .pj-ctx { padding: 16px; }
+    .pjv-hojas { padding: 12px 10px 6px; gap: 10px; }
+
+    .pjv-capa-barra { padding: 10px 12px; }
+    .pjv-capa-txt span { display: none; }
+    .pjv-capa-cuerpo { padding: 8px; }
+
+    .pj-pres-diapo { padding: 18px 16px; border-radius: 22px; }
+    .pj-pres-hdr { flex-direction: column; gap: 10px; }
+    .pj-pres-nombre { font-size: 24px; }
+
+    .pj-tab { max-width: 210px; }
+
+    .pj-minis { grid-template-columns: 1fr; gap: 10px; }
+    .pj-mini { min-height: 0; padding: 15px 15px 13px; gap: 12px; border-radius: 20px; }
+    .pj-mini-ico { width: 40px; height: 40px; border-radius: 13px; font-size: 13.5px; }
+    .pj-mini-nombre { font-size: 15px; }
+    .pj-minis-pie { flex-direction: column-reverse; align-items: stretch; text-align: center; }
+    .pj-paginador { justify-content: space-between; }
+    .pj-paginador .pager-btn { flex: 1; }
+
+    .pj-ficha { padding: 10px 8px 24px; }
+    .pj-ficha-cerrar { top: 8px; right: 8px; width: 38px; height: 38px; border-radius: 12px; }
+    .pj-ficha .pj-card-hdr { padding-right: 40px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pj, .pj-hero-sheen, .pj-pres-diapo, .pj-dialogo, .pj-dialogo-caja, .pjv-capa,
+    .pj-mini, .pj-ficha, .pj-ficha-marco { animation: none !important; }
+    .pj-vistazo { transition: none !important; }
+}

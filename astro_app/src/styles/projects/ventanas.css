@@ -1,0 +1,130 @@
+/* PROYECTOS · Formulario, confirmación y ver en grande — parte de projects.css (ver el índice). */
+/* ── Formulario del modal ────────────────────────────────────── */
+.pjf-monto { display: flex; gap: 8px; }
+.form-group .pjf-monto select { width: 84px; flex-shrink: 0; }
+.pjf-ayuda { display: block; margin-top: 6px; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+.pjf-error {
+    margin: 4px 0 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #fef2f2;
+    border: 1px solid rgba(220, 38, 38, .25);
+    font: 600 13px 'DM Sans', sans-serif;
+    color: #b91c1c;
+}
+
+/* ── Confirmación ────────────────────────────────────────────── */
+.pj-dialogo {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    background: rgba(2, 6, 23, .45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    animation: pjAparece .16s ease;
+}
+
+.pj-dialogo.saliendo { opacity: 0; transition: opacity .16s ease; }
+
+.pj-dialogo-caja {
+    width: min(420px, 100%);
+    padding: 26px 24px 20px;
+    border-radius: 24px;
+    text-align: center;
+    background: rgba(255, 255, 255, .92);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, .9);
+    box-shadow: 0 30px 60px -20px rgba(2, 6, 23, .5), inset 0 1px 0 #fff;
+    animation: pjSube .2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pj-dialogo-ico {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 12px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    color: #dc2626;
+    background: #fee2e2;
+}
+
+.pj-dialogo-ico svg { width: 22px; height: 22px; }
+.pj-dialogo-caja h3 { margin: 0 0 8px; font: 800 18px 'DM Sans', sans-serif; color: var(--text); }
+.pj-dialogo-caja p { margin: 0 0 20px; font: 500 14px/1.6 'DM Sans', sans-serif; color: var(--text-muted); overflow-wrap: anywhere; }
+.pj-dialogo-caja p b { color: var(--text); }
+.pj-dialogo-pie { display: flex; gap: 10px; justify-content: center; }
+.pj-dialogo-pie .pj-btn-suave { height: 40px; padding: 0 16px; }
+
+@keyframes pjAparece { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pjSube { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+
+/* ── Ver en grande ───────────────────────────────────────────── */
+.pjv-capa {
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--z-preview) + 1);
+    display: flex;
+    flex-direction: column;
+    background: rgba(2, 6, 23, .86);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    animation: pjAparece .18s ease;
+}
+
+.pjv-capa-barra {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px 18px;
+    background: rgba(15, 23, 42, .6);
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    color: #fff;
+}
+
+.pjv-capa-tit { min-width: 0; display: flex; flex-direction: column; }
+.pjv-capa-proy { font: 700 11px 'DM Sans', sans-serif; text-transform: uppercase; letter-spacing: 1.2px; color: rgba(255, 255, 255, .55); }
+.pjv-capa-arch { font: 700 15px 'DM Sans', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pjv-capa-acc { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.pjv-capa-n { font: 700 12px 'JetBrains Mono', monospace; color: rgba(255, 255, 255, .7); }
+
+.pjv-capa-btn {
+    height: 38px;
+    min-width: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 0 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, .14);
+    background: rgba(255, 255, 255, .08);
+    color: #fff;
+    font: 600 12.5px 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: background .18s ease;
+}
+
+.pjv-capa-btn svg { width: 17px; height: 17px; }
+.pjv-capa-btn:hover { background: rgba(255, 255, 255, .18); }
+.pjv-capa-btn[hidden] { display: none; }
+
+.pjv-capa-cuerpo { flex: 1; min-height: 0; display: flex; justify-content: center; padding: 18px; }
+
+.pjv-grande {
+    position: relative;
+    inset: auto;
+    width: min(1180px, 100%);
+    height: 100%;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #e9eef5, #dfe6ef);
+}
+
+.pjv-grande .pjv-imagen img { max-height: calc(var(--vh-util) - 150px); }

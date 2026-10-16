@@ -1,0 +1,68 @@
+/* GLOBAL · Paginador — parte de global.css (ver el índice). */
+/* ============================================================
+   PAGINADOR (ver renderPager en utils.js)
+   ============================================================ */
+
+.pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+}
+
+.pager-btn {
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+.pager-btn:hover:not(:disabled) {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.pager-btn:disabled {
+    opacity: .45;
+    cursor: default;
+}
+
+.pager-info {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+/* Celda larga que se recorta con puntos suspensivos. Va como clase y no
+   como estilo en linea porque los estilos en linea ganan a las reglas
+   del modo tarjeta de abajo y dejaban el texto cortado en telefono. */
+.cell-truncate {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-muted);
+}
+
+/* Columna de numeracion correlativa */
+.cell-index {
+    width: 40px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.cell-no-results {
+    padding: 28px 12px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+}

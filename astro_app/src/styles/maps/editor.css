@@ -1,0 +1,109 @@
+/* MAPAS · Editor: estructura y cabecera — parte de maps.css (ver el índice). */
+/* ════════════════════════════════════════════════════════════════
+   EDITOR
+   ════════════════════════════════════════════════════════════════ */
+.mp-ed {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: calc(var(--vh-util, 100vh) - 54px);
+    margin: -28px -28px -48px;
+    overflow: hidden;
+    isolation: isolate;
+    background: #070b14;
+    color: #e5e7eb;
+}
+.mp-ed-espera { align-items: center; justify-content: center; padding: 24px; }
+.mp-ed-espera-caja { display: grid; justify-items: center; gap: 14px; color: #94a3b8; font-size: 13.5px; font-weight: 600; }
+.mp-ed .db-spinner { border-color: rgba(255, 255, 255, 0.14); border-top-color: #60a5fa; }
+
+/* Cabecera del editor */
+.mp-ed-barra {
+    position: relative;
+    z-index: 8;
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 58px;
+    padding: 0 14px;
+    background: linear-gradient(180deg, rgba(17, 24, 39, 0.98), rgba(10, 15, 28, 0.96));
+    border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+}
+.mp-ed-volver {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    height: 36px;
+    padding: 0 12px 0 5px;
+    border: 0;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #60a5fa;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.mp-ed-volver svg { width: 21px; height: 21px; }
+.mp-ed-volver:hover { background: rgba(255, 255, 255, 0.1); }
+.mp-ed-tit { flex: 1; min-width: 0; display: grid; }
+.mp-ed-tipo { font-size: 10.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #60a5fa; }
+.mp-ed-tit h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.mp-ed-lectura {
+    flex: none;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(251, 191, 36, 0.14);
+    color: #fcd34d;
+    font-size: 11.5px;
+    font-weight: 700;
+}
+.mp-ed-herr { flex: none; display: flex; gap: 6px; }
+.mp-ed-h {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #cbd5e1;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.mp-ed-h svg { width: 17px; height: 17px; flex: none; }
+.mp-ed-h:hover { background: rgba(255, 255, 255, 0.11); color: #fff; }
+.mp-ed-h.solo-ico { width: 36px; padding: 0; justify-content: center; }
+.mp-ed-h.abierto,
+.mp-ed.panel-abierto .mp-ed-h[data-acc="panel"] { background: rgba(10, 132, 255, 0.18); border-color: rgba(10, 132, 255, 0.35); color: #93c5fd; }
+.mp-ed-h.activo { background: rgba(245, 158, 11, 0.18); border-color: rgba(245, 158, 11, 0.42); color: #fcd34d; }
+/* Interruptores de la barra (Minimizar iconos, Mostrar nombres) encendidos */
+.mp-ed-h.encendido { background: var(--mp-azul, #0a84ff); border-color: transparent; color: #fff; box-shadow: 0 6px 16px -6px rgba(10, 132, 255, 0.8); }
+.mp-ed-h.encendido:hover { background: #2a93ff; color: #fff; }
+
+/* En escritorios angostos la barra queda solo con íconos (con su globo de ayuda) */
+@media (min-width: 1025px) and (max-width: 1180px) {
+    .mp-ed-herr .mp-ed-h { width: 36px; padding: 0; justify-content: center; }
+    .mp-ed-herr .mp-ed-h span { display: none; }
+}
+@media (max-width: 1024px) and (min-height: 501px) {
+    .mp-ed-herr .mp-ed-h { width: 38px; padding: 0; justify-content: center; }
+    .mp-ed-herr .mp-ed-h span { display: none; }
+}
+
+.mp-ed-cuerpo { position: relative; flex: 1; min-height: 0; display: flex; }

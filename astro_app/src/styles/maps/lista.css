@@ -1,0 +1,210 @@
+/* MAPAS · Lista: página, isla y barra — parte de maps.css (ver el índice). */
+/* ════════════════════════════════════════════════════════════════
+   LISTA DE MAPAS
+   ════════════════════════════════════════════════════════════════ */
+.mp-casa { max-width: 1320px; margin: 0 auto; padding-bottom: 24px; color: #0f172a; }
+
+.mp-cab {
+    position: relative;
+    overflow: hidden;
+    padding: 28px 32px 26px;
+    border-radius: 32px;
+    background:
+        radial-gradient(120% 140% at 0% 0%, #ffffff 0%, rgba(255, 255, 255, 0) 55%),
+        radial-gradient(80% 120% at 100% 0%, #dbeafe 0%, rgba(219, 234, 254, 0) 62%),
+        radial-gradient(70% 120% at 85% 115%, #ede9fe 0%, rgba(237, 233, 254, 0) 60%),
+        linear-gradient(135deg, #f8fafc, #eef2ff);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 22px 50px -26px rgba(15, 23, 42, 0.35);
+}
+.mp-cab-deco {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 62%;
+    height: 100%;
+    color: #6366f1;
+    pointer-events: none;
+}
+.mp-ruta {
+    stroke: #0a84ff;
+    stroke-dasharray: 2 9;
+    animation: mp-ruta 1.4s linear infinite;
+}
+.mp-cab-pins circle { fill: #fff; stroke: #0a84ff; stroke-width: 3; }
+.mp-cab-pins circle:last-child { fill: #0a84ff; stroke: #fff; animation: mp-latido 2.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes mp-ruta { to { stroke-dashoffset: -22; } }
+@keyframes mp-latido { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.35); } }
+
+.mp-cab-txt { position: relative; max-width: 620px; }
+/* Una "isla dinámica" en lugar de la barra azul de otros módulos */
+.mp-cab-sup {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 30px;
+    padding: 0 14px 0 5px;
+    border-radius: 999px;
+    background: #0b0b0f;
+    color: #f5f5f7;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    box-shadow: 0 10px 22px -10px rgba(0, 0, 0, 0.55);
+}
+.mp-cab-sup svg {
+    width: 21px;
+    height: 21px;
+    padding: 4px;
+    box-sizing: border-box;
+    border-radius: 50%;
+    background: linear-gradient(160deg, #5ac8fa, #0a84ff);
+    color: #fff;
+}
+.mp-cab-sup::after {
+    content: '';
+    width: 7px;
+    height: 7px;
+    margin-left: 4px;
+    border-radius: 50%;
+    background: #34c759;
+    box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.25);
+}
+.mp-cab h1 {
+    margin: 14px 0 6px;
+    font-size: clamp(34px, 4.2vw, 46px);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1.02;
+    color: #0b1220;
+}
+.mp-cab p { margin: 0; font-size: 15px; color: #475569; line-height: 1.5; }
+
+.mp-widgets {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 22px;
+}
+.mp-widget {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 12px;
+    align-items: center;
+    padding: 14px 16px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.72);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 12px 30px -20px rgba(15, 23, 42, 0.45);
+}
+.mp-widget-ico {
+    grid-row: span 2;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 11px;
+    color: #fff;
+    background: linear-gradient(160deg, color-mix(in srgb, var(--w) 62%, #fff), var(--w));
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 8px 16px -8px var(--w);
+}
+.mp-widget-ico svg { width: 18px; height: 18px; }
+.mp-widget b { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; color: #0b1220; }
+.mp-widget > span:last-child { font-size: 12.5px; font-weight: 600; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Barra: pestañas, búsqueda y "Nuevo mapa" */
+.mp-barra {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin: 22px 0 10px;
+}
+.mp-barra .mp-seg {
+    display: flex;
+    padding: 3px;
+    border-radius: 13px;
+    background: rgba(118, 118, 128, 0.14);
+}
+.mp-barra .mp-seg button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 34px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 10px;
+    background: none;
+    color: #334155;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+}
+.mp-barra .mp-seg button svg { width: 15px; height: 15px; }
+.mp-barra .mp-seg button b {
+    display: inline-grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 99px;
+    background: rgba(15, 23, 42, 0.08);
+    font-size: 11.5px;
+}
+.mp-barra .mp-seg button.activo { background: #fff; color: #0f172a; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12); }
+.mp-barra .mp-seg button.activo b { background: var(--mp-azul); color: #fff; }
+
+.mp-buscar {
+    flex: 1 1 260px;
+    max-width: 380px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 12px;
+    background: rgba(118, 118, 128, 0.12);
+    color: #64748b;
+    transition: box-shadow 0.2s, background 0.2s;
+}
+.mp-buscar:focus-within { background: #fff; box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25); }
+.mp-buscar svg { width: 16px; height: 16px; flex: none; }
+.mp-buscar input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: none;
+    font: inherit;
+    font-size: 14px;
+    color: #0f172a;
+}
+.mp-barra > .mp-btn-primario { margin-left: auto; }
+
+.mp-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.mp-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 13px;
+    border-radius: 999px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: #fff;
+    color: #334155;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.mp-chip b { font-size: 11.5px; color: #94a3b8; }
+.mp-chip:hover { border-color: rgba(15, 23, 42, 0.2); }
+.mp-chip.activo { background: #0f172a; border-color: #0f172a; color: #fff; }
+.mp-chip.activo b { color: #93c5fd; }

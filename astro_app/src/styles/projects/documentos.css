@@ -1,0 +1,310 @@
+/* PROYECTOS · Columna de documentos y visor — parte de projects.css (ver el índice). */
+/* ── Columna de documentos ───────────────────────────────────── */
+.pj-doc {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.pj-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 2px 2px 4px;
+    scrollbar-width: thin;
+}
+
+/* Con muchos documentos las pestañas no se encogen hasta quedar en "C…":
+   conservan su ancho y la fila se desplaza de lado. */
+.pj-tab {
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: 260px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 6px 0 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(15, 23, 42, .07);
+    background: rgba(255, 255, 255, .55);
+    font: 600 12.5px 'DM Sans', sans-serif;
+    color: var(--text);
+    cursor: pointer;
+    transition: background .18s ease, box-shadow .18s ease;
+    outline: none;
+}
+
+.pj-tab:hover { background: rgba(255, 255, 255, .9); }
+.pj-tab:focus-visible { box-shadow: 0 0 0 3px rgba(59, 130, 246, .35); }
+
+.pj-tab.activo {
+    background: #fff;
+    box-shadow: 0 6px 16px -8px rgba(15, 23, 42, .35), 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.pj-tab-ico {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border-radius: 7px;
+    color: #fff;
+    background: #64748b;
+}
+
+.pj-tab-ico svg { width: 14px; height: 14px; }
+.pj-tipo-txt { font: 800 8.5px 'DM Sans', sans-serif; letter-spacing: .3px; }
+.pj-t-pdf { background: linear-gradient(135deg, #f87171, #dc2626); }
+.pj-t-docx, .pj-t-doc { background: linear-gradient(135deg, #60a5fa, #1d4ed8); }
+.pj-t-imagen { background: linear-gradient(135deg, #34d399, #059669); }
+
+.pj-tab-nombre { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 2px; }
+
+.pj-tab-x {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    opacity: .55;
+    transition: opacity .15s ease, background .15s ease, color .15s ease;
+}
+
+.pj-tab-x svg { width: 13px; height: 13px; }
+.pj-tab:hover .pj-tab-x, .pj-tab.activo .pj-tab-x { opacity: 1; }
+.pj-tab-x:hover { background: #fee2e2; color: #dc2626; }
+
+.pj-tab-mas {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 38px;
+    padding: 0 12px;
+    border-radius: 12px;
+    border: 1.5px dashed rgba(59, 130, 246, .45);
+    background: rgba(59, 130, 246, .06);
+    color: var(--primary);
+    font: 700 12.5px 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: background .18s ease;
+}
+
+.pj-tab-mas svg { width: 15px; height: 15px; }
+.pj-tab-mas:hover { background: rgba(59, 130, 246, .12); }
+
+/* El visor: una "mesa" gris sobre la que se ponen las hojas */
+.pj-visor {
+    position: relative;
+    height: 600px;
+    border-radius: 18px;
+    overflow: hidden;
+    background: linear-gradient(180deg, #e9eef5, #dfe6ef);
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, .07), inset 0 10px 24px -14px rgba(15, 23, 42, .25);
+}
+
+.pjv {
+    position: absolute;
+    inset: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+}
+
+.pj-visor-acc {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    display: flex;
+    gap: 8px;
+    z-index: 2;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity .2s ease, transform .2s ease;
+}
+
+.pj-visor:hover .pj-visor-acc,
+.pj-visor:focus-within .pj-visor-acc { opacity: 1; transform: none; }
+
+@media (hover: none) {
+    .pj-visor-acc { opacity: 1; transform: none; }
+}
+
+.pj-flot {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, .7);
+    background: rgba(15, 23, 42, .62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 8px 18px -8px rgba(15, 23, 42, .6);
+    transition: background .18s ease, transform .15s ease;
+}
+
+.pj-flot svg { width: 16px; height: 16px; }
+.pj-flot:hover { background: rgba(15, 23, 42, .85); transform: translateY(-1px); }
+
+/* Sin documentos: zona para soltar */
+.pj-visor-vacio { display: grid; place-items: center; }
+
+.pj-soltar {
+    text-align: center;
+    padding: 28px;
+    max-width: 380px;
+}
+
+.pj-soltar-ico {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 14px;
+    display: grid;
+    place-items: center;
+    border-radius: 20px;
+    color: var(--primary);
+    background: rgba(255, 255, 255, .8);
+    box-shadow: 0 10px 26px -12px rgba(37, 99, 235, .45), inset 0 1px 0 #fff;
+}
+
+.pj-soltar-ico svg { width: 28px; height: 28px; }
+.pj-soltar-tit { margin: 0 0 6px; font: 800 16px 'DM Sans', sans-serif; color: var(--text); }
+.pj-soltar-txt { margin: 0; font: 500 13px/1.6 'DM Sans', sans-serif; color: var(--text-muted); }
+
+/* Arrastrando archivos encima */
+.pj-doc.pj-arrastrando::after {
+    content: 'Suelta aquí para agregarlos a este proyecto';
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: grid;
+    place-items: center;
+    border-radius: 18px;
+    border: 2px dashed var(--primary);
+    background: rgba(59, 130, 246, .12);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    font: 800 15px 'DM Sans', sans-serif;
+    color: #1d4ed8;
+    pointer-events: none;
+}
+
+.pj-subiendo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    border-radius: 12px;
+    background: rgba(59, 130, 246, .1);
+    border: 1px solid rgba(59, 130, 246, .25);
+    font: 600 12.5px 'DM Sans', sans-serif;
+    color: #1d4ed8;
+}
+
+.pj-subiendo .db-spinner { width: 16px; height: 16px; border-width: 2px; }
+
+/* ── Visor por dentro (pjv-*) ────────────────────────────────── */
+.pjv-cargando,
+.pjv-aviso {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 28px;
+    text-align: center;
+    font: 500 13px/1.6 'DM Sans', sans-serif;
+    color: var(--text-muted);
+}
+
+.pjv-aviso p { margin: 0; max-width: 360px; }
+.pjv-aviso-tit { font-weight: 800; font-size: 15px; color: var(--text); overflow-wrap: anywhere; }
+
+.pjv-aviso-ico {
+    width: 58px;
+    height: 70px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    color: #fff;
+    font: 800 13px 'DM Sans', sans-serif;
+    background: linear-gradient(135deg, #60a5fa, #1d4ed8);
+    box-shadow: 0 12px 24px -12px rgba(29, 78, 216, .7);
+}
+
+/* PDF */
+.pjv-hojas {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 18px 8px;
+}
+
+.pjv-hoja {
+    position: relative;
+    width: 100%;
+    max-width: 920px;
+    background: #fff;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .12), 0 14px 30px -14px rgba(15, 23, 42, .35);
+}
+
+.pjv-hoja canvas { display: block; width: 100%; height: 100%; }
+
+.pjv-contador {
+    position: sticky;
+    bottom: 12px;
+    width: max-content;
+    margin: 4px auto 12px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, .72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #fff;
+    font: 700 11.5px 'DM Sans', sans-serif;
+    pointer-events: none;
+}
+
+/* Word */
+.pjv-docx { transform-origin: top left; }
+.pjv-docx .pjdocx-wrapper { background: transparent !important; padding: 24px !important; }
+
+.pjv-docx .pjdocx-wrapper > section.pjdocx {
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .12), 0 14px 30px -14px rgba(15, 23, 42, .35) !important;
+    margin-bottom: 24px !important;
+}
+
+/* Imagen */
+.pjv-imagen {
+    min-height: 100%;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+}
+
+.pjv-imagen img {
+    display: block;
+    max-width: 100%;
+    max-height: 560px;
+    object-fit: contain;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 16px 34px -16px rgba(15, 23, 42, .45);
+}

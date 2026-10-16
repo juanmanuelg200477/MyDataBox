@@ -1,0 +1,160 @@
+/* PROYECTOS · Lista y tarjetas — parte de projects.css (ver el índice). */
+/* ── Lista y tarjetas ────────────────────────────────────────── */
+.pj-lista { display: flex; flex-direction: column; gap: 22px; padding-bottom: 12px; }
+
+.pj-card {
+    --pj-rim:
+        0 0 0 1px rgba(15, 23, 42, .07),
+        inset 0 1px 0 rgba(255, 255, 255, 1),
+        inset 0 2px 6px -2px rgba(255, 255, 255, .9),
+        inset 1px 0 0 rgba(255, 255, 255, .6),
+        inset -1px 0 0 rgba(255, 255, 255, .35),
+        inset 0 -1px 0 rgba(15, 23, 42, .07),
+        inset 0 -8px 14px -10px rgba(15, 23, 42, .08);
+    position: relative;
+    border-radius: 26px;
+    padding: 24px 26px 26px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, .8) 0%, rgba(255, 255, 255, .26) 34%, rgba(255, 255, 255, 0) 58%),
+        linear-gradient(125deg, rgba(255, 255, 255, .55) 0%, rgba(255, 255, 255, 0) 28%),
+        rgba(255, 255, 255, .5);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, .9);
+    box-shadow: 0 2px 6px rgba(15, 23, 42, .06), 0 22px 46px -22px rgba(15, 23, 42, .32), var(--pj-rim);
+    scroll-margin-top: 70px;
+    transition: box-shadow .3s ease, opacity .25s ease, transform .25s ease;
+}
+
+/* Línea de color del estado, como el canto iluminado del vidrio */
+.pj-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 28px;
+    right: 28px;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+    background: linear-gradient(90deg, transparent, var(--accent) 22%, var(--accent) 78%, transparent);
+    box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 60%, transparent);
+    opacity: .85;
+}
+
+.pj-card:hover {
+    box-shadow:
+        0 2px 4px rgba(15, 23, 42, .06),
+        0 26px 52px -22px rgba(15, 23, 42, .34),
+        0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent),
+        0 0 32px -12px color-mix(in srgb, var(--accent) 45%, transparent),
+        var(--pj-rim);
+}
+
+.pj-card.pj-saliendo { opacity: 0; transform: scale(.98) translateY(-6px); }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .pj-card { background: linear-gradient(180deg, #ffffff, #f8fafc); }
+}
+
+.pj-card-hdr {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.pj-card-tit { min-width: 0; flex: 1; }
+
+.pj-kicker { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; }
+
+.pj-estado {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 26px;
+    padding: 0 11px;
+    border-radius: 999px;
+    font: 700 11.5px 'DM Sans', sans-serif;
+    letter-spacing: .2px;
+    color: color-mix(in srgb, var(--c) 78%, #0f172a);
+    background: color-mix(in srgb, var(--c) 13%, rgba(255, 255, 255, .7));
+    border: 1px solid color-mix(in srgb, var(--c) 28%, transparent);
+}
+
+.pj-estado::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--c);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 22%, transparent);
+}
+
+.pj-kicker-dato {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: 600 12px 'DM Sans', sans-serif;
+    color: var(--text-muted);
+}
+
+.pj-kicker-dato svg,
+.pj-meta svg { width: 14px; height: 14px; flex-shrink: 0; opacity: .75; }
+
+.pj-nombre {
+    margin: 0;
+    font-size: 26px;
+    line-height: 1.18;
+    font-weight: 800;
+    letter-spacing: -.6px;
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+.pj-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin-top: 10px;
+    font: 500 12.5px 'DM Sans', sans-serif;
+    color: var(--text-muted);
+}
+
+.pj-meta span { display: inline-flex; align-items: center; gap: 6px; }
+
+.pj-card-lado { display: flex; align-items: flex-start; gap: 14px; flex-shrink: 0; }
+
+.pj-monto {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    padding: 10px 16px;
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .85), rgba(255, 255, 255, .45));
+    box-shadow: 0 0 0 1px rgba(15, 23, 42, .06), inset 0 1px 0 #fff;
+}
+
+.pj-monto-l {
+    font: 700 9.5px 'DM Sans', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+}
+
+.pj-monto-n {
+    margin-top: 4px;
+    font: 700 22px/1.1 'JetBrains Mono', monospace;
+    letter-spacing: -.8px;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+.pj-card-acc { display: flex; gap: 8px; }
+
+/* Documento a la izquierda, contexto a la derecha */
+.pj-cuerpo-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    gap: 20px;
+    align-items: stretch;
+}

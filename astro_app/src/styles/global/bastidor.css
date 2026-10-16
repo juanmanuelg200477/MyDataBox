@@ -1,0 +1,167 @@
+/* GLOBAL · Vista de bastidor — parte de global.css (ver el índice). */
+/* ============================================================
+   RACK VIEW
+   ============================================================ */
+
+.rack-view {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 24px;
+}
+
+.rack-specs {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    overflow: hidden;
+}
+
+.rack-specs-header {
+    background: linear-gradient(135deg, var(--text-main) 0%, #1e293b 100%);
+    color: var(--white);
+    padding: 15px 18px;
+    font-size: 13.5px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: -0.2px;
+}
+
+.rack-specs-header svg {
+    width: 17px;
+    height: 17px;
+    opacity: 0.75;
+}
+
+.rack-specs table {
+    width: 100%;
+}
+
+.rack-specs td {
+    padding: 10px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--surface-3);
+}
+
+.rack-specs td:first-child {
+    font-weight: 700;
+    color: var(--text-muted);
+    width: 40%;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.65px;
+}
+
+.rack-specs td:last-child {
+    color: var(--text);
+    font-weight: 500;
+}
+
+.rack-elevation {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    overflow: hidden;
+}
+
+.rack-elevation-header {
+    padding: 15px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(to bottom, var(--surface), #fafbfd);
+}
+
+.rack-elevation-header h3 {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+}
+
+.rack-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.rack-table td {
+    border-bottom: 1px solid var(--surface-3);
+}
+
+.rack-u-num {
+    width: 38px;
+    text-align: center;
+    font-size: 10.5px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    padding: 0 4px;
+    background: linear-gradient(to right, var(--surface-2), var(--surface-3));
+    border-right: 2px solid var(--border);
+}
+
+.rack-u-slot {
+    padding: 0;
+    height: 28px;
+    position: relative;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.rack-u-slot:hover {
+    background: rgba(59, 130, 246, 0.04);
+}
+
+.rack-u-slot.empty:hover::after {
+    content: '+ Agregar dispositivo';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    color: var(--primary);
+    font-weight: 600;
+    letter-spacing: -0.1px;
+}
+
+@media (max-width: 768px) {
+    .rack-u-slot::after {
+        display: none !important;
+        content: none !important;
+    }
+}
+
+.rack-u-slot.occupied {
+    cursor: default;
+    padding: 0;
+}
+
+.rack-u-slot.occupied:hover {
+    background: transparent;
+}
+
+.rack-u-slot.occupied:hover::after {
+    display: none;
+}
+
+.rack-device {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: var(--transition);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.rack-device:hover {
+    filter: brightness(1.09);
+    transform: scale(1.006);
+}

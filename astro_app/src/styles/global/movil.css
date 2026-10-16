@@ -1,0 +1,114 @@
+/* GLOBAL · Móvil: estructura y topbar — parte de global.css (ver el índice). */
+/* ============================================================
+   MOBILE RESPONSIVENESS (FASE 1: Base Layout & Topbar)
+   ============================================================ */
+
+/* Tablet & Smaller */
+@media (max-width: 1024px) {
+    .content {
+        padding: 20px 16px 40px;
+    }
+}
+
+/* Mobile Devices */
+@media (max-width: 768px) {
+    /* Topbar adjustments */
+    .topbar {
+        padding: 8px 16px;
+        height: auto;
+        min-height: 54px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .hamburger-btn {
+        margin-right: 4px;
+        padding: 6px;
+    }
+    
+    .breadcrumb {
+        font-size: 11px;
+        line-height: 1.2;
+    }
+    
+    #btn-logout {
+        padding: 5px 8px !important;
+        font-size: 11px !important;
+    }
+
+    /* Page headers for detail views */
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    
+    .page-header h1 {
+        font-size: 20px;
+    }
+
+    /* Modals need to fit mobile screen */
+    .form-modal {
+        width: 100%;
+        max-width: 100%;
+        margin: 0 16px;
+        /* 20px de aire arriba y otros 20 abajo, mas la franja de gestos. */
+        max-height: calc(var(--vh-util) - 40px - env(safe-area-inset-bottom, 0px));
+    }
+
+    .form-overlay {
+        padding-top: 20px;
+    }
+
+    /* El pie es sticky y se pega al borde inferior del dialogo, justo
+       donde el telefono dibuja la barra de gestos. Se le anade esa
+       franja para que los botones queden enteros y pulsables. */
+    .form-modal-footer {
+        padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .form-row {
+        grid-template-columns: 1fr; /* Stack form inputs */
+        gap: 12px;
+    }
+
+    /* ── Tablas Responsivas ──
+       Entre 601 y 768px (tableta en vertical) basta con desplazamiento
+       lateral: las columnas aun caben razonablemente. Por debajo de eso
+       se convierten en tarjetas, mas abajo en este archivo. */
+    table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* Deslizamiento fluido en iOS */
+        white-space: nowrap; /* Evitar que las celdas se aplasten y el texto quede feo */
+    }
+
+    /* ── Vistas Generales y Perfiles ── */
+    .rack-view {
+        grid-template-columns: 1fr; /* Separar la info del rack visual en columnas apiladas */
+        gap: 16px;
+    }
+
+    /* La tabla técnica interna del NVR o Dispositivos (Information Table) */
+    .nvr-info-table td, .nvr-info-table th {
+        white-space: normal; /* Permitir que el texto interno (descripciones) caiga naturalmente en lugar de obligar scroll en esta info basica */
+    }
+    
+    .nvr-info-table tr {
+        display: flex;
+        flex-direction: column;
+        border-bottom: 2px solid var(--surface-3);
+    }
+    
+    .nvr-info-table td {
+        border-bottom: none !important;
+        padding: 8px 14px;
+        width: 100% !important;
+    }
+    .nvr-info-table td:nth-child(1), .nvr-info-table td:nth-child(3) {
+        padding-bottom: 2px;
+        color: var(--primary);
+    }
+}

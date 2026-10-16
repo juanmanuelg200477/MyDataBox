@@ -1,0 +1,135 @@
+/* GLOBAL · Variables, puntos de corte y base — parte de global.css (ver el índice). */
+/* ============================================================
+   DATABOX IT — Premium Enterprise UI
+   ============================================================ */
+
+:root {
+    /* Backgrounds */
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --surface-2: #f8fafc;
+    --surface-3: #f1f5f9;
+
+    /* Sidebar */
+    --sidebar-bg: #070b16;
+    --sidebar-hover: rgba(255, 255, 255, 0.055);
+    --sidebar-active: #3b82f6;
+
+    /* Brand */
+    --white: #ffffff;
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --primary-light: rgba(59, 130, 246, 0.1);
+
+    /* Text */
+    --text: #0f172a;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+
+    /* Border */
+    --border: #e2e8f0;
+
+    /* Semantic */
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #6366f1;
+    --orange: #f97316;
+    --teal: #14b8a6;
+    --purple: #8b5cf6;
+
+    /* Badges */
+    --badge-active: #dcfce7;
+    --badge-active-text: #15803d;
+    --badge-inactive: #fee2e2;
+    --badge-inactive-text: #b91c1c;
+    --badge-warning: #fef3c7;
+    --badge-warning-text: #b45309;
+
+    /* Shadows */
+    --shadow-sm:  0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.04);
+    --shadow-md:  0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.04);
+    --shadow-lg:  0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px rgba(15, 23, 42, 0.05);
+    --shadow-xl:  0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px rgba(15, 23, 42, 0.06);
+    --shadow-primary: 0 4px 14px rgba(59, 130, 246, 0.35);
+
+    /* ── Capas (z-index) ──────────────────────────────────────────
+       Escala única de la app, de abajo hacia arriba. Antes cada zona
+       subía el número a ojo para "ganarle" a la anterior y se llegó a
+       tener el editor de planos y el overlay de navegación empatados
+       en 999999 (el orden quedaba al azar, según el DOM).
+       Los números sueltos pequeños (1, 2, 10…) dentro de un componente
+       son apilado local y NO entran en esta escala. */
+    --z-topbar:          50;
+    --z-cardnav:         1000;
+    --z-sidebar-overlay: 1999;
+    --z-sidebar:         2000;
+    --z-sheet:           5000;     /* panel a pantalla completa en teléfono
+                                      (editor de Apuntes): tapa el marco de
+                                      la app, pero los diálogos quedan encima */
+    --z-modal:           9000;     /* diálogos generales (.form-overlay) */
+    --z-modal-popover:   9100;     /* desplegables dentro de un diálogo */
+    --z-preview:         9999;     /* vista detallada del dashboard */
+    --z-notes-modal:     10000;    /* diálogos del workspace de Notas */
+    --z-notes-popover:   10100;    /* desplegables dentro de esos diálogos */
+    --z-fullscreen:      999999;   /* editor de planos a pantalla completa */
+    --z-toast:           1000050;  /* avisos: por encima de todo lo interactivo */
+    --z-transition:      1000100;  /* overlay de navegación: tapa hasta el fullscreen */
+    --z-welcome:         9999999;  /* animación de bienvenida */
+
+    /* Geometry */
+    --radius:    10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+
+    /* ── Alto util de la ventana ──────────────────────────────────
+       En el telefono, 100vh mide la ventana CON la barra del
+       navegador oculta, que es mas alta de lo que se ve de verdad.
+       Un dialogo dimensionado con vh se sale por abajo y el pie
+       (Guardar / Cancelar) queda fuera de la pantalla: se ve cortado
+       y no hay forma de alcanzarlo, porque el pie es sticky y
+       acompana al borde inferior del dialogo.
+       dvh si sigue a la barra del navegador. Se expone como variable
+       para poder usarla tambien desde los estilos que se inyectan en
+       caliente, que van despues de esta hoja y no se pueden pisar
+       desde aqui.
+       Todo dialogo debe medirse con --vh-util, nunca con vh. */
+    --vh-util: 100vh;
+
+    /* Motion */
+    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@supports (height: 100dvh) {
+    :root { --vh-util: 100dvh; }
+}
+
+/* ============================================================
+   BREAKPOINTS - escala acordada de la app
+   Movil: hasta 768px | Tablet: 769-1024px | Escritorio: 1025px+
+   Usar SOLO 768 y 1024 en los @media nuevos. (CSS no permite
+   variables dentro de @media, por eso la convencion va escrita aqui.)
+   Quedan archivos con quiebres sueltos (820, 900, 1100, 1300) que
+   desincronizan el layout entre secciones; migrarlos requiere
+   comprobacion visual, no hacerlo a ciegas.
+   ============================================================ */
+
+/* ============================================================
+   BASE
+   ============================================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}

@@ -1,0 +1,112 @@
+/* NOTAS · Piezas compartidas (.nws-*) — parte de notes.css (ver el índice). */
+/* ══════════════════════════════════════════════════════
+   COMPARTIDOS (.nws-*)
+══════════════════════════════════════════════════════ */
+/* ── Modo app en teléfono: piezas propias del shell ──────
+   Van aquí, con el resto del tema oscuro, para que la app se vea
+   coherente al activarlo desde el botón de la barra superior. */
+html.nw-dark .nw { background: #050505; }
+html.nw-dark .nw-back { color: #e5e9f5; }
+html.nw-dark .nw-back:active { background: rgba(255, 255, 255, 0.07); }
+html.nw-dark .nw-tabs {
+  background: #0d0d0d;
+  border-top-color: rgba(255, 255, 255, 0.07);
+}
+html.nw-dark .nw-tab { color: rgba(203, 213, 225, 0.65); }
+html.nw-dark .nw-fab {
+  background: linear-gradient(135deg, #06b6d4, #a855f7);
+  box-shadow: 0 6px 22px rgba(6, 182, 212, 0.45);
+  color: #fff;
+}
+html.nw-dark .nws-main-body { background: transparent; }
+/* El editor a pantalla completa necesita fondo propio y opaco: .nws-main
+   es transparente en este tema, y sin esto se transparentaba lo que
+   hubiera detrás. */
+html.nw-dark .nws-apuntes.ap-editing .nws-main { background: #050505; }
+
+html.nw-dark .nws-side {
+  background: #0d0d0d;
+  border-right-color: rgba(255, 255, 255, 0.06);
+}
+html.nw-dark .nws-side-hdr { border-bottom-color: rgba(255, 255, 255, 0.06); }
+html.nw-dark .nws-side-title { color: rgba(148, 163, 184, 0.7); }
+html.nw-dark .nws-main { background: transparent; }
+html.nw-dark .nws-main-hdr {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+  background: rgba(15, 23, 42, 0.4);
+}
+html.nw-dark .nws-main-body { background: #050505; }
+
+/* Botones */
+html.nw-dark .nws-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #e5e9f5;
+}
+html.nw-dark .nws-btn:hover {
+  background: rgba(6, 182, 212, 0.1);
+  border-color: rgba(6, 182, 212, 0.4);
+  box-shadow: 0 0 14px rgba(6, 182, 212, 0.25);
+}
+html.nw-dark .nws-btn.primary {
+  background: linear-gradient(135deg, #06b6d4, #a855f7);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 0 22px rgba(6, 182, 212, 0.45);
+}
+html.nw-dark .nws-btn.primary:hover { box-shadow: 0 0 32px rgba(6, 182, 212, 0.65); }
+html.nw-dark .nws-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.3);
+}
+
+html.nw-dark .nws-iconbtn {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgba(203, 213, 225, 0.8);
+}
+html.nw-dark .nws-iconbtn:hover {
+  background: rgba(6, 182, 212, 0.1);
+  border-color: rgba(6, 182, 212, 0.4);
+  color: #00d4ff;
+}
+
+html.nw-dark .nws-search {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+html.nw-dark .nws-search:focus-within {
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15), 0 0 14px rgba(6, 182, 212, 0.25);
+}
+html.nw-dark .nws-search input { color: #e5e9f5; }
+html.nw-dark .nws-search input::placeholder { color: rgba(148, 163, 184, 0.5); }
+html.nw-dark .nws-search svg { color: rgba(148, 163, 184, 0.7); }
+
+html.nw-dark .nws-tag {
+  background: rgba(6, 182, 212, 0.12);
+  color: #06b6d4;
+}
+html.nw-dark .nws-empty { color: rgba(148, 163, 184, 0.7); }
+html.nw-dark .nws-empty-ico {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(168, 85, 247, 0.12));
+  color: #00d4ff;
+  box-shadow:
+    0 0 30px rgba(6, 182, 212, 0.4),
+    0 0 60px rgba(6, 182, 212, 0.15),
+    inset 0 0 0 1px rgba(6, 182, 212, 0.25);
+}
+html.nw-dark .nws-empty-title {
+  color: #f1f5f9;
+  text-shadow: 0 0 18px rgba(6, 182, 212, 0.25);
+}
+html.nw-dark .nws-empty-sub { color: rgba(148, 163, 184, 0.7); }
+html.nw-dark .nws-empty kbd {
+  background: rgba(255, 255, 255, 0.08);
+  color: #00d4ff;
+  border: 1px solid rgba(0, 212, 255, 0.25);
+  padding: 1px 6px; border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}

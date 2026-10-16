@@ -1,0 +1,149 @@
+/* PROYECTOS · Presentación — parte de projects.css (ver el índice). */
+/* ── Presentación ────────────────────────────────────────────── */
+.pj-pres {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-preview);
+    display: flex;
+    flex-direction: column;
+    color: #fff;
+    animation: pjAparece .25s ease;
+}
+
+.pj-pres-fondo {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+        radial-gradient(40% 50% at 15% 20%, rgba(99, 102, 241, .35), transparent 70%),
+        radial-gradient(40% 50% at 85% 80%, rgba(139, 92, 246, .3), transparent 70%),
+        radial-gradient(30% 40% at 70% 15%, rgba(20, 184, 166, .18), transparent 70%),
+        linear-gradient(135deg, #070b16 0%, #101b3d 45%, #1d1747 100%);
+}
+
+.pj-pres-barra {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 14px 22px;
+}
+
+.pj-pres-marca {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font: 800 14px 'DM Sans', sans-serif;
+    letter-spacing: .3px;
+    color: rgba(255, 255, 255, .85);
+}
+
+.pj-pres-marca svg { width: 18px; height: 18px; }
+.pj-pres-n { font: 700 13px 'JetBrains Mono', monospace; color: rgba(255, 255, 255, .6); }
+
+.pj-pres-escena {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    justify-content: center;
+    padding: 4px 76px 18px;
+}
+
+.pj-pres-diapo {
+    width: min(1560px, 100%);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 26px 30px 28px;
+    border-radius: 28px;
+    color: var(--text);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, .96) 0%, rgba(255, 255, 255, .88) 100%);
+    border: 1px solid rgba(255, 255, 255, .9);
+    box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .6), inset 0 1px 0 #fff;
+    position: relative;
+    animation: pjDiapo .35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pj-pres-diapo::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 34px;
+    right: 34px;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+    background: linear-gradient(90deg, transparent, var(--accent) 22%, var(--accent) 78%, transparent);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.pj-pres-diapo.desde-der { animation-name: pjDesdeDer; }
+.pj-pres-diapo.desde-izq { animation-name: pjDesdeIzq; }
+
+@keyframes pjDiapo { from { opacity: 0; transform: scale(.985); } to { opacity: 1; transform: none; } }
+@keyframes pjDesdeDer { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: none; } }
+@keyframes pjDesdeIzq { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: none; } }
+
+.pj-pres-hdr { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-shrink: 0; }
+.pj-pres-nombre { margin: 0; font: 800 34px/1.12 'DM Sans', sans-serif; letter-spacing: -1px; color: var(--text); overflow-wrap: anywhere; }
+.pj-monto-pres .pj-monto-n { font-size: 28px; }
+
+.pj-pres-cuerpo {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: 22px;
+}
+
+.pj-pres-cuerpo .pj-doc { min-height: 0; }
+.pj-pres-cuerpo .pj-visor { height: auto; flex: 1; min-height: 0; }
+.pj-pres-cuerpo .pj-ctx { max-height: none; min-height: 0; }
+.pj-pres-cuerpo .pj-ctx-texto { font-size: 16.5px; }
+.pj-pres-cuerpo .pj-paso p { font-size: 16px; }
+
+.pj-pres-nav {
+    position: absolute;
+    top: 50%;
+    width: 52px;
+    height: 52px;
+    margin-top: -26px;
+    display: grid;
+    place-items: center;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, .16);
+    background: rgba(255, 255, 255, .1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #fff;
+    cursor: pointer;
+    transition: background .18s ease, transform .15s ease;
+}
+
+.pj-pres-nav svg { width: 24px; height: 24px; }
+.pj-pres-nav:hover { background: rgba(255, 255, 255, .2); }
+.pj-pres-nav.izq { left: 14px; }
+.pj-pres-nav.der { right: 14px; }
+
+.pj-pres-puntos {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 0 16px;
+}
+
+.pj-pres-puntos button {
+    width: 9px;
+    height: 9px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .3);
+    cursor: pointer;
+    transition: width .25s ease, background .25s ease;
+}
+
+.pj-pres-puntos button.activo { width: 28px; background: #fff; }

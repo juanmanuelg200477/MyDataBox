@@ -1,0 +1,78 @@
+/* NOTAS · Bóveda (.vt-*) — parte de notes.css (ver el índice). */
+/* ══════════════════════════════════════════════════════
+   BÓVEDA (.vt-*)
+══════════════════════════════════════════════════════ */
+html.nw-dark .vt-cat { color: #cbd5e1; }
+html.nw-dark .vt-cat:hover { background: rgba(255, 255, 255, 0.04); }
+html.nw-dark .vt-cat.active {
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+  box-shadow:
+    inset 3px 0 0 var(--c),
+    0 0 18px color-mix(in srgb, var(--c) 28%, transparent);
+}
+html.nw-dark .vt-cat-name { color: #e5e9f5; }
+html.nw-dark .vt-cat-count {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(148, 163, 184, 0.85);
+}
+html.nw-dark .vt-card {
+  background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+}
+html.nw-dark .vt-card:hover {
+  border-color: var(--c);
+  box-shadow:
+    0 0 30px color-mix(in srgb, var(--c) 30%, transparent),
+    0 12px 32px rgba(0, 0, 0, 0.5);
+}
+html.nw-dark .vt-card-stripe {
+  background: linear-gradient(90deg, var(--c), color-mix(in srgb, var(--c) 30%, transparent));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--c) 60%, transparent);
+}
+html.nw-dark .vt-card-name { color: #e5e9f5; }
+html.nw-dark .vt-card-cat { color: rgba(148, 163, 184, 0.85); }
+html.nw-dark .vt-card-row { background: rgba(255, 255, 255, 0.03); }
+html.nw-dark .vt-lbl { color: rgba(100, 116, 139, 0.85); }
+html.nw-dark .vt-val { color: #e5e9f5; }
+html.nw-dark .vt-link { color: #06b6d4; }
+html.nw-dark .vt-card-notes {
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(148, 163, 184, 0.85);
+}
+html.nw-dark .vt-card-foot {
+  border-top-color: rgba(255, 255, 255, 0.05);
+  color: rgba(100, 116, 139, 0.85);
+}
+html.nw-dark .vt-mini { color: rgba(148, 163, 184, 0.85); }
+html.nw-dark .vt-mini:hover {
+  background: rgba(6, 182, 212, 0.12);
+  color: #06b6d4;
+}
+
+html.nw-dark .vt-modal {
+  background: linear-gradient(180deg, #181818, #0f0f0f);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), 0 0 40px rgba(6, 182, 212, 0.18);
+  border: 1px solid rgba(6, 182, 212, 0.18);
+}
+html.nw-dark .vt-modal-hdr { border-bottom-color: rgba(255, 255, 255, 0.06); }
+html.nw-dark .vt-modal-hdr h3 { color: #f1f5f9; }
+html.nw-dark .vt-modal-ftr {
+  background: rgba(0, 0, 0, 0.3);
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+html.nw-dark .vt-fld-lbl { color: rgba(148, 163, 184, 0.85); }
+html.nw-dark .vt-fld input,
+html.nw-dark .vt-fld select,
+html.nw-dark .vt-fld textarea {
+  background: #050505;
+  color: #e5e9f5;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+html.nw-dark .vt-fld input:focus,
+html.nw-dark .vt-fld select:focus,
+html.nw-dark .vt-fld textarea:focus {
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+}
+html.nw-dark .vt-pwd-meter { background: rgba(255, 255, 255, 0.06); }

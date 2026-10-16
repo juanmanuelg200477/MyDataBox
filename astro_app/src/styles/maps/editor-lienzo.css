@@ -1,0 +1,347 @@
+/* MAPAS · Editor: lienzo, tramos, marcas y zoom — parte de maps.css (ver el índice). */
+/* Lienzo */
+.mp-lienzo {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    cursor: grab;
+    background-color: #0b1220;
+    background-image: radial-gradient(rgba(148, 163, 184, 0.16) 1px, transparent 1.3px);
+    background-size: 22px 22px;
+}
+.mp-lienzo:active { cursor: grabbing; }
+.mp-ed.colocando .mp-lienzo,
+.mp-ed.trazando .mp-lienzo,
+.mp-ed.trazando .mp-marca,
+.mp-ed.trazando .mp-linea-hit { cursor: crosshair; }
+.mp-lienzo.soltando { box-shadow: inset 0 0 0 3px rgba(10, 132, 255, 0.75); }
+.mp-mundo { --z: 1; position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.mp-ed.sin-plano .mp-mundo { display: none; }
+.mp-plano {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    border-radius: calc(4px / var(--z));
+    box-shadow: 0 0 0 calc(1px / var(--z)) rgba(255, 255, 255, 0.12), 0 calc(24px / var(--z)) calc(70px / var(--z)) rgba(0, 0, 0, 0.6);
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+.mp-lineas { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+
+/* Tramos: casco oscuro + trazo de color + franja invisible para tocarlos */
+.mp-linea { --g: 5; }
+.mp-linea polyline { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.mp-linea-casco { stroke: rgba(2, 6, 23, 0.72); stroke-width: calc((var(--g) + 4) * 1px / var(--z)); transition: stroke 0.15s; }
+.mp-linea-trazo { stroke: var(--lc); stroke-width: calc(var(--g) * 1px / var(--z)); }
+.mp-linea-trazo.discontinua { stroke-linecap: butt; stroke-dasharray: calc(var(--g) * 2.8px / var(--z)) calc(var(--g) * 1.8px / var(--z)); }
+.mp-linea-trazo.punteada { stroke-dasharray: 0 calc(var(--g) * 2.2px / var(--z)); }
+.mp-linea-hit {
+    stroke: transparent;
+    stroke-width: calc(max(18px, (var(--g) + 14) * 1px) / var(--z));
+    pointer-events: stroke;
+    cursor: pointer;
+}
+@media (hover: hover) { .mp-linea:hover .mp-linea-casco { stroke: rgba(255, 255, 255, 0.55); } }
+.mp-linea.sel .mp-linea-casco { stroke: #fff; stroke-width: calc((var(--g) + 7) * 1px / var(--z)); }
+.mp-linea.perdida .mp-linea-trazo { stroke: #64748b; stroke-dasharray: calc(6px / var(--z)) calc(6px / var(--z)); }
+.mp-linea.borrador .mp-linea-trazo { animation: mp-hormigas 0.7s linear infinite; }
+.mp-linea.borrador .mp-linea-casco { stroke: rgba(2, 6, 23, 0.55); }
+@keyframes mp-hormigas { to { stroke-dashoffset: calc(var(--g) * -4.6px / var(--z)); } }
+.mp-borrador-punto { r: calc(4.5px / var(--z)); fill: #fff; stroke: var(--lc); stroke-width: calc(2.5px / var(--z)); }
+
+/* Marcas: pin con ficha 3D (equipos y bastidores) o ficha redonda (puntos) */
+.mp-marcas { position: absolute; inset: 0; pointer-events: none; }
+.mp-marca {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    cursor: pointer;
+    pointer-events: auto;
+    transform-origin: 0 0;
+    transform: scale(calc(1 / var(--z))) translate(-50%, -50%);
+    -webkit-tap-highlight-color: transparent;
+}
+.mp-marca.con-pin { transform: scale(calc(1 / var(--z))) translate(-50%, -100%); }
+.mp-marca:focus-visible { outline: none; }
+.mp-marca:focus-visible .mp-marca-ficha { box-shadow: 0 0 0 3px var(--mp-azul), 0 6px 16px rgba(0, 0, 0, 0.45); }
+.mp-marca-ficha {
+    display: block;
+    padding: 3px;
+    border-radius: 15px;
+    background: #fff;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+    transform-origin: 50% 100%;
+    transition: transform 0.18s cubic-bezier(0.3, 0.9, 0.4, 1.3), box-shadow 0.18s, background 0.18s;
+}
+.mp-marca-ficha .ic3d { display: grid; }
+.mp-marca-pico {
+    width: 0;
+    height: 0;
+    margin-top: -1px;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 9px solid #fff;
+    filter: drop-shadow(0 2px 1.5px rgba(0, 0, 0, 0.4));
+    transition: border-top-color 0.18s;
+}
+.mp-marca.con-pin::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -4px;
+    z-index: -1;
+    width: 18px;
+    height: 8px;
+    margin-left: -9px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(0, 0, 0, 0.55), transparent);
+    pointer-events: none;
+}
+.mp-marca:not(.con-pin) .mp-marca-ficha { padding: 2.5px; border-radius: 50%; }
+.mp-marca:not(.con-pin) .ic3d { border-radius: 50%; }
+@media (hover: hover) {
+    .mp-marca:hover { z-index: 2; }
+    .mp-marca:hover .mp-marca-ficha { transform: scale(1.08); box-shadow: 0 10px 22px rgba(0, 0, 0, 0.5); }
+}
+.mp-marca.sel { z-index: 3; }
+.mp-marca.sel .mp-marca-ficha { background: var(--mp-azul); box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.32), 0 10px 24px rgba(0, 0, 0, 0.5); }
+.mp-marca.sel .mp-marca-pico { border-top-color: var(--mp-azul); }
+.mp-marca.sel.con-pin::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -11px;
+    width: 22px;
+    height: 22px;
+    margin-left: -11px;
+    border-radius: 50%;
+    border: 2px solid var(--mp-azul);
+    pointer-events: none;
+    animation: mp-pulso 1.6s ease-out infinite;
+}
+@keyframes mp-pulso { from { transform: scale(0.35); opacity: 1; } to { transform: scale(1.9); opacity: 0; } }
+.mp-marca.iman .mp-marca-ficha { background: #fbbf24; box-shadow: 0 0 0 5px rgba(251, 191, 36, 0.35), 0 8px 20px rgba(0, 0, 0, 0.5); }
+.mp-marca.iman .mp-marca-pico { border-top-color: #fbbf24; }
+.mp-marca.moviendo { z-index: 4; cursor: grabbing; }
+.mp-marca.moviendo .mp-marca-ficha { transform: translateY(-6px) scale(1.1); box-shadow: 0 18px 30px rgba(0, 0, 0, 0.55); animation: none; }
+.mp-marca.perdida .mp-marca-ficha { filter: grayscale(1); opacity: 0.75; }
+/* Candado abierto: las marcas "tiemblan" como los íconos del iPhone al editarlos */
+.mp-ed.desbloqueado .mp-marca { cursor: move; }
+.mp-ed.desbloqueado .mp-marca-ficha { animation: mp-temblor 0.34s ease-in-out infinite; }
+.mp-ed.desbloqueado .mp-marca:nth-child(3n) .mp-marca-ficha { animation-delay: -0.12s; }
+.mp-ed.desbloqueado .mp-marca:nth-child(3n + 1) .mp-marca-ficha { animation-delay: -0.23s; }
+@keyframes mp-temblor { 0%, 100% { transform: rotate(-2.2deg); } 50% { transform: rotate(2.2deg); } }
+
+.mp-marca-nombre {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 50%;
+    max-width: 230px;
+    padding: 3px 8px;
+    border-radius: 8px;
+    background: rgba(2, 6, 23, 0.86);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 700;
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transform: translateX(-50%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+}
+/* "Mostrar nombres" (equipos y bastidores) y, en Capas, los de infraestructura */
+.mp-ed.con-nombres .mp-marca.con-pin .mp-marca-nombre,
+.mp-ed.con-nombres-infra .mp-m-infra_point .mp-marca-nombre,
+.mp-marca.sel .mp-marca-nombre,
+.mp-marca.moviendo .mp-marca-nombre,
+.mp-marca.iman .mp-marca-nombre { opacity: 1; }
+@media (hover: hover) { .mp-marca:hover .mp-marca-nombre { opacity: 1; } }
+
+/* "Minimizar iconos": equipos y bastidores como puntos azules justo en su
+   lugar (la infraestructura conserva su ficha) */
+.mp-marca-punto { display: none; }
+.mp-ed.minimizado .mp-marca.con-pin { transform: scale(calc(1 / var(--z))) translate(-50%, -50%); }
+.mp-ed.minimizado .mp-marca.con-pin .mp-marca-ficha,
+.mp-ed.minimizado .mp-marca.con-pin .mp-marca-pico { display: none; }
+.mp-ed.minimizado .mp-marca.con-pin::after { display: none; }
+.mp-ed.minimizado .mp-marca.con-pin .mp-marca-punto {
+    position: relative;
+    display: block;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 34% 30%, #8fcbff 0%, #0a84ff 55%, #005fd1 100%);
+    box-shadow: 0 0 0 2.5px #fff, 0 2px 6px rgba(2, 6, 23, 0.5);
+    transition: transform 0.15s cubic-bezier(0.3, 0.9, 0.4, 1.3), box-shadow 0.15s;
+}
+.mp-ed.minimizado .mp-m-rack .mp-marca-punto { width: 15px; height: 15px; }
+/* Más fácil de tocar que lo que se ve */
+.mp-ed.minimizado .mp-marca-punto::before { content: ''; position: absolute; inset: -12px; border-radius: 50%; }
+@media (hover: hover) { .mp-ed.minimizado .mp-marca.con-pin:hover .mp-marca-punto { transform: scale(1.25); } }
+.mp-ed.minimizado .mp-marca.sel .mp-marca-punto {
+    transform: scale(1.3);
+    box-shadow: 0 0 0 2.5px #fff, 0 0 0 6px rgba(10, 132, 255, 0.4), 0 2px 8px rgba(2, 6, 23, 0.55);
+}
+.mp-ed.minimizado .mp-marca.sel.con-pin::before { bottom: auto; top: 50%; margin-top: -11px; }
+.mp-ed.minimizado .mp-marca.iman .mp-marca-punto { background: radial-gradient(circle at 34% 30%, #fde68a, #f59e0b 60%, #b45309); transform: scale(1.3); }
+.mp-ed.minimizado .mp-marca.moviendo .mp-marca-punto { transform: scale(1.45); }
+.mp-ed.minimizado .mp-marca.perdida .mp-marca-punto { background: #94a3b8; }
+.mp-ed.minimizado .mp-marca.con-pin .mp-marca-nombre { top: calc(100% + 7px); }
+.mp-ed.desbloqueado.minimizado .mp-marca-punto { outline: 2px dashed rgba(251, 191, 36, 0.9); outline-offset: 3px; }
+
+.mp-etq-metraje {
+    position: absolute;
+    padding: 1px 6px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(15, 23, 42, 0.15);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    color: #0f172a;
+    font: 700 10.5px/1.5 'JetBrains Mono', ui-monospace, monospace;
+    white-space: nowrap;
+    pointer-events: none;
+    transform-origin: 0 0;
+    transform: scale(calc(1 / var(--z))) translate(-50%, -50%);
+}
+.mp-etq-metraje.sel { background: var(--mp-azul); border-color: transparent; color: #fff; }
+
+.mp-vertice {
+    position: absolute;
+    z-index: 5;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid var(--mp-azul);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+    pointer-events: auto;
+    cursor: grab;
+    transform-origin: 0 0;
+    transform: scale(calc(1 / var(--z))) translate(-50%, -50%);
+}
+.mp-vertice::before { content: ''; position: absolute; inset: -11px; border-radius: 50%; }
+
+/* Lo que se va a colocar sigue al cursor */
+.mp-fantasma { position: absolute; left: 0; top: 0; z-index: 6; pointer-events: none; }
+.mp-fantasma .ic3d { position: absolute; left: 0; top: 0; opacity: 0.92; transform: translate(-50%, calc(-100% - 9px)); }
+.mp-fantasma::after {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: -5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--mp-azul);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.9), 0 0 0 7px rgba(10, 132, 255, 0.3);
+}
+
+/* Aviso del modo (colocar / trazar) */
+.mp-ed-aviso {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: max-content;
+    max-width: calc(100% - 24px);
+    padding: 7px 7px 7px 12px;
+    border-radius: 18px;
+    background: rgba(15, 23, 42, 0.92);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    backdrop-filter: blur(16px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+    transform: translateX(-50%);
+    animation: mp-aviso-in 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+@keyframes mp-aviso-in { from { opacity: 0; transform: translate(-50%, -10px); } }
+.mp-aviso-txt { min-width: 0; font-size: 13px; line-height: 1.3; color: #e2e8f0; }
+.mp-aviso-txt b { color: #fff; }
+.mp-aviso-txt small { display: block; margin-top: 1px; font-size: 11.5px; color: #94a3b8; }
+.mp-ed-aviso .mp-btn { height: 32px; padding: 0 12px; border-radius: 10px; font-size: 12.5px; }
+.mp-ed-aviso .mp-btn-suave { background: rgba(255, 255, 255, 0.1); color: #e5e7eb; }
+.mp-ed-aviso .mp-btn-suave:hover:not(:disabled) { background: rgba(255, 255, 255, 0.17); }
+
+/* Zoom */
+.mp-ed-zoom {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    z-index: 6;
+    display: grid;
+    overflow: hidden;
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.88);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+    transition: right 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.mp-ed-zoom button {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    background: none;
+    color: #e2e8f0;
+    cursor: pointer;
+}
+.mp-ed-zoom button + button { border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.mp-ed-zoom button:hover { background: rgba(255, 255, 255, 0.08); }
+.mp-ed-zoom svg { width: 18px; height: 18px; }
+.mp-ed.con-hoja .mp-ed-zoom { right: calc(var(--hoja-w, 372px) + 28px); }
+.mp-ed.sin-plano .mp-ed-zoom { display: none; }
+
+/* Sin imagen todavía */
+.mp-sinplano { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; padding: 24px; overflow-y: auto; }
+.mp-sinplano-caja {
+    max-width: 440px;
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    padding: 34px 28px;
+    border-radius: 28px;
+    background: rgba(15, 23, 42, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+    text-align: center;
+}
+.mp-sinplano-ico {
+    width: 74px;
+    height: 74px;
+    display: grid;
+    place-items: center;
+    border-radius: 22px;
+    background: linear-gradient(160deg, #60a5fa, #1d4ed8);
+    color: #fff;
+    box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.5), 0 14px 30px rgba(29, 78, 216, 0.5);
+}
+.mp-sinplano-ico svg { width: 36px; height: 36px; }
+.mp-sinplano-caja h3 { margin: 6px 0 0; font-size: 19px; font-weight: 800; color: #fff; }
+.mp-sinplano-caja p { margin: 0 0 8px; font-size: 14px; line-height: 1.5; color: #94a3b8; }
+.mp-cargando-plano { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; pointer-events: none; }

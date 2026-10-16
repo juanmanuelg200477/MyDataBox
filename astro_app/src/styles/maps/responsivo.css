@@ -1,0 +1,169 @@
+/* MAPAS · Tableta, teléfono y movimiento reducido — parte de maps.css (ver el índice). */
+/* ════════════════════════════════════════════════════════════════
+   RESPONSIVO
+   ════════════════════════════════════════════════════════════════ */
+
+/* Tableta y teléfono: el editor ocupa toda la pantalla y el panel flota */
+@media (max-width: 1024px), (max-height: 500px) {
+    .mp-ed {
+        position: fixed;
+        inset: 0;
+        z-index: var(--z-sheet, 5000);
+        height: auto;
+        margin: 0;
+    }
+    .mp-panel {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: min(320px, 84vw);
+        margin-left: 0;
+        transform: translateX(-104%);
+        -webkit-backdrop-filter: blur(18px);
+        backdrop-filter: blur(18px);
+        background: rgba(12, 17, 30, 0.95);
+        box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
+    }
+    .mp-ed.panel-abierto .mp-panel { transform: none; }
+}
+
+/* Lista en tableta y teléfono */
+@media (max-width: 1024px) {
+    .mp-widgets { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 768px) {
+    .mp-cab { padding: 20px 18px 18px; border-radius: 26px; }
+    /* La ruta decorativa se queda arriba a la derecha, sin cruzar el título */
+    .mp-cab-deco { width: 52%; height: 118px; opacity: 0.85; }
+    .mp-cab h1 { font-size: 34px; margin-top: 12px; }
+    .mp-cab p { font-size: 14px; }
+    .mp-widgets { gap: 10px; margin-top: 18px; }
+    .mp-widget { padding: 12px; border-radius: 18px; column-gap: 10px; }
+    .mp-widget-ico { width: 32px; height: 32px; border-radius: 10px; }
+    .mp-widget b { font-size: 21px; }
+    .mp-widget > span:last-child { font-size: 11.5px; line-height: 1.25; white-space: normal; }
+    .mp-barra { gap: 10px; margin-top: 18px; }
+    .mp-barra .mp-seg { flex: 1 1 100%; }
+    .mp-barra .mp-seg button { flex: 1; }
+    .mp-buscar { flex: 1 1 100%; max-width: none; }
+    .mp-barra > .mp-btn-primario { flex: 1 1 100%; margin-left: 0; }
+    .mp-chips { flex-wrap: nowrap; overflow-x: auto; margin: 0 -16px; padding: 2px 16px 4px; scrollbar-width: none; }
+    .mp-chips::-webkit-scrollbar { display: none; }
+    .mp-chip { flex: none; }
+    .mp-tarjetas { gap: 16px; margin-top: 14px; }
+    .mp-tarjeta {
+        grid-template-columns: 1fr;
+        grid-template-rows: 236px 150px;
+        height: auto;
+        border-radius: 26px;
+    }
+    .mp-tarjeta-nombre { font-size: 26px; }
+    .mp-tarjeta-plano { border-left: 0; border-top: 1px solid rgba(15, 23, 42, 0.06); padding: 18px; }
+    .mp-papel img { max-height: 104px; }
+    .mp-tarjeta-inic { font-size: 78px; }
+    .mp-papel-fila { flex-wrap: wrap; }
+    .mp-papel-fila .mp-papel-txt { flex: 1 1 calc(100% - 80px); }
+    .mp-papel-fila .mp-btn { flex: 1 1 0; }
+    .mp-aviso-grande { margin: 20px auto; padding: 22px 20px; }
+
+    /* Diálogos como hoja que sube desde abajo, en vertical */
+    .mp-dlg-pie .mp-btn { flex: 1; }
+}
+
+@media (max-width: 768px) and (orientation: portrait) {
+    .mp-dlg { place-items: end center; padding: 0; }
+    .mp-dlg-caja {
+        width: 100%;
+        max-height: calc(var(--vh-util, 100vh) - 24px);
+        border-radius: 26px 26px 0 0;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        animation-name: mp-hoja-sube;
+    }
+    @keyframes mp-hoja-sube { from { transform: translateY(40px); opacity: 0; } }
+    .mp-form-rejilla,
+    .mp-form-infra { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+    .mp-zona { flex-wrap: wrap; }
+    .mp-zona [data-elegir] { flex: 1 1 100%; }
+}
+
+@media (max-width: 380px) {
+    .mp-tarjeta { grid-template-rows: 214px 132px; }
+    .mp-tarjeta-nombre { font-size: 23px; }
+    .mp-widget b { font-size: 19px; }
+}
+
+/* Teléfono en horizontal: todo más compacto para que quepa el plano */
+@media (max-height: 500px) {
+    .mp-ed { --hoja-w: min(330px, 46vw); }
+    .mp-ed-barra {
+        height: 46px;
+        gap: 8px;
+        padding: 0 max(8px, env(safe-area-inset-right, 0px)) 0 max(8px, env(safe-area-inset-left, 0px));
+    }
+    .mp-ed-volver { height: 32px; padding: 0 8px 0 3px; }
+    .mp-ed-volver span { display: none; }
+    .mp-ed-tipo { font-size: 9.5px; }
+    .mp-ed-tit h2 { font-size: 14.5px; }
+    .mp-ed-herr { gap: 4px; }
+    .mp-ed-h { width: 34px; height: 32px; padding: 0; justify-content: center; }
+    .mp-ed-h span { display: none; }
+    .mp-ed-lectura { display: none; }
+    .mp-panel-tabs { margin: 8px 8px 4px; }
+    .mp-seg-osc button { height: 30px; font-size: 12px; }
+    .mp-panel-cuerpo { padding: 2px 8px 0; }
+    .mp-pan-cab { padding: 6px 2px; }
+    .mp-pan-buscar { height: 34px; }
+    .mp-pan-chips { padding-top: 7px; }
+    .mp-pan-titulo { padding: 8px 2px 4px; }
+    .mp-pan-ayuda { display: none; }
+    .mp-pan-lista { margin: 0 -8px; padding: 0 4px 12px; }
+    .mp-hoja { top: 8px; right: max(8px, env(safe-area-inset-right, 0px)); bottom: 8px; border-radius: 20px; }
+    .mp-hoja-scroll { padding: 14px 14px 14px; }
+    .mp-hoja-cab { margin-bottom: 12px; gap: 11px; }
+    .mp-hoja-cab .ic3d { --tam: 42px !important; }
+    .mp-hoja-tit h3 { font-size: 17px; }
+    .mp-foto { aspect-ratio: 16 / 9; }
+    .mp-ed-aviso { top: 8px; gap: 7px; padding: 5px 5px 5px 10px; border-radius: 14px; max-width: calc(100% - 16px); }
+    .mp-ed-aviso > .ic3d { display: none; }
+    .mp-aviso-txt { font-size: 12px; }
+    .mp-aviso-txt small { display: none; }
+    .mp-ed-aviso .mp-btn { height: 30px; padding: 0 10px; }
+    .mp-ed-aviso .mp-btn span { display: none; }
+    .mp-ed-zoom { right: max(8px, env(safe-area-inset-right, 0px)); bottom: 8px; border-radius: 12px; }
+    .mp-ed-zoom button { width: 36px; height: 36px; }
+    .mp-ed.con-hoja .mp-ed-zoom { right: calc(var(--hoja-w) + 16px); }
+    .mp-pop { width: min(296px, calc(100vw - 16px)); padding: 10px; }
+    .mp-interruptor { padding: 6px 4px; }
+    .mp-sinplano-caja { padding: 20px; gap: 6px; }
+    .mp-sinplano-ico { width: 54px; height: 54px; border-radius: 16px; }
+    .mp-sinplano-ico svg { width: 26px; height: 26px; }
+    .mp-dlg { padding: 8px; }
+    .mp-dlg-caja { max-height: calc(var(--vh-util, 100vh) - 16px); border-radius: 20px; }
+    .mp-dlg-cab { padding: 12px 16px 4px; }
+    .mp-dlg-cuerpo { padding: 6px 16px 12px; }
+    .mp-dlg-pie { padding: 8px 16px 12px; }
+    .mp-dlg-confirmar .mp-dlg-cuerpo { padding-top: 14px; }
+    .mp-conf-ico { width: 46px; height: 46px; }
+}
+
+/* Movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+    .mp-ruta,
+    .mp-cab-pins circle:last-child,
+    .mp-tarjeta,
+    .mp-papel-fila,
+    .mp-infra-vacio-iconos .ic3d,
+    .mp-ed.desbloqueado .mp-marca-ficha,
+    .mp-marca.sel.con-pin::before,
+    .mp-linea.borrador .mp-linea-trazo,
+    .mp-girar-tel,
+    .mp-foto-cargando { animation: none; }
+    .mp-tarjeta,
+    .mp-papel,
+    .mp-tarjeta-portada img { transition: none; }
+}
