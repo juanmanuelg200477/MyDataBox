@@ -17,7 +17,8 @@ import { store, save, genId, getAllDevices } from '../../store.js';
 import { icons } from '../../icons.js';
 import { showModal, closeModal } from '../../modal.js';
 import { escapeHtml } from '../../utils.js';
-import { generatePagination, deleteStandaloneDevice } from '../devices.js';
+import { generatePagination } from './comun.js';
+import { deleteStandaloneDevice } from './formulario.js';
 
 const TIPO = 'biométricos';          // valor guardado en d.device (en minúsculas para comparar)
 const BIO_PER_PAGE = 20;

@@ -5,7 +5,9 @@
 import { store, save, genId, getAllDevices } from '../../store.js';
 import { icons } from '../../icons.js';
 import { showModal, closeModal } from '../../modal.js';
-import { generatePagination, deleteStandaloneDevice, filterDeviceTable } from '../devices.js';
+import { generatePagination } from './comun.js';
+import { deleteStandaloneDevice } from './formulario.js';
+import { filterDeviceTable } from './tabla.js';
 import { fijarBarraHorizontal } from './barraHorizontalFija.js';
 
 // Estado del módulo (movido desde devices.js)

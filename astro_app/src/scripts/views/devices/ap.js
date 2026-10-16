@@ -5,7 +5,8 @@ import { store, save, genId, getAllDevices } from '../../store.js';
 import { icons } from '../../icons.js';
 import { showModal, closeModal } from '../../modal.js';
 import { escapeHtml } from '../../utils.js';
-import { generatePagination, deleteStandaloneDevice } from '../devices.js';
+import { generatePagination } from './comun.js';
+import { deleteStandaloneDevice } from './formulario.js';
 
 // Estado del módulo (movido desde devices.js)
 let currentPageAps = 1;
