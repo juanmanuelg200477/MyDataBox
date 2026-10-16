@@ -106,6 +106,14 @@ let _ctx = null;
 // por ejemplo, un Ctrl+Z deshace un paso por cada plano abierto antes.
 let _limpiarMotor = null;
 
+// ── Motor del lienzo ─────────────────────────────────────────────
+// Nodos del editor abierto y su devicePixelRatio. Antes eran variables
+// locales de initCanvasEngine() que compartían sus funciones internas;
+// ahora esas funciones viven fuera (más abajo) y leen de aquí. Solo hay un
+// motor vivo a la vez: initCanvasEngine() retira el anterior antes de
+// llenar M otra vez.
+const M = {};
+
 // ════════════════════════════════════════════════════════════════
 //  ENTRY
 // ════════════════════════════════════════════════════════════════
@@ -502,627 +510,40 @@ function groupBy(arr, key) {
 // ════════════════════════════════════════════════════════════════
 function initCanvasEngine() {
     _limpiarMotor?.();
-    const canvas = document.getElementById('bp-canvas');
-    const wrap = canvas.parentElement;
-    const ctx = canvas.getContext('2d');
-    const rulerX = document.getElementById('bp-ruler-x');
-    const rulerY = document.getElementById('bp-ruler-y');
-    const crosshair = document.getElementById('bp-crosshair');
-    const measureTip = document.getElementById('bp-measure-tip');
-    const editorRoot = document.getElementById('bp-editor-root');
+    M.canvas = document.getElementById('bp-canvas');
+    M.wrap = M.canvas.parentElement;
+    M.ctx = M.canvas.getContext('2d');
+    M.rulerX = document.getElementById('bp-ruler-x');
+    M.rulerY = document.getElementById('bp-ruler-y');
+    M.crosshair = document.getElementById('bp-crosshair');
+    M.measureTip = document.getElementById('bp-measure-tip');
+    M.editorRoot = document.getElementById('bp-editor-root');
 
-    let dpr = window.devicePixelRatio || 1;
+    M.dpr = window.devicePixelRatio || 1;
 
-    // ── Resize ───────────────────────────────────────────────
-    const resize = () => {
-        dpr = window.devicePixelRatio || 1;
-        const rect = wrap.getBoundingClientRect();
-        canvas.width  = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        canvas.style.width  = rect.width + 'px';
-        canvas.style.height = rect.height + 'px';
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        if (rulerX) {
-            rulerX.width = rect.width * dpr; rulerX.height = RULER_SIZE * dpr;
-            rulerX.style.width = rect.width + 'px'; rulerX.style.height = RULER_SIZE + 'px';
-            rulerX.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
-        }
-        if (rulerY) {
-            rulerY.width = RULER_SIZE * dpr; rulerY.height = rect.height * dpr;
-            rulerY.style.width = RULER_SIZE + 'px'; rulerY.style.height = rect.height + 'px';
-            rulerY.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
-        }
-        draw();
-    };
     resize();
-    const ro = new ResizeObserver(resize);
-    ro.observe(wrap);
-
-    // ── Helpers ──────────────────────────────────────────────
-    const screenToWorld = (sx, sy) => ({
-        x: (sx - _ctx.view.x) / _ctx.view.zoom,
-        y: (sy - _ctx.view.y) / _ctx.view.zoom
-    });
-    const snap = v => _ctx.snap ? Math.round(v / _ctx.gridSize) * _ctx.gridSize : v;
-    const constrainShift = (x0, y0, x1, y1) => {
-        const dx = x1 - x0, dy = y1 - y0;
-        const angle = Math.atan2(dy, dx);
-        const step = Math.PI / 4;
-        const a2 = Math.round(angle / step) * step;
-        const len = Math.hypot(dx, dy);
-        return { x: x0 + Math.cos(a2) * len, y: y0 + Math.sin(a2) * len };
-    };
-
-    // ── Helpers UI ──────────────────────────────────────────
-    const showMeasureCell = (text) => {
-        const cell = document.getElementById('bp-measure-cell');
-        const m = document.getElementById('bp-measure');
-        if (m) { m.textContent = text; cell.style.display = 'flex'; }
-    };
-    const hideMeasureCell = () => { document.getElementById('bp-measure-cell').style.display = 'none'; };
-    const showFloatingMeasure = (text, sx, sy) => {
-        measureTip.textContent = text;
-        measureTip.style.left = (sx + 18) + 'px';
-        measureTip.style.top = (sy - 32) + 'px';
-        measureTip.classList.add('show');
-    };
-    const hideFloatingMeasure = () => measureTip.classList.remove('show');
+    M.ro = new ResizeObserver(resize);
+    M.ro.observe(M.wrap);
 
     // ── Eventos del canvas ──────────────────────────────────
-    canvas.addEventListener('mouseenter', () => { _ctx.cursor.inside = true; updateCrosshair(); });
-    canvas.addEventListener('mouseleave', () => {
+    M.canvas.addEventListener('mouseenter', () => { _ctx.cursor.inside = true; updateCrosshair(); });
+    M.canvas.addEventListener('mouseleave', () => {
         _ctx.cursor.inside = false;
-        crosshair.style.opacity = '0';
+        M.crosshair.style.opacity = '0';
         hideFloatingMeasure();
         updateRulers();
     });
 
-    canvas.addEventListener('mousedown', onMouseDown);
-    canvas.addEventListener('mousemove', onMouseMove);
-    canvas.addEventListener('mouseup', onMouseUp);
-    canvas.addEventListener('dblclick', onDblClick);
-    canvas.addEventListener('wheel', onWheel, { passive: false });
+    M.canvas.addEventListener('mousedown', onMouseDown);
+    M.canvas.addEventListener('mousemove', onMouseMove);
+    M.canvas.addEventListener('mouseup', onMouseUp);
+    M.canvas.addEventListener('dblclick', onDblClick);
+    M.canvas.addEventListener('wheel', onWheel, { passive: false });
 
-    function onMouseDown(e) {
-        if (_ctx.textEditing) return; // mientras se edita texto, no recibir clicks
-        const rect = canvas.getBoundingClientRect();
-        const sx = e.clientX - rect.left;
-        const sy = e.clientY - rect.top;
-        const w = screenToWorld(sx, sy);
-
-        // Pan: espacio, herramienta Hand, o botón medio
-        if (_ctx.spaceDown || _ctx.tool === 'hand' || e.button === 1) {
-            _ctx.drag = { type: 'pan', startX: sx, startY: sy, viewX: _ctx.view.x, viewY: _ctx.view.y };
-            canvas.style.cursor = 'grabbing';
-            return;
-        }
-
-        if (_ctx.tool === 'eraser') {
-            const i = findShapeAt(w.x, w.y);
-            if (i !== -1) { _ctx.shapes.splice(i, 1); commit(); }
-            return;
-        }
-
-        // Select tool — incluye manejo de grips
-        if (_ctx.tool === 'select') {
-            // ¿Click sobre un handle (nodo) del shape seleccionado?
-            if (_ctx.selected !== null) {
-                const handles = getHandles(_ctx.shapes[_ctx.selected]);
-                for (let hi = 0; hi < handles.length; hi++) {
-                    const h = handles[hi];
-                    const sxw = h.x * _ctx.view.zoom + _ctx.view.x;
-                    const syw = h.y * _ctx.view.zoom + _ctx.view.y;
-                    if (Math.abs(sxw - sx) <= HANDLE_SIZE && Math.abs(syw - sy) <= HANDLE_SIZE) {
-                        _ctx.drag = {
-                            type: 'handle',
-                            shapeIdx: _ctx.selected,
-                            handleIdx: hi,
-                            origShape: JSON.parse(JSON.stringify(_ctx.shapes[_ctx.selected])),
-                            startX: w.x, startY: w.y
-                        };
-                        return;
-                    }
-                }
-            }
-            const i = findShapeAt(w.x, w.y);
-            if (i !== -1) {
-                _ctx.selected = i;
-                _ctx.drag = {
-                    type: 'move',
-                    startX: w.x, startY: w.y,
-                    origShape: JSON.parse(JSON.stringify(_ctx.shapes[i]))
-                };
-            } else {
-                _ctx.selected = null;
-            }
-            draw();
-            return;
-        }
-
-        // Text — comienza edición inline directamente
-        if (_ctx.tool === 'text') {
-            startInlineText(snap(w.x), snap(w.y));
-            return;
-        }
-
-        // Symbol — colocar símbolo seleccionado
-        if (_ctx.tool === 'symbol') {
-            const symDef = SYMBOLS.find(s => s.id === _ctx.symbolVariant) || SYMBOLS[0];
-            const size = symDef.defaultSize;
-            const cx = snap(w.x), cy = snap(w.y);
-            _ctx.shapes.push({
-                type: 'symbol', symbolId: symDef.id,
-                x: cx - size / 2, y: cy - size / 2, w: size, h: size,
-                stroke: _ctx.strokeColor, strokeWidth: _ctx.strokeWidth,
-                label: ''
-            });
-            commit();
-            return;
-        }
-
-        // Shapes (variantes)
-        if (_ctx.tool === 'shape') {
-            const variant = _ctx.shapeVariant;
-            const x = snap(w.x), y = snap(w.y);
-
-            // ── LÍNEA (AutoCAD): cada click crea un segmento INDEPENDIENTE ──
-            if (variant === 'line') {
-                if (!_ctx.lineChain) {
-                    // Primer punto: solo guarda el inicio, no crea figura aún
-                    _ctx.lineChain = { last: { x, y }, preview: { x, y } };
-                } else {
-                    let nx = x, ny = y;
-                    if (_ctx.shiftDown) {
-                        const last = _ctx.lineChain.last;
-                        const p = constrainShift(last.x, last.y, w.x, w.y);
-                        nx = snap(p.x); ny = snap(p.y);
-                    }
-                    // Crear figura individual: cada línea es su propio shape
-                    _ctx.shapes.push({
-                        type: 'line',
-                        x1: _ctx.lineChain.last.x,
-                        y1: _ctx.lineChain.last.y,
-                        x2: nx,
-                        y2: ny,
-                        stroke: _ctx.strokeColor,
-                        strokeWidth: _ctx.strokeWidth
-                    });
-                    _ctx.lineChain.last = { x: nx, y: ny };
-                    _ctx.lineChain.preview = { x: nx, y: ny };
-                    commit();
-                }
-                draw();
-                return;
-            }
-
-            // ── POLÍGONO: polilínea continua que se puede cerrar (rellenable) ──
-            if (variant === 'polygon') {
-                if (!_ctx.polylineChain) {
-                    _ctx.polylineChain = { points: [{ x, y }], cur: { x, y }, stroke: _ctx.strokeColor, strokeWidth: _ctx.strokeWidth };
-                } else {
-                    const start = _ctx.polylineChain.points[0];
-                    const dist = Math.hypot((x - start.x) * _ctx.view.zoom, (y - start.y) * _ctx.view.zoom);
-                    if (_ctx.polylineChain.points.length >= 2 && dist < CLOSE_THRESHOLD) {
-                        _ctx.shapes.push({
-                            type: 'polygon',
-                            points: [..._ctx.polylineChain.points],
-                            stroke: _ctx.polylineChain.stroke,
-                            strokeWidth: _ctx.polylineChain.strokeWidth,
-                            fill: _ctx.fillEnabled ? _ctx.fillColor : null,
-                            closed: true
-                        });
-                        _ctx.polylineChain = null;
-                        hideFloatingMeasure();
-                        hideMeasureCell();
-                        commit();
-                        return;
-                    }
-                    let nx = x, ny = y;
-                    if (_ctx.shiftDown) {
-                        const last = _ctx.polylineChain.points[_ctx.polylineChain.points.length - 1];
-                        const p = constrainShift(last.x, last.y, w.x, w.y);
-                        nx = snap(p.x); ny = snap(p.y);
-                    }
-                    _ctx.polylineChain.points.push({ x: nx, y: ny });
-                    _ctx.polylineChain.cur = { x: nx, y: ny };
-                }
-                draw();
-                return;
-            }
-
-            if (variant === 'rect') {
-                _ctx.creating = { type: 'rect', x, y, w: 0, h: 0, stroke: _ctx.strokeColor, strokeWidth: _ctx.strokeWidth, fill: _ctx.fillEnabled ? _ctx.fillColor : null };
-            } else if (variant === 'circle') {
-                _ctx.creating = { type: 'circle', cx: x, cy: y, r: 0, stroke: _ctx.strokeColor, strokeWidth: _ctx.strokeWidth, fill: _ctx.fillEnabled ? _ctx.fillColor : null };
-            } else if (variant === 'ellipse') {
-                _ctx.creating = { type: 'ellipse', cx: x, cy: y, rx: 0, ry: 0, stroke: _ctx.strokeColor, strokeWidth: _ctx.strokeWidth, fill: _ctx.fillEnabled ? _ctx.fillColor : null };
-            } else if (variant === 'triangle') {
-                _ctx.creating = { type: 'triangle', x, y, w: 0, h: 0, stroke: _ctx.strokeColor, strokeWidth: _ctx.strokeWidth, fill: _ctx.fillEnabled ? _ctx.fillColor : null };
-            } else if (variant === 'arrow') {
-                _ctx.creating = { type: 'arrow', x1: x, y1: y, x2: x, y2: y, stroke: _ctx.strokeColor, strokeWidth: _ctx.strokeWidth };
-            }
-            draw();
-            return;
-        }
-
-        if (_ctx.tool === 'pen') {
-            _ctx.creating = { type: 'pen', points: [{ x: w.x, y: w.y }], stroke: _ctx.strokeColor, strokeWidth: _ctx.strokeWidth };
-            draw();
-            return;
-        }
-    }
-
-    function onMouseMove(e) {
-        const rect = canvas.getBoundingClientRect();
-        const sx = e.clientX - rect.left;
-        const sy = e.clientY - rect.top;
-        const w = screenToWorld(sx, sy);
-        _ctx.cursor.x = w.x; _ctx.cursor.y = w.y;
-        _ctx.cursor.sx = sx; _ctx.cursor.sy = sy;
-        updateCrosshair();
-
-        document.getElementById('bp-coords').textContent = `${Math.round(w.x)}, ${Math.round(w.y)}`;
-        updateRulers();
-        updateHoverHandle(sx, sy);
-
-        if (_ctx.drag?.type === 'pan') {
-            _ctx.view.x = _ctx.drag.viewX + (sx - _ctx.drag.startX);
-            _ctx.view.y = _ctx.drag.viewY + (sy - _ctx.drag.startY);
-            draw(); return;
-        }
-
-        if (_ctx.drag?.type === 'move' && _ctx.selected !== null) {
-            const sh = _ctx.shapes[_ctx.selected];
-            const orig = _ctx.drag.origShape;
-            const dx = snap(w.x) - snap(_ctx.drag.startX);
-            const dy = snap(w.y) - snap(_ctx.drag.startY);
-            translateShape(sh, orig, dx, dy);
-            draw(); return;
-        }
-
-        if (_ctx.drag?.type === 'handle') {
-            const sh = _ctx.shapes[_ctx.drag.shapeIdx];
-            const orig = _ctx.drag.origShape;
-            moveHandle(sh, orig, _ctx.drag.handleIdx, snap(w.x), snap(w.y));
-            draw(); return;
-        }
-
-        // Línea AutoCAD: actualizar preview del próximo segmento
-        if (_ctx.lineChain) {
-            let nx = snap(w.x), ny = snap(w.y);
-            if (_ctx.shiftDown) {
-                const last = _ctx.lineChain.last;
-                const p = constrainShift(last.x, last.y, w.x, w.y);
-                nx = snap(p.x); ny = snap(p.y);
-            }
-            _ctx.lineChain.preview = { x: nx, y: ny };
-            const last = _ctx.lineChain.last;
-            const segLen = Math.hypot(nx - last.x, ny - last.y);
-            const angle = (Math.atan2(ny - last.y, nx - last.x) * 180 / Math.PI).toFixed(1);
-            const txt = `${fmtLen(segLen)} · ${angle}°`;
-            showMeasureCell(fmtLenFull(segLen) + ` · ${angle}°`);
-            showFloatingMeasure(txt, sx, sy);
-            draw();
-            return;
-        }
-
-        // Polilínea: actualizar preview
-        if (_ctx.polylineChain) {
-            let nx = snap(w.x), ny = snap(w.y);
-            if (_ctx.shiftDown && _ctx.polylineChain.points.length) {
-                const last = _ctx.polylineChain.points[_ctx.polylineChain.points.length - 1];
-                const p = constrainShift(last.x, last.y, w.x, w.y);
-                nx = snap(p.x); ny = snap(p.y);
-            }
-            _ctx.polylineChain.cur = { x: nx, y: ny };
-
-            // Mostrar medida del último segmento
-            const last = _ctx.polylineChain.points[_ctx.polylineChain.points.length - 1];
-            const segLen = Math.hypot(nx - last.x, ny - last.y);
-            const angle = (Math.atan2(ny - last.y, nx - last.x) * 180 / Math.PI).toFixed(1);
-            const txt = `${fmtLen(segLen)} · ${angle}°`;
-            showMeasureCell(fmtLenFull(segLen) + ` · ${angle}°`);
-            showFloatingMeasure(txt, sx, sy);
-
-            // Indicador de cierre cerca del punto inicial
-            if (_ctx.polylineChain.points.length >= 2) {
-                const start = _ctx.polylineChain.points[0];
-                const dist = Math.hypot((nx - start.x) * _ctx.view.zoom, (ny - start.y) * _ctx.view.zoom);
-                _ctx.polylineChain.nearStart = dist < CLOSE_THRESHOLD;
-            }
-
-            draw(); return;
-        }
-
-        if (_ctx.creating) {
-            const c = _ctx.creating;
-            const x = snap(w.x), y = snap(w.y);
-            if (c.type === 'rect') {
-                let nw = w.x - c.x, nh = w.y - c.y;
-                if (_ctx.shiftDown) {
-                    const s = Math.max(Math.abs(nw), Math.abs(nh));
-                    nw = Math.sign(nw || 1) * s; nh = Math.sign(nh || 1) * s;
-                }
-                c.w = _ctx.snap ? Math.round(nw / _ctx.gridSize) * _ctx.gridSize : nw;
-                c.h = _ctx.snap ? Math.round(nh / _ctx.gridSize) * _ctx.gridSize : nh;
-                const txt = `${fmtLen(Math.abs(c.w))} × ${fmtLen(Math.abs(c.h))}`;
-                showMeasureCell(`${Math.abs(c.w)} × ${Math.abs(c.h)} px · ${pxToCm(Math.abs(c.w)).toFixed(2)} × ${pxToCm(Math.abs(c.h)).toFixed(2)} cm`);
-                showFloatingMeasure(txt, sx, sy);
-            } else if (c.type === 'circle') {
-                const r = Math.hypot(w.x - c.cx, w.y - c.cy);
-                c.r = _ctx.snap ? Math.round(r / _ctx.gridSize) * _ctx.gridSize : r;
-                const txt = `R ${fmtLen(c.r)} · D ${fmtLen(c.r * 2)}`;
-                showMeasureCell(`R = ${Math.round(c.r)}px (${pxToCm(c.r).toFixed(2)} cm) · D = ${pxToCm(c.r * 2).toFixed(2)} cm`);
-                showFloatingMeasure(txt, sx, sy);
-            } else if (c.type === 'ellipse') {
-                c.rx = Math.abs(w.x - c.cx);
-                c.ry = Math.abs(w.y - c.cy);
-                if (_ctx.shiftDown) { c.rx = c.ry = Math.max(c.rx, c.ry); }
-                const txt = `${fmtLen(c.rx * 2)} × ${fmtLen(c.ry * 2)}`;
-                showMeasureCell(`Rx ${Math.round(c.rx)} · Ry ${Math.round(c.ry)}`);
-                showFloatingMeasure(txt, sx, sy);
-            } else if (c.type === 'triangle') {
-                c.w = (w.x - c.x);
-                c.h = (w.y - c.y);
-                if (_ctx.shiftDown) {
-                    const s = Math.max(Math.abs(c.w), Math.abs(c.h));
-                    c.w = Math.sign(c.w || 1) * s; c.h = Math.sign(c.h || 1) * s;
-                }
-                showMeasureCell(`Base ${Math.abs(c.w)} · Alto ${Math.abs(c.h)}`);
-                showFloatingMeasure(`${fmtLen(Math.abs(c.w))} × ${fmtLen(Math.abs(c.h))}`, sx, sy);
-            } else if (c.type === 'arrow') {
-                if (_ctx.shiftDown) {
-                    const p = constrainShift(c.x1, c.y1, w.x, w.y);
-                    c.x2 = snap(p.x); c.y2 = snap(p.y);
-                } else {
-                    c.x2 = x; c.y2 = y;
-                }
-                const len = Math.hypot(c.x2 - c.x1, c.y2 - c.y1);
-                const angle = (Math.atan2(c.y2 - c.y1, c.x2 - c.x1) * 180 / Math.PI).toFixed(1);
-                showMeasureCell(`${Math.round(len)}px · ${angle}°`);
-                showFloatingMeasure(`${fmtLen(len)} · ${angle}°`, sx, sy);
-            } else if (c.type === 'pen') {
-                c.points.push({ x: w.x, y: w.y });
-            }
-            draw();
-        }
-    }
-
-    function onMouseUp(e) {
-        if (_ctx.drag?.type === 'pan') { canvas.style.cursor = _ctx.tool === 'hand' ? 'grab' : ''; _ctx.drag = null; return; }
-        if (_ctx.drag?.type === 'move') { _ctx.drag = null; commit(); return; }
-        if (_ctx.drag?.type === 'handle') { _ctx.drag = null; commit(); return; }
-        if (_ctx.creating) {
-            const c = _ctx.creating;
-            const valid =
-                (c.type === 'rect' && Math.abs(c.w) > 2 && Math.abs(c.h) > 2) ||
-                (c.type === 'circle' && c.r > 2) ||
-                (c.type === 'ellipse' && c.rx > 2 && c.ry > 2) ||
-                (c.type === 'triangle' && Math.abs(c.w) > 2 && Math.abs(c.h) > 2) ||
-                (c.type === 'arrow' && (c.x1 !== c.x2 || c.y1 !== c.y2)) ||
-                (c.type === 'pen' && c.points.length > 1);
-            if (valid) { _ctx.shapes.push({ ...c }); commit(); }
-            _ctx.creating = null;
-            hideFloatingMeasure(); hideMeasureCell();
-            draw();
-        }
-    }
-
-    function onDblClick(e) {
-        // En polilínea, doble click cierra/termina
-        if (_ctx.polylineChain) {
-            commitPolyline(false);
-        }
-    }
-
-    function onWheel(e) {
-        e.preventDefault();
-        const rect = canvas.getBoundingClientRect();
-        const sx = e.clientX - rect.left;
-        const sy = e.clientY - rect.top;
-        const before = screenToWorld(sx, sy);
-        const factor = e.deltaY < 0 ? 1.12 : 0.89;
-        _ctx.view.zoom = Math.max(0.2, Math.min(8, _ctx.view.zoom * factor));
-        const after = screenToWorld(sx, sy);
-        _ctx.view.x += (after.x - before.x) * _ctx.view.zoom;
-        _ctx.view.y += (after.y - before.y) * _ctx.view.zoom;
-        document.getElementById('bp-zoom-val').textContent = Math.round(_ctx.view.zoom * 100) + '%';
-        draw();
-    }
-
-    function updateCrosshair() {
-        if (!_ctx.cursor.inside) return;
-        crosshair.style.opacity = '1';
-        crosshair.querySelector('.bp-crosshair-x').style.top = _ctx.cursor.sy + 'px';
-        crosshair.querySelector('.bp-crosshair-y').style.left = _ctx.cursor.sx + 'px';
-    }
-
-    // Detectar hover sobre handles para cambiar cursor
-    function updateHoverHandle(sx, sy) {
-        if (_ctx.tool !== 'select' || _ctx.selected === null) {
-            _ctx.hoverHandle = null;
-            canvas.style.cursor = canvas.style.cursor; // mantener
-            return;
-        }
-        const handles = getHandles(_ctx.shapes[_ctx.selected]);
-        for (let hi = 0; hi < handles.length; hi++) {
-            const h = handles[hi];
-            const sxw = h.x * _ctx.view.zoom + _ctx.view.x;
-            const syw = h.y * _ctx.view.zoom + _ctx.view.y;
-            if (Math.abs(sxw - sx) <= HANDLE_SIZE && Math.abs(syw - sy) <= HANDLE_SIZE) {
-                _ctx.hoverHandle = { handleIdx: hi };
-                canvas.style.cursor = h.cursor || 'pointer';
-                return;
-            }
-        }
-        _ctx.hoverHandle = null;
-        if (_ctx.tool === 'select') canvas.style.cursor = 'default';
-    }
-
-    function commitPolyline(closed) {
-        if (!_ctx.polylineChain || _ctx.polylineChain.points.length < 2) {
-            _ctx.polylineChain = null;
-            hideFloatingMeasure(); hideMeasureCell();
-            draw();
-            return;
-        }
-        _ctx.shapes.push({
-            type: closed ? 'polygon' : 'polyline',
-            points: [..._ctx.polylineChain.points],
-            stroke: _ctx.polylineChain.stroke,
-            strokeWidth: _ctx.polylineChain.strokeWidth,
-            fill: (closed && _ctx.fillEnabled) ? _ctx.fillColor : null,
-            closed
-        });
-        _ctx.polylineChain = null;
-        hideFloatingMeasure(); hideMeasureCell();
-        commit();
-    }
-
-    // ── Edición inline de texto en el canvas ────────────────
-    function startInlineText(wx, wy) {
-        // Si ya hay un editor abierto, lo cerramos primero (commit)
-        if (_ctx.textEditing) {
-            _ctx.textEditing.finish(true);
-        }
-
-        const sx = wx * _ctx.view.zoom + _ctx.view.x;
-        const sy = wy * _ctx.view.zoom + _ctx.view.y;
-        let currentSize = 16;
-
-        const editor = document.createElement('div');
-        editor.contentEditable = 'true';
-        editor.className = 'bp-text-editor';
-        editor.style.left = sx + 'px';
-        editor.style.top = sy + 'px';
-        editor.style.fontSize = (currentSize * _ctx.view.zoom) + 'px';
-        editor.style.color = _ctx.strokeColor;
-        editor.style.fontFamily = "'DM Sans', sans-serif";
-        editor.dataset.placeholder = 'Escribe texto...';
-        editor.tabIndex = 0;
-
-        // Evita que clicks en el editor se propaguen al canvas
-        editor.addEventListener('mousedown', e => e.stopPropagation());
-        editor.addEventListener('click',     e => e.stopPropagation());
-
-        wrap.appendChild(editor);
-
-        let done = false;
-        const finish = (save) => {
-            if (done) return;
-            done = true;
-            const text = editor.innerText.trim();
-            editor.remove();
-            _ctx.textEditing = null;
-            if (save && text) {
-                _ctx.shapes.push({
-                    type: 'text',
-                    x: wx, y: wy,
-                    text,
-                    color: _ctx.strokeColor,
-                    size: currentSize
-                });
-                commit();
-            } else {
-                draw();
-            }
-        };
-
-        _ctx.textEditing = { editor, finish };
-
-        editor.addEventListener('blur', () => finish(true));
-        editor.addEventListener('keydown', e => {
-            e.stopPropagation(); // que no se disparen atajos de herramientas
-            if (e.key === 'Escape') { e.preventDefault(); finish(false); return; }
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); editor.blur(); return; }
-            if (e.ctrlKey && (e.key === '+' || e.key === '=')) {
-                e.preventDefault();
-                currentSize = Math.min(72, currentSize + 2);
-                editor.style.fontSize = (currentSize * _ctx.view.zoom) + 'px';
-            }
-            if (e.ctrlKey && (e.key === '-' || e.key === '_')) {
-                e.preventDefault();
-                currentSize = Math.max(8, currentSize - 2);
-                editor.style.fontSize = (currentSize * _ctx.view.zoom) + 'px';
-            }
-        });
-
-        // Foco diferido — algunos navegadores no enfocan si se hace en el
-        // mismo tick que la creación. requestAnimationFrame garantiza que el
-        // DOM ya está pintado.
-        requestAnimationFrame(() => {
-            editor.focus({ preventScroll: true });
-            // Coloca el cursor dentro del editor
-            const range = document.createRange();
-            range.selectNodeContents(editor);
-            range.collapse(false);
-            const sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
-        });
-    }
-
-    // ── Keyboard ─────────────────────────────────────────────
-    // Si el lienzo ya no está en la página (se cambió de sección o de
-    // página), el motor se retira solo con la primera tecla o clic.
-    const onKeyDown = e => {
-        if (!canvas.isConnected) { cleanup(); return; }
-        if (e.target.matches('input, textarea, [contenteditable="true"]')) return;
-        if (e.key === 'Shift') { _ctx.shiftDown = true; updateOrthoIndicator(); }
-        if (e.code === 'Space') {
-            e.preventDefault();
-            _ctx.spaceDown = true;
-            if (_ctx.tool !== 'hand') canvas.style.cursor = 'grab';
-        }
-        if (e.key === 'Escape') {
-            if (_ctx.lineChain) { _ctx.lineChain = null; hideFloatingMeasure(); hideMeasureCell(); draw(); return; }
-            if (_ctx.polylineChain) { commitPolyline(false); return; }
-            if (_ctx.creating) { _ctx.creating = null; hideFloatingMeasure(); hideMeasureCell(); draw(); return; }
-            if (_ctx.fullscreen) { toggleFullscreen(); return; }
-            if (_ctx.selected !== null) { _ctx.selected = null; draw(); }
-        }
-        if (e.key === 'Enter') {
-            if (_ctx.polylineChain) { commitPolyline(true); return; }
-        }
-        if (e.key === 'Delete' && _ctx.selected !== null) {
-            _ctx.shapes.splice(_ctx.selected, 1);
-            _ctx.selected = null;
-            commit();
-        }
-        if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
-        if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'Z'))) { e.preventDefault(); redo(); }
-
-        // Atajos de herramientas
-        const t = TOOLS_TOP.find(x => x.key.toLowerCase() === e.key.toLowerCase());
-        if (t) setTool(t.id);
-    };
-    const onKeyUp = e => {
-        if (!canvas.isConnected) { cleanup(); return; }
-        if (e.key === 'Shift') { _ctx.shiftDown = false; updateOrthoIndicator(); }
-        if (e.code === 'Space') {
-            _ctx.spaceDown = false;
-            if (_ctx.tool !== 'hand') canvas.style.cursor = _ctx.tool === 'select' ? 'default' : 'crosshair';
-        }
-    };
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('keyup', onKeyUp);
 
-    // Cerrar dropdowns al click fuera (se registra más abajo, con la toolbar)
-    const onClickFuera = e => {
-        if (!canvas.isConnected) { cleanup(); return; }
-        if (!e.target.closest('.bp-tool') && !e.target.closest('.bp-dropdown')) {
-            closeDropdowns();
-        }
-    };
-
-    const cleanup = () => {
-        document.removeEventListener('keydown', onKeyDown);
-        document.removeEventListener('keyup', onKeyUp);
-        document.removeEventListener('click', onClickFuera);
-        ro.disconnect();
-        if (_limpiarMotor === cleanup) _limpiarMotor = null;
-    };
-    canvas._cleanup = cleanup;
+    M.canvas._cleanup = cleanup;
     _limpiarMotor = cleanup;
 
     // ── Toolbar wiring ──────────────────────────────────────
@@ -1176,7 +597,7 @@ function initCanvasEngine() {
     document.getElementById('bp-zoom-fit').onclick = zoomFit;
     document.getElementById('bp-fullscreen').onclick = toggleFullscreen;
     document.getElementById('bp-fullscreen-exit').onclick = toggleFullscreen;
-    document.getElementById('bp-export-png').onclick = () => exportPNG(canvas);
+    document.getElementById('bp-export-png').onclick = () => exportPNG(M.canvas);
     document.getElementById('bp-export-svg').onclick = exportSVG;
 
     document.getElementById('bp-name').oninput = e => {
@@ -1184,12 +605,6 @@ function initCanvasEngine() {
         renderList();
     };
 
-    // Colors
-    const updateStrokeUI = () => {
-        document.querySelectorAll('#bp-stroke-colors .bp-color[data-c]').forEach(b => {
-            b.classList.toggle('active', b.dataset.c === _ctx.strokeColor);
-        });
-    };
     document.querySelectorAll('#bp-stroke-colors .bp-color[data-c]').forEach(b => {
         b.onclick = () => { _ctx.strokeColor = b.dataset.c; updateStrokeUI(); applyColorToSelected(); };
     });
@@ -1200,11 +615,6 @@ function initCanvasEngine() {
     };
     updateStrokeUI();
 
-    const fillUI = () => {
-        document.querySelectorAll('#bp-fill-colors .bp-color').forEach(b => {
-            b.classList.toggle('active', b.dataset.c === _ctx.fillColor);
-        });
-    };
     document.querySelectorAll('#bp-fill-colors .bp-color').forEach(b => {
         b.onclick = () => {
             _ctx.fillColor = b.dataset.c; _ctx.fillEnabled = true;
@@ -1218,27 +628,11 @@ function initCanvasEngine() {
     };
     fillUI();
 
-    function applyColorToSelected() {
-        if (_ctx.selected === null) return;
-        const sh = _ctx.shapes[_ctx.selected];
-        sh.stroke = _ctx.strokeColor;
-        if (sh.type === 'text') sh.color = _ctx.strokeColor;
-        commit();
-    }
-    function applyFillToSelected() {
-        if (_ctx.selected === null) return;
-        const sh = _ctx.shapes[_ctx.selected];
-        if (['rect', 'circle', 'ellipse', 'triangle', 'polygon'].includes(sh.type)) {
-            sh.fill = _ctx.fillEnabled ? _ctx.fillColor : null;
-            commit();
-        }
-    }
-
-    const swEl = document.getElementById('bp-stroke-width');
-    const swVal = document.getElementById('bp-stroke-width-val');
-    swEl.oninput = () => {
-        _ctx.strokeWidth = +swEl.value;
-        swVal.textContent = swEl.value + 'px';
+    M.swEl = document.getElementById('bp-stroke-width');
+    M.swVal = document.getElementById('bp-stroke-width-val');
+    M.swEl.oninput = () => {
+        _ctx.strokeWidth = +M.swEl.value;
+        M.swVal.textContent = M.swEl.value + 'px';
         if (_ctx.selected !== null) {
             _ctx.shapes[_ctx.selected].strokeWidth = _ctx.strokeWidth;
             commit();
@@ -1248,11 +642,11 @@ function initCanvasEngine() {
     document.getElementById('bp-grid-show').onchange = e => { _ctx.showGrid = e.target.checked; persistDrawing(); draw(); };
     document.getElementById('bp-snap').onchange = e => { _ctx.snap = e.target.checked; };
     document.getElementById('bp-rulers-show').onchange = e => { _ctx.showRulers = e.target.checked; toggleRulers(); };
-    const gsEl = document.getElementById('bp-grid-size');
-    const gsVal = document.getElementById('bp-grid-size-val');
-    gsEl.oninput = () => {
-        _ctx.gridSize = +gsEl.value;
-        gsVal.textContent = _ctx.gridSize + 'px';
+    M.gsEl = document.getElementById('bp-grid-size');
+    M.gsVal = document.getElementById('bp-grid-size-val');
+    M.gsEl.oninput = () => {
+        _ctx.gridSize = +M.gsEl.value;
+        M.gsVal.textContent = _ctx.gridSize + 'px';
         persistDrawing(); draw();
     };
 
@@ -1263,510 +657,1142 @@ function initCanvasEngine() {
     // Cerrar dropdowns al click fuera
     document.addEventListener('click', onClickFuera);
 
-    // ── Funciones internas que dependen del scope ──
-    function setTool(id) {
-        _ctx.tool = id;
-        _ctx.selected = null;
-        _ctx.creating = null;
-        _ctx.lineChain = null;
-        hideFloatingMeasure(); hideMeasureCell();
-        if (_ctx.polylineChain) commitPolyline(false);
-        document.querySelectorAll('.bp-tool[data-tool]').forEach(b => {
-            b.classList.toggle('active', b.dataset.tool === id);
-        });
-        const toolName = (() => {
-            if (id === 'shape') {
-                const v = SHAPES.find(s => s.id === _ctx.shapeVariant);
-                return v ? `Forma: ${v.name}` : 'Forma';
-            }
-            if (id === 'symbol') {
-                const v = SYMBOLS.find(s => s.id === _ctx.symbolVariant);
-                return v ? `Símbolo: ${v.name}` : 'Símbolo';
-            }
-            return TOOLS_TOP.find(t => t.id === id)?.name || id;
-        })();
-        document.getElementById('bp-tool-name').textContent = toolName;
-        canvas.style.cursor = id === 'select' ? 'default' : id === 'hand' ? 'grab' : 'crosshair';
-        draw();
+}
+
+// ── Funciones del motor (antes internas de initCanvasEngine) ─────
+// ── Resize ───────────────────────────────────────────────
+const resize = () => {
+    M.dpr = window.devicePixelRatio || 1;
+    const rect = M.wrap.getBoundingClientRect();
+    M.canvas.width  = rect.width * M.dpr;
+    M.canvas.height = rect.height * M.dpr;
+    M.canvas.style.width  = rect.width + 'px';
+    M.canvas.style.height = rect.height + 'px';
+    M.ctx.setTransform(M.dpr, 0, 0, M.dpr, 0, 0);
+    if (M.rulerX) {
+        M.rulerX.width = rect.width * M.dpr; M.rulerX.height = RULER_SIZE * M.dpr;
+        M.rulerX.style.width = rect.width + 'px'; M.rulerX.style.height = RULER_SIZE + 'px';
+        M.rulerX.getContext('2d').setTransform(M.dpr, 0, 0, M.dpr, 0, 0);
+    }
+    if (M.rulerY) {
+        M.rulerY.width = RULER_SIZE * M.dpr; M.rulerY.height = rect.height * M.dpr;
+        M.rulerY.style.width = RULER_SIZE + 'px'; M.rulerY.style.height = rect.height + 'px';
+        M.rulerY.getContext('2d').setTransform(M.dpr, 0, 0, M.dpr, 0, 0);
+    }
+    draw();
+};
+
+// ── Helpers ──────────────────────────────────────────────
+const screenToWorld = (sx, sy) => ({
+    x: (sx - _ctx.view.x) / _ctx.view.zoom,
+    y: (sy - _ctx.view.y) / _ctx.view.zoom
+});
+
+const snap = v => _ctx.snap ? Math.round(v / _ctx.gridSize) * _ctx.gridSize : v;
+
+const constrainShift = (x0, y0, x1, y1) => {
+    const dx = x1 - x0, dy = y1 - y0;
+    const angle = Math.atan2(dy, dx);
+    const step = Math.PI / 4;
+    const a2 = Math.round(angle / step) * step;
+    const len = Math.hypot(dx, dy);
+    return { x: x0 + Math.cos(a2) * len, y: y0 + Math.sin(a2) * len };
+};
+
+// ── Helpers UI ──────────────────────────────────────────
+const showMeasureCell = (text) => {
+    const cell = document.getElementById('bp-measure-cell');
+    const m = document.getElementById('bp-measure');
+    if (m) { m.textContent = text; cell.style.display = 'flex'; }
+};
+
+const hideMeasureCell = () => { document.getElementById('bp-measure-cell').style.display = 'none'; };
+
+const showFloatingMeasure = (text, sx, sy) => {
+    M.measureTip.textContent = text;
+    M.measureTip.style.left = (sx + 18) + 'px';
+    M.measureTip.style.top = (sy - 32) + 'px';
+    M.measureTip.classList.add('show');
+};
+
+const hideFloatingMeasure = () => M.measureTip.classList.remove('show');
+
+function onMouseDown(e) {
+    if (_ctx.textEditing) return; // mientras se edita texto, no recibir clicks
+    const rect = M.canvas.getBoundingClientRect();
+    const sx = e.clientX - rect.left;
+    const sy = e.clientY - rect.top;
+    const w = screenToWorld(sx, sy);
+
+    // Pan: espacio, herramienta Hand, o botón medio
+    if (_ctx.spaceDown || _ctx.tool === 'hand' || e.button === 1) {
+        _ctx.drag = { type: 'pan', startX: sx, startY: sy, viewX: _ctx.view.x, viewY: _ctx.view.y };
+        M.canvas.style.cursor = 'grabbing';
+        return;
     }
 
-    function updateShapeIcon() {
-        const btn = document.querySelector('.bp-tool[data-tool="shape"] svg');
-        if (!btn) return;
-        const v = SHAPES.find(s => s.id === _ctx.shapeVariant);
-        if (v) btn.innerHTML = v.icon;
-    }
-    function toggleDropdown(name, anchor) {
-        const dd = document.getElementById('bp-dropdown-' + name);
-        const isOpen = dd.classList.contains('open');
-        closeDropdowns();
-        if (!isOpen) {
-            const rect = anchor.getBoundingClientRect();
-            dd.style.left = (rect.right + 8) + 'px';
-            dd.style.top = rect.top + 'px';
-            dd.classList.add('open');
-        }
-    }
-    function closeDropdowns() {
-        document.querySelectorAll('.bp-dropdown.open').forEach(d => d.classList.remove('open'));
+    if (_ctx.tool === 'eraser') {
+        const i = findShapeAt(w.x, w.y);
+        if (i !== -1) { _ctx.shapes.splice(i, 1); commit(); }
+        return;
     }
 
-    function toggleFullscreen() {
-        _ctx.fullscreen = !_ctx.fullscreen;
-
-        if (_ctx.fullscreen) {
-            // PORTAL → mover el editor a <body> para escapar cualquier
-            // contenedor con transform/filter/overflow que rompa position:fixed.
-            // Dejamos un placeholder para poder regresarlo a su lugar.
-            let placeholder = document.getElementById('bp-fs-placeholder');
-            if (placeholder) placeholder.remove();
-            placeholder = document.createElement('div');
-            placeholder.id = 'bp-fs-placeholder';
-            placeholder.style.display = 'none';
-            if (editorRoot.parentNode) {
-                editorRoot.parentNode.insertBefore(placeholder, editorRoot);
-            }
-            document.body.appendChild(editorRoot);
-            editorRoot.classList.add('bp-fs');
-        } else {
-            editorRoot.classList.remove('bp-fs');
-            const placeholder = document.getElementById('bp-fs-placeholder');
-            if (placeholder && placeholder.parentNode) {
-                placeholder.parentNode.insertBefore(editorRoot, placeholder);
-                placeholder.remove();
-            }
-        }
-        document.body.classList.toggle('bp-fs-body', _ctx.fullscreen);
-        // Múltiples resizes para asegurar que el canvas se ajusta
-        // después del cambio de layout y reparenting.
-        requestAnimationFrame(() => {
-            resize();
-            setTimeout(resize, 100);
-            setTimeout(resize, 300);
-        });
-    }
-
-    function toggleRulers() {
-        rulerX.style.display = _ctx.showRulers ? '' : 'none';
-        rulerY.style.display = _ctx.showRulers ? '' : 'none';
-        document.querySelector('.bp-ruler-corner').style.display = _ctx.showRulers ? '' : 'none';
-        document.querySelector('.bp-canvas-area').classList.toggle('no-rulers', !_ctx.showRulers);
-    }
-
-    function zoomBy(factor) {
-        const cx = canvas.clientWidth / 2;
-        const cy = canvas.clientHeight / 2;
-        const before = screenToWorld(cx, cy);
-        _ctx.view.zoom = Math.max(0.2, Math.min(8, _ctx.view.zoom * factor));
-        const after = screenToWorld(cx, cy);
-        _ctx.view.x += (after.x - before.x) * _ctx.view.zoom;
-        _ctx.view.y += (after.y - before.y) * _ctx.view.zoom;
-        document.getElementById('bp-zoom-val').textContent = Math.round(_ctx.view.zoom * 100) + '%';
-        draw();
-    }
-
-    function zoomFit() {
-        const b = boundsAll(_ctx.shapes);
-        if (!b) { _ctx.view = { x: 0, y: 0, zoom: 1 }; document.getElementById('bp-zoom-val').textContent = '100%'; draw(); return; }
-        const padding = 80;
-        const cw = canvas.clientWidth - padding * 2;
-        const ch = canvas.clientHeight - padding * 2;
-        const z = Math.min(cw / (b.w || 1), ch / (b.h || 1), 4);
-        _ctx.view.zoom = Math.max(0.2, z);
-        _ctx.view.x = padding - b.x * _ctx.view.zoom + (cw - b.w * _ctx.view.zoom) / 2;
-        _ctx.view.y = padding - b.y * _ctx.view.zoom + (ch - b.h * _ctx.view.zoom) / 2;
-        document.getElementById('bp-zoom-val').textContent = Math.round(_ctx.view.zoom * 100) + '%';
-        draw();
-    }
-
-    function findShapeAt(x, y) {
-        for (let i = _ctx.shapes.length - 1; i >= 0; i--) {
-            if (shapeHit(_ctx.shapes[i], x, y)) return i;
-        }
-        return -1;
-    }
-
-    function commit() {
-        const snapJSON = JSON.stringify(_ctx.shapes);
-        _ctx.history = _ctx.history.slice(0, _ctx.historyIdx + 1);
-        _ctx.history.push(snapJSON);
-        if (_ctx.history.length > 80) _ctx.history.shift();
-        _ctx.historyIdx = _ctx.history.length - 1;
-        persistDrawing();
-        draw();
-        document.getElementById('bp-count').textContent = _ctx.shapes.length;
-    }
-    function undo() {
-        if (_ctx.historyIdx > 0) {
-            _ctx.historyIdx--;
-            _ctx.shapes = JSON.parse(_ctx.history[_ctx.historyIdx]);
-            _ctx.selected = null;
-            persistDrawing(); draw();
-            document.getElementById('bp-count').textContent = _ctx.shapes.length;
-        }
-    }
-    function redo() {
-        if (_ctx.historyIdx < _ctx.history.length - 1) {
-            _ctx.historyIdx++;
-            _ctx.shapes = JSON.parse(_ctx.history[_ctx.historyIdx]);
-            _ctx.selected = null;
-            persistDrawing(); draw();
-            document.getElementById('bp-count').textContent = _ctx.shapes.length;
-        }
-    }
-
-    function persistDrawing() {
-        const status = document.getElementById('bp-save-status');
-        if (status) status.innerHTML = '<span class="bp-status-dot saving"></span> Guardando…';
-        clearTimeout(persistDrawing._t);
-        persistDrawing._t = setTimeout(() => {
-            updateDrawing(_ctx.activeDrawingId, {
-                data: { shapes: _ctx.shapes, gridSize: _ctx.gridSize, showGrid: _ctx.showGrid },
-                thumbnail: makeThumbnail()
-            });
-            if (status) status.innerHTML = '<span class="bp-status-dot"></span> Sincronizado';
-            renderList();
-        }, 500);
-    }
-
-    function makeThumbnail() {
-        try {
-            const tmp = document.createElement('canvas');
-            tmp.width = 120; tmp.height = 80;
-            const tctx = tmp.getContext('2d');
-            tctx.fillStyle = '#fef7e8';
-            tctx.fillRect(0, 0, 120, 80);
-            const b = boundsAll(_ctx.shapes);
-            if (!b) return null;
-            const pad = 8;
-            const sx = (120 - pad * 2) / (b.w || 1);
-            const sy = (80 - pad * 2) / (b.h || 1);
-            const s = Math.min(sx, sy);
-            tctx.save();
-            tctx.translate(pad - b.x * s, pad - b.y * s);
-            tctx.scale(s, s);
-            renderShapes(tctx, _ctx.shapes, null);
-            tctx.restore();
-            return tmp.toDataURL('image/png');
-        } catch { return null; }
-    }
-
-    function updateOrthoIndicator() {
-        const el = document.getElementById('bp-ortho-mode');
-        const state = el?.querySelector('.bp-status-state');
-        if (state) {
-            state.textContent = _ctx.shiftDown ? 'ON' : 'OFF';
-            el.classList.toggle('active', _ctx.shiftDown);
-        }
-    }
-
-    // ════════════════════════════════════════════════════════
-    //  RENDER
-    // ════════════════════════════════════════════════════════
-    function draw() {
-        const cw = canvas.width / dpr;
-        const ch = canvas.height / dpr;
-        ctx.fillStyle = '#fefcf7';
-        ctx.fillRect(0, 0, cw, ch);
-        if (_ctx.showGrid) drawGrid(ctx, cw, ch);
-
-        ctx.save();
-        ctx.translate(_ctx.view.x, _ctx.view.y);
-        ctx.scale(_ctx.view.zoom, _ctx.view.zoom);
-
-        renderShapes(ctx, _ctx.shapes, _ctx.selected);
-
-        // Shape en construcción
-        if (_ctx.creating) {
-            ctx.save();
-            ctx.globalAlpha = 0.78;
-            renderShapes(ctx, [_ctx.creating], null);
-            ctx.restore();
-        }
-
-        // Línea AutoCAD en construcción: preview del próximo segmento + arco de ángulo
-        if (_ctx.lineChain && _ctx.lineChain.preview) {
-            const last = _ctx.lineChain.last;
-            const cur = _ctx.lineChain.preview;
-            ctx.save();
-            ctx.strokeStyle = _ctx.strokeColor;
-            ctx.lineWidth = _ctx.strokeWidth;
-            ctx.setLineDash([6 / _ctx.view.zoom, 4 / _ctx.view.zoom]);
-            ctx.globalAlpha = 0.7;
-            ctx.beginPath();
-            ctx.moveTo(last.x, last.y);
-            ctx.lineTo(cur.x, cur.y);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            ctx.globalAlpha = 1;
-            // Marcador del punto de partida
-            ctx.fillStyle = _ctx.strokeColor;
-            ctx.beginPath();
-            ctx.arc(last.x, last.y, 4 / _ctx.view.zoom, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-
-            // ── Arco del ángulo en la esquina (estilo trigonometría) ──
-            // Si el último punto coincide con el extremo de una línea existente,
-            // dibujamos el arco entre ambas direcciones.
-            const prevDir = findIncomingLineDirection(last);
-            const curDir = Math.atan2(cur.y - last.y, cur.x - last.x);
-            if (prevDir !== null && Math.hypot(cur.x - last.x, cur.y - last.y) > 5) {
-                // prevDir apunta HACIA el vértice; lo invertimos para "salir" del vértice
-                const fromAngle = prevDir + Math.PI;
-                drawAngleArc(ctx, last, fromAngle, curDir);
-            } else if (Math.hypot(cur.x - last.x, cur.y - last.y) > 5) {
-                // Primer segmento: ángulo desde la horizontal
-                drawAngleArc(ctx, last, 0, curDir);
-            }
-        }
-
-        // Polilínea en construcción
-        if (_ctx.polylineChain) {
-            const c = _ctx.polylineChain;
-            ctx.save();
-            ctx.strokeStyle = c.stroke;
-            ctx.lineWidth = c.strokeWidth;
-            ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-
-            // Segmentos firmes
-            ctx.beginPath();
-            ctx.moveTo(c.points[0].x, c.points[0].y);
-            for (let i = 1; i < c.points.length; i++) ctx.lineTo(c.points[i].x, c.points[i].y);
-            ctx.stroke();
-
-            // Segmento preview (línea punteada al cursor)
-            if (c.cur) {
-                ctx.save();
-                ctx.globalAlpha = 0.65;
-                ctx.setLineDash([6 / _ctx.view.zoom, 4 / _ctx.view.zoom]);
-                ctx.beginPath();
-                const last = c.points[c.points.length - 1];
-                ctx.moveTo(last.x, last.y);
-                ctx.lineTo(c.cur.x, c.cur.y);
-                ctx.stroke();
-                ctx.restore();
-            }
-
-            // Marker en cada vértice
-            ctx.fillStyle = c.stroke;
-            c.points.forEach((p, i) => {
-                const r = (i === 0 ? 5 : 3) / _ctx.view.zoom;
-                ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
-            });
-
-            // Indicador de cierre cerca del primer punto
-            if (c.nearStart && c.points.length >= 2) {
-                ctx.save();
-                ctx.strokeStyle = '#10b981';
-                ctx.lineWidth = 2 / _ctx.view.zoom;
-                ctx.beginPath();
-                ctx.arc(c.points[0].x, c.points[0].y, 8 / _ctx.view.zoom, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.restore();
-            }
-            ctx.restore();
-        }
-
-        ctx.restore();
-    }
-
-    function drawGrid(ctx, w, h) {
-        const gs = _ctx.gridSize * _ctx.view.zoom;
-        if (gs < 4) return;
-        const ox = _ctx.view.x % gs;
-        const oy = _ctx.view.y % gs;
-
-        ctx.strokeStyle = 'rgba(15, 23, 42, 0.05)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        for (let x = ox; x < w; x += gs) { ctx.moveTo(Math.round(x) + 0.5, 0); ctx.lineTo(Math.round(x) + 0.5, h); }
-        for (let y = oy; y < h; y += gs) { ctx.moveTo(0, Math.round(y) + 0.5); ctx.lineTo(w, Math.round(y) + 0.5); }
-        ctx.stroke();
-
-        ctx.strokeStyle = 'rgba(15, 23, 42, 0.13)';
-        ctx.beginPath();
-        for (let x = ox; x < w; x += gs * 5) { ctx.moveTo(Math.round(x) + 0.5, 0); ctx.lineTo(Math.round(x) + 0.5, h); }
-        for (let y = oy; y < h; y += gs * 5) { ctx.moveTo(0, Math.round(y) + 0.5); ctx.lineTo(w, Math.round(y) + 0.5); }
-        ctx.stroke();
-
-        // Ejes
-        ctx.strokeStyle = 'rgba(59, 130, 246, 0.35)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        const ax = _ctx.view.x;
-        const ay = _ctx.view.y;
-        if (ax >= 0 && ax <= w) { ctx.moveTo(Math.round(ax) + 0.5, 0); ctx.lineTo(Math.round(ax) + 0.5, h); }
-        if (ay >= 0 && ay <= h) { ctx.moveTo(0, Math.round(ay) + 0.5); ctx.lineTo(w, Math.round(ay) + 0.5); }
-        ctx.stroke();
-    }
-
-    function updateRulers() {
-        if (!rulerX || !rulerY || rulerX.style.display === 'none') return;
-        const rxctx = rulerX.getContext('2d');
-        const ryctx = rulerY.getContext('2d');
-        const rxw = rulerX.width / dpr;
-        const ryh = rulerY.height / dpr;
-        const gs = _ctx.gridSize * _ctx.view.zoom;
-
-        rxctx.fillStyle = '#1e293b';
-        rxctx.fillRect(0, 0, rxw, RULER_SIZE);
-        rxctx.strokeStyle = '#334155';
-        rxctx.fillStyle = '#94a3b8';
-        rxctx.font = '9px "JetBrains Mono", monospace';
-
-        if (gs > 3) {
-            const ox = _ctx.view.x % gs;
-            for (let x = ox; x < rxw; x += gs) {
-                rxctx.beginPath();
-                rxctx.moveTo(Math.round(x) + 0.5, RULER_SIZE - 4);
-                rxctx.lineTo(Math.round(x) + 0.5, RULER_SIZE);
-                rxctx.stroke();
-            }
-            const oxL = _ctx.view.x % (gs * 5);
-            for (let x = oxL; x < rxw; x += gs * 5) {
-                const worldX = Math.round((x - _ctx.view.x) / _ctx.view.zoom);
-                rxctx.beginPath();
-                rxctx.moveTo(Math.round(x) + 0.5, RULER_SIZE - 8);
-                rxctx.lineTo(Math.round(x) + 0.5, RULER_SIZE);
-                rxctx.stroke();
-                rxctx.fillText(String(worldX), x + 2, 10);
-            }
-        }
-        if (_ctx.cursor.inside) {
-            rxctx.fillStyle = '#3b82f6';
-            rxctx.fillRect(_ctx.cursor.sx - 1, 0, 2, RULER_SIZE);
-        }
-
-        ryctx.fillStyle = '#1e293b';
-        ryctx.fillRect(0, 0, RULER_SIZE, ryh);
-        ryctx.strokeStyle = '#334155';
-        ryctx.fillStyle = '#94a3b8';
-        ryctx.font = '9px "JetBrains Mono", monospace';
-        if (gs > 3) {
-            const oy = _ctx.view.y % gs;
-            for (let y = oy; y < ryh; y += gs) {
-                ryctx.beginPath();
-                ryctx.moveTo(RULER_SIZE - 4, Math.round(y) + 0.5);
-                ryctx.lineTo(RULER_SIZE, Math.round(y) + 0.5);
-                ryctx.stroke();
-            }
-            const oyL = _ctx.view.y % (gs * 5);
-            for (let y = oyL; y < ryh; y += gs * 5) {
-                const worldY = Math.round((y - _ctx.view.y) / _ctx.view.zoom);
-                ryctx.beginPath();
-                ryctx.moveTo(RULER_SIZE - 8, Math.round(y) + 0.5);
-                ryctx.lineTo(RULER_SIZE, Math.round(y) + 0.5);
-                ryctx.stroke();
-                ryctx.save();
-                ryctx.translate(10, y - 2);
-                ryctx.rotate(-Math.PI / 2);
-                ryctx.fillText(String(worldY), 0, 0);
-                ryctx.restore();
-            }
-        }
-        if (_ctx.cursor.inside) {
-            ryctx.fillStyle = '#3b82f6';
-            ryctx.fillRect(0, _ctx.cursor.sy - 1, RULER_SIZE, 2);
-        }
-    }
-
-    function renderShapes(ctx, shapes, selectedIdx) {
-        shapes.forEach((s, i) => {
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.strokeStyle = s.stroke || '#0f172a';
-            ctx.lineWidth = s.strokeWidth || 2;
-            ctx.fillStyle = s.fill || 'transparent';
-
-            if (s.type === 'line') {
-                ctx.beginPath();
-                ctx.moveTo(s.x1, s.y1);
-                ctx.lineTo(s.x2, s.y2);
-                ctx.stroke();
-            } else if (s.type === 'rect') {
-                ctx.beginPath(); ctx.rect(s.x, s.y, s.w, s.h);
-                if (s.fill) ctx.fill();
-                ctx.stroke();
-            } else if (s.type === 'circle') {
-                ctx.beginPath(); ctx.arc(s.cx, s.cy, s.r, 0, Math.PI * 2);
-                if (s.fill) ctx.fill();
-                ctx.stroke();
-            } else if (s.type === 'ellipse') {
-                ctx.beginPath(); ctx.ellipse(s.cx, s.cy, s.rx, s.ry, 0, 0, Math.PI * 2);
-                if (s.fill) ctx.fill();
-                ctx.stroke();
-            } else if (s.type === 'triangle') {
-                ctx.beginPath();
-                ctx.moveTo(s.x + s.w / 2, s.y);
-                ctx.lineTo(s.x + s.w, s.y + s.h);
-                ctx.lineTo(s.x, s.y + s.h);
-                ctx.closePath();
-                if (s.fill) ctx.fill();
-                ctx.stroke();
-            } else if (s.type === 'arrow') {
-                drawArrow(ctx, s.x1, s.y1, s.x2, s.y2, s.strokeWidth || 2);
-            } else if (s.type === 'polyline' || s.type === 'polygon') {
-                if (!s.points?.length) return;
-                ctx.beginPath();
-                ctx.moveTo(s.points[0].x, s.points[0].y);
-                for (let j = 1; j < s.points.length; j++) ctx.lineTo(s.points[j].x, s.points[j].y);
-                if (s.closed) ctx.closePath();
-                if (s.fill && s.closed) ctx.fill();
-                ctx.stroke();
-            } else if (s.type === 'pen') {
-                if (!s.points?.length) return;
-                ctx.beginPath();
-                ctx.moveTo(s.points[0].x, s.points[0].y);
-                for (let j = 1; j < s.points.length; j++) ctx.lineTo(s.points[j].x, s.points[j].y);
-                ctx.stroke();
-            } else if (s.type === 'text') {
-                ctx.fillStyle = s.color || '#0f172a';
-                ctx.font = `${s.size || 14}px 'DM Sans', sans-serif`;
-                ctx.textBaseline = 'top';
-                ctx.fillText(s.text, s.x, s.y);
-            } else if (s.type === 'symbol') {
-                drawSymbol(ctx, s.symbolId, s.x, s.y, s.w, s.h, s.stroke || '#0f172a');
-                if (s.label) {
-                    ctx.fillStyle = s.stroke || '#0f172a';
-                    ctx.font = `${Math.max(10, s.h * 0.18)}px 'DM Sans', sans-serif`;
-                    ctx.textAlign = 'center';
-                    ctx.fillText(s.label, s.x + s.w / 2, s.y + s.h + 4);
-                    ctx.textAlign = 'left';
+    // Select tool — incluye manejo de grips
+    if (_ctx.tool === 'select') {
+        // ¿Click sobre un handle (nodo) del shape seleccionado?
+        if (_ctx.selected !== null) {
+            const handles = getHandles(_ctx.shapes[_ctx.selected]);
+            for (let hi = 0; hi < handles.length; hi++) {
+                const h = handles[hi];
+                const sxw = h.x * _ctx.view.zoom + _ctx.view.x;
+                const syw = h.y * _ctx.view.zoom + _ctx.view.y;
+                if (Math.abs(sxw - sx) <= HANDLE_SIZE && Math.abs(syw - sy) <= HANDLE_SIZE) {
+                    _ctx.drag = {
+                        type: 'handle',
+                        shapeIdx: _ctx.selected,
+                        handleIdx: hi,
+                        origShape: JSON.parse(JSON.stringify(_ctx.shapes[_ctx.selected])),
+                        startX: w.x, startY: w.y
+                    };
+                    return;
                 }
             }
-
-            if (i === selectedIdx) {
-                drawSelection(ctx, s);
-            }
-        });
+        }
+        const i = findShapeAt(w.x, w.y);
+        if (i !== -1) {
+            _ctx.selected = i;
+            _ctx.drag = {
+                type: 'move',
+                startX: w.x, startY: w.y,
+                origShape: JSON.parse(JSON.stringify(_ctx.shapes[i]))
+            };
+        } else {
+            _ctx.selected = null;
+        }
+        draw();
+        return;
     }
 
-    function drawSelection(ctx, s) {
-        const b = shapeBounds(s);
-        if (!b) return;
-        ctx.save();
-        // Bounding box
+    // Text — comienza edición inline directamente
+    if (_ctx.tool === 'text') {
+        startInlineText(snap(w.x), snap(w.y));
+        return;
+    }
+
+    // Symbol — colocar símbolo seleccionado
+    if (_ctx.tool === 'symbol') {
+        const symDef = SYMBOLS.find(s => s.id === _ctx.symbolVariant) || SYMBOLS[0];
+        const size = symDef.defaultSize;
+        const cx = snap(w.x), cy = snap(w.y);
+        _ctx.shapes.push({
+            type: 'symbol', symbolId: symDef.id,
+            x: cx - size / 2, y: cy - size / 2, w: size, h: size,
+            stroke: _ctx.strokeColor, strokeWidth: _ctx.strokeWidth,
+            label: ''
+        });
+        commit();
+        return;
+    }
+
+    // Shapes (variantes)
+    if (_ctx.tool === 'shape') {
+        const variant = _ctx.shapeVariant;
+        const x = snap(w.x), y = snap(w.y);
+
+        // ── LÍNEA (AutoCAD): cada click crea un segmento INDEPENDIENTE ──
+        if (variant === 'line') {
+            if (!_ctx.lineChain) {
+                // Primer punto: solo guarda el inicio, no crea figura aún
+                _ctx.lineChain = { last: { x, y }, preview: { x, y } };
+            } else {
+                let nx = x, ny = y;
+                if (_ctx.shiftDown) {
+                    const last = _ctx.lineChain.last;
+                    const p = constrainShift(last.x, last.y, w.x, w.y);
+                    nx = snap(p.x); ny = snap(p.y);
+                }
+                // Crear figura individual: cada línea es su propio shape
+                _ctx.shapes.push({
+                    type: 'line',
+                    x1: _ctx.lineChain.last.x,
+                    y1: _ctx.lineChain.last.y,
+                    x2: nx,
+                    y2: ny,
+                    stroke: _ctx.strokeColor,
+                    strokeWidth: _ctx.strokeWidth
+                });
+                _ctx.lineChain.last = { x: nx, y: ny };
+                _ctx.lineChain.preview = { x: nx, y: ny };
+                commit();
+            }
+            draw();
+            return;
+        }
+
+        // ── POLÍGONO: polilínea continua que se puede cerrar (rellenable) ──
+        if (variant === 'polygon') {
+            if (!_ctx.polylineChain) {
+                _ctx.polylineChain = { points: [{ x, y }], cur: { x, y }, stroke: _ctx.strokeColor, strokeWidth: _ctx.strokeWidth };
+            } else {
+                const start = _ctx.polylineChain.points[0];
+                const dist = Math.hypot((x - start.x) * _ctx.view.zoom, (y - start.y) * _ctx.view.zoom);
+                if (_ctx.polylineChain.points.length >= 2 && dist < CLOSE_THRESHOLD) {
+                    _ctx.shapes.push({
+                        type: 'polygon',
+                        points: [..._ctx.polylineChain.points],
+                        stroke: _ctx.polylineChain.stroke,
+                        strokeWidth: _ctx.polylineChain.strokeWidth,
+                        fill: _ctx.fillEnabled ? _ctx.fillColor : null,
+                        closed: true
+                    });
+                    _ctx.polylineChain = null;
+                    hideFloatingMeasure();
+                    hideMeasureCell();
+                    commit();
+                    return;
+                }
+                let nx = x, ny = y;
+                if (_ctx.shiftDown) {
+                    const last = _ctx.polylineChain.points[_ctx.polylineChain.points.length - 1];
+                    const p = constrainShift(last.x, last.y, w.x, w.y);
+                    nx = snap(p.x); ny = snap(p.y);
+                }
+                _ctx.polylineChain.points.push({ x: nx, y: ny });
+                _ctx.polylineChain.cur = { x: nx, y: ny };
+            }
+            draw();
+            return;
+        }
+
+        if (variant === 'rect') {
+            _ctx.creating = { type: 'rect', x, y, w: 0, h: 0, stroke: _ctx.strokeColor, strokeWidth: _ctx.strokeWidth, fill: _ctx.fillEnabled ? _ctx.fillColor : null };
+        } else if (variant === 'circle') {
+            _ctx.creating = { type: 'circle', cx: x, cy: y, r: 0, stroke: _ctx.strokeColor, strokeWidth: _ctx.strokeWidth, fill: _ctx.fillEnabled ? _ctx.fillColor : null };
+        } else if (variant === 'ellipse') {
+            _ctx.creating = { type: 'ellipse', cx: x, cy: y, rx: 0, ry: 0, stroke: _ctx.strokeColor, strokeWidth: _ctx.strokeWidth, fill: _ctx.fillEnabled ? _ctx.fillColor : null };
+        } else if (variant === 'triangle') {
+            _ctx.creating = { type: 'triangle', x, y, w: 0, h: 0, stroke: _ctx.strokeColor, strokeWidth: _ctx.strokeWidth, fill: _ctx.fillEnabled ? _ctx.fillColor : null };
+        } else if (variant === 'arrow') {
+            _ctx.creating = { type: 'arrow', x1: x, y1: y, x2: x, y2: y, stroke: _ctx.strokeColor, strokeWidth: _ctx.strokeWidth };
+        }
+        draw();
+        return;
+    }
+
+    if (_ctx.tool === 'pen') {
+        _ctx.creating = { type: 'pen', points: [{ x: w.x, y: w.y }], stroke: _ctx.strokeColor, strokeWidth: _ctx.strokeWidth };
+        draw();
+        return;
+    }
+}
+
+function onMouseMove(e) {
+    const rect = M.canvas.getBoundingClientRect();
+    const sx = e.clientX - rect.left;
+    const sy = e.clientY - rect.top;
+    const w = screenToWorld(sx, sy);
+    _ctx.cursor.x = w.x; _ctx.cursor.y = w.y;
+    _ctx.cursor.sx = sx; _ctx.cursor.sy = sy;
+    updateCrosshair();
+
+    document.getElementById('bp-coords').textContent = `${Math.round(w.x)}, ${Math.round(w.y)}`;
+    updateRulers();
+    updateHoverHandle(sx, sy);
+
+    if (_ctx.drag?.type === 'pan') {
+        _ctx.view.x = _ctx.drag.viewX + (sx - _ctx.drag.startX);
+        _ctx.view.y = _ctx.drag.viewY + (sy - _ctx.drag.startY);
+        draw(); return;
+    }
+
+    if (_ctx.drag?.type === 'move' && _ctx.selected !== null) {
+        const sh = _ctx.shapes[_ctx.selected];
+        const orig = _ctx.drag.origShape;
+        const dx = snap(w.x) - snap(_ctx.drag.startX);
+        const dy = snap(w.y) - snap(_ctx.drag.startY);
+        translateShape(sh, orig, dx, dy);
+        draw(); return;
+    }
+
+    if (_ctx.drag?.type === 'handle') {
+        const sh = _ctx.shapes[_ctx.drag.shapeIdx];
+        const orig = _ctx.drag.origShape;
+        moveHandle(sh, orig, _ctx.drag.handleIdx, snap(w.x), snap(w.y));
+        draw(); return;
+    }
+
+    // Línea AutoCAD: actualizar preview del próximo segmento
+    if (_ctx.lineChain) {
+        let nx = snap(w.x), ny = snap(w.y);
+        if (_ctx.shiftDown) {
+            const last = _ctx.lineChain.last;
+            const p = constrainShift(last.x, last.y, w.x, w.y);
+            nx = snap(p.x); ny = snap(p.y);
+        }
+        _ctx.lineChain.preview = { x: nx, y: ny };
+        const last = _ctx.lineChain.last;
+        const segLen = Math.hypot(nx - last.x, ny - last.y);
+        const angle = (Math.atan2(ny - last.y, nx - last.x) * 180 / Math.PI).toFixed(1);
+        const txt = `${fmtLen(segLen)} · ${angle}°`;
+        showMeasureCell(fmtLenFull(segLen) + ` · ${angle}°`);
+        showFloatingMeasure(txt, sx, sy);
+        draw();
+        return;
+    }
+
+    // Polilínea: actualizar preview
+    if (_ctx.polylineChain) {
+        let nx = snap(w.x), ny = snap(w.y);
+        if (_ctx.shiftDown && _ctx.polylineChain.points.length) {
+            const last = _ctx.polylineChain.points[_ctx.polylineChain.points.length - 1];
+            const p = constrainShift(last.x, last.y, w.x, w.y);
+            nx = snap(p.x); ny = snap(p.y);
+        }
+        _ctx.polylineChain.cur = { x: nx, y: ny };
+
+        // Mostrar medida del último segmento
+        const last = _ctx.polylineChain.points[_ctx.polylineChain.points.length - 1];
+        const segLen = Math.hypot(nx - last.x, ny - last.y);
+        const angle = (Math.atan2(ny - last.y, nx - last.x) * 180 / Math.PI).toFixed(1);
+        const txt = `${fmtLen(segLen)} · ${angle}°`;
+        showMeasureCell(fmtLenFull(segLen) + ` · ${angle}°`);
+        showFloatingMeasure(txt, sx, sy);
+
+        // Indicador de cierre cerca del punto inicial
+        if (_ctx.polylineChain.points.length >= 2) {
+            const start = _ctx.polylineChain.points[0];
+            const dist = Math.hypot((nx - start.x) * _ctx.view.zoom, (ny - start.y) * _ctx.view.zoom);
+            _ctx.polylineChain.nearStart = dist < CLOSE_THRESHOLD;
+        }
+
+        draw(); return;
+    }
+
+    if (_ctx.creating) {
+        const c = _ctx.creating;
+        const x = snap(w.x), y = snap(w.y);
+        if (c.type === 'rect') {
+            let nw = w.x - c.x, nh = w.y - c.y;
+            if (_ctx.shiftDown) {
+                const s = Math.max(Math.abs(nw), Math.abs(nh));
+                nw = Math.sign(nw || 1) * s; nh = Math.sign(nh || 1) * s;
+            }
+            c.w = _ctx.snap ? Math.round(nw / _ctx.gridSize) * _ctx.gridSize : nw;
+            c.h = _ctx.snap ? Math.round(nh / _ctx.gridSize) * _ctx.gridSize : nh;
+            const txt = `${fmtLen(Math.abs(c.w))} × ${fmtLen(Math.abs(c.h))}`;
+            showMeasureCell(`${Math.abs(c.w)} × ${Math.abs(c.h)} px · ${pxToCm(Math.abs(c.w)).toFixed(2)} × ${pxToCm(Math.abs(c.h)).toFixed(2)} cm`);
+            showFloatingMeasure(txt, sx, sy);
+        } else if (c.type === 'circle') {
+            const r = Math.hypot(w.x - c.cx, w.y - c.cy);
+            c.r = _ctx.snap ? Math.round(r / _ctx.gridSize) * _ctx.gridSize : r;
+            const txt = `R ${fmtLen(c.r)} · D ${fmtLen(c.r * 2)}`;
+            showMeasureCell(`R = ${Math.round(c.r)}px (${pxToCm(c.r).toFixed(2)} cm) · D = ${pxToCm(c.r * 2).toFixed(2)} cm`);
+            showFloatingMeasure(txt, sx, sy);
+        } else if (c.type === 'ellipse') {
+            c.rx = Math.abs(w.x - c.cx);
+            c.ry = Math.abs(w.y - c.cy);
+            if (_ctx.shiftDown) { c.rx = c.ry = Math.max(c.rx, c.ry); }
+            const txt = `${fmtLen(c.rx * 2)} × ${fmtLen(c.ry * 2)}`;
+            showMeasureCell(`Rx ${Math.round(c.rx)} · Ry ${Math.round(c.ry)}`);
+            showFloatingMeasure(txt, sx, sy);
+        } else if (c.type === 'triangle') {
+            c.w = (w.x - c.x);
+            c.h = (w.y - c.y);
+            if (_ctx.shiftDown) {
+                const s = Math.max(Math.abs(c.w), Math.abs(c.h));
+                c.w = Math.sign(c.w || 1) * s; c.h = Math.sign(c.h || 1) * s;
+            }
+            showMeasureCell(`Base ${Math.abs(c.w)} · Alto ${Math.abs(c.h)}`);
+            showFloatingMeasure(`${fmtLen(Math.abs(c.w))} × ${fmtLen(Math.abs(c.h))}`, sx, sy);
+        } else if (c.type === 'arrow') {
+            if (_ctx.shiftDown) {
+                const p = constrainShift(c.x1, c.y1, w.x, w.y);
+                c.x2 = snap(p.x); c.y2 = snap(p.y);
+            } else {
+                c.x2 = x; c.y2 = y;
+            }
+            const len = Math.hypot(c.x2 - c.x1, c.y2 - c.y1);
+            const angle = (Math.atan2(c.y2 - c.y1, c.x2 - c.x1) * 180 / Math.PI).toFixed(1);
+            showMeasureCell(`${Math.round(len)}px · ${angle}°`);
+            showFloatingMeasure(`${fmtLen(len)} · ${angle}°`, sx, sy);
+        } else if (c.type === 'pen') {
+            c.points.push({ x: w.x, y: w.y });
+        }
+        draw();
+    }
+}
+
+function onMouseUp(e) {
+    if (_ctx.drag?.type === 'pan') { M.canvas.style.cursor = _ctx.tool === 'hand' ? 'grab' : ''; _ctx.drag = null; return; }
+    if (_ctx.drag?.type === 'move') { _ctx.drag = null; commit(); return; }
+    if (_ctx.drag?.type === 'handle') { _ctx.drag = null; commit(); return; }
+    if (_ctx.creating) {
+        const c = _ctx.creating;
+        const valid =
+            (c.type === 'rect' && Math.abs(c.w) > 2 && Math.abs(c.h) > 2) ||
+            (c.type === 'circle' && c.r > 2) ||
+            (c.type === 'ellipse' && c.rx > 2 && c.ry > 2) ||
+            (c.type === 'triangle' && Math.abs(c.w) > 2 && Math.abs(c.h) > 2) ||
+            (c.type === 'arrow' && (c.x1 !== c.x2 || c.y1 !== c.y2)) ||
+            (c.type === 'pen' && c.points.length > 1);
+        if (valid) { _ctx.shapes.push({ ...c }); commit(); }
+        _ctx.creating = null;
+        hideFloatingMeasure(); hideMeasureCell();
+        draw();
+    }
+}
+
+function onDblClick(e) {
+    // En polilínea, doble click cierra/termina
+    if (_ctx.polylineChain) {
+        commitPolyline(false);
+    }
+}
+
+function onWheel(e) {
+    e.preventDefault();
+    const rect = M.canvas.getBoundingClientRect();
+    const sx = e.clientX - rect.left;
+    const sy = e.clientY - rect.top;
+    const before = screenToWorld(sx, sy);
+    const factor = e.deltaY < 0 ? 1.12 : 0.89;
+    _ctx.view.zoom = Math.max(0.2, Math.min(8, _ctx.view.zoom * factor));
+    const after = screenToWorld(sx, sy);
+    _ctx.view.x += (after.x - before.x) * _ctx.view.zoom;
+    _ctx.view.y += (after.y - before.y) * _ctx.view.zoom;
+    document.getElementById('bp-zoom-val').textContent = Math.round(_ctx.view.zoom * 100) + '%';
+    draw();
+}
+
+function updateCrosshair() {
+    if (!_ctx.cursor.inside) return;
+    M.crosshair.style.opacity = '1';
+    M.crosshair.querySelector('.bp-crosshair-x').style.top = _ctx.cursor.sy + 'px';
+    M.crosshair.querySelector('.bp-crosshair-y').style.left = _ctx.cursor.sx + 'px';
+}
+
+// Detectar hover sobre handles para cambiar cursor
+function updateHoverHandle(sx, sy) {
+    if (_ctx.tool !== 'select' || _ctx.selected === null) {
+        _ctx.hoverHandle = null;
+        M.canvas.style.cursor = M.canvas.style.cursor; // mantener
+        return;
+    }
+    const handles = getHandles(_ctx.shapes[_ctx.selected]);
+    for (let hi = 0; hi < handles.length; hi++) {
+        const h = handles[hi];
+        const sxw = h.x * _ctx.view.zoom + _ctx.view.x;
+        const syw = h.y * _ctx.view.zoom + _ctx.view.y;
+        if (Math.abs(sxw - sx) <= HANDLE_SIZE && Math.abs(syw - sy) <= HANDLE_SIZE) {
+            _ctx.hoverHandle = { handleIdx: hi };
+            M.canvas.style.cursor = h.cursor || 'pointer';
+            return;
+        }
+    }
+    _ctx.hoverHandle = null;
+    if (_ctx.tool === 'select') M.canvas.style.cursor = 'default';
+}
+
+function commitPolyline(closed) {
+    if (!_ctx.polylineChain || _ctx.polylineChain.points.length < 2) {
+        _ctx.polylineChain = null;
+        hideFloatingMeasure(); hideMeasureCell();
+        draw();
+        return;
+    }
+    _ctx.shapes.push({
+        type: closed ? 'polygon' : 'polyline',
+        points: [..._ctx.polylineChain.points],
+        stroke: _ctx.polylineChain.stroke,
+        strokeWidth: _ctx.polylineChain.strokeWidth,
+        fill: (closed && _ctx.fillEnabled) ? _ctx.fillColor : null,
+        closed
+    });
+    _ctx.polylineChain = null;
+    hideFloatingMeasure(); hideMeasureCell();
+    commit();
+}
+
+// ── Edición inline de texto en el canvas ────────────────
+function startInlineText(wx, wy) {
+    // Si ya hay un editor abierto, lo cerramos primero (commit)
+    if (_ctx.textEditing) {
+        _ctx.textEditing.finish(true);
+    }
+
+    const sx = wx * _ctx.view.zoom + _ctx.view.x;
+    const sy = wy * _ctx.view.zoom + _ctx.view.y;
+    let currentSize = 16;
+
+    const editor = document.createElement('div');
+    editor.contentEditable = 'true';
+    editor.className = 'bp-text-editor';
+    editor.style.left = sx + 'px';
+    editor.style.top = sy + 'px';
+    editor.style.fontSize = (currentSize * _ctx.view.zoom) + 'px';
+    editor.style.color = _ctx.strokeColor;
+    editor.style.fontFamily = "'DM Sans', sans-serif";
+    editor.dataset.placeholder = 'Escribe texto...';
+    editor.tabIndex = 0;
+
+    // Evita que clicks en el editor se propaguen al canvas
+    editor.addEventListener('mousedown', e => e.stopPropagation());
+    editor.addEventListener('click',     e => e.stopPropagation());
+
+    M.wrap.appendChild(editor);
+
+    let done = false;
+    const finish = (save) => {
+        if (done) return;
+        done = true;
+        const text = editor.innerText.trim();
+        editor.remove();
+        _ctx.textEditing = null;
+        if (save && text) {
+            _ctx.shapes.push({
+                type: 'text',
+                x: wx, y: wy,
+                text,
+                color: _ctx.strokeColor,
+                size: currentSize
+            });
+            commit();
+        } else {
+            draw();
+        }
+    };
+
+    _ctx.textEditing = { editor, finish };
+
+    editor.addEventListener('blur', () => finish(true));
+    editor.addEventListener('keydown', e => {
+        e.stopPropagation(); // que no se disparen atajos de herramientas
+        if (e.key === 'Escape') { e.preventDefault(); finish(false); return; }
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); editor.blur(); return; }
+        if (e.ctrlKey && (e.key === '+' || e.key === '=')) {
+            e.preventDefault();
+            currentSize = Math.min(72, currentSize + 2);
+            editor.style.fontSize = (currentSize * _ctx.view.zoom) + 'px';
+        }
+        if (e.ctrlKey && (e.key === '-' || e.key === '_')) {
+            e.preventDefault();
+            currentSize = Math.max(8, currentSize - 2);
+            editor.style.fontSize = (currentSize * _ctx.view.zoom) + 'px';
+        }
+    });
+
+    // Foco diferido — algunos navegadores no enfocan si se hace en el
+    // mismo tick que la creación. requestAnimationFrame garantiza que el
+    // DOM ya está pintado.
+    requestAnimationFrame(() => {
+        editor.focus({ preventScroll: true });
+        // Coloca el cursor dentro del editor
+        const range = document.createRange();
+        range.selectNodeContents(editor);
+        range.collapse(false);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+    });
+}
+
+// ── Keyboard ─────────────────────────────────────────────
+// Si el lienzo ya no está en la página (se cambió de sección o de
+// página), el motor se retira solo con la primera tecla o clic.
+const onKeyDown = e => {
+    if (!M.canvas.isConnected) { cleanup(); return; }
+    if (e.target.matches('input, textarea, [contenteditable="true"]')) return;
+    if (e.key === 'Shift') { _ctx.shiftDown = true; updateOrthoIndicator(); }
+    if (e.code === 'Space') {
+        e.preventDefault();
+        _ctx.spaceDown = true;
+        if (_ctx.tool !== 'hand') M.canvas.style.cursor = 'grab';
+    }
+    if (e.key === 'Escape') {
+        if (_ctx.lineChain) { _ctx.lineChain = null; hideFloatingMeasure(); hideMeasureCell(); draw(); return; }
+        if (_ctx.polylineChain) { commitPolyline(false); return; }
+        if (_ctx.creating) { _ctx.creating = null; hideFloatingMeasure(); hideMeasureCell(); draw(); return; }
+        if (_ctx.fullscreen) { toggleFullscreen(); return; }
+        if (_ctx.selected !== null) { _ctx.selected = null; draw(); }
+    }
+    if (e.key === 'Enter') {
+        if (_ctx.polylineChain) { commitPolyline(true); return; }
+    }
+    if (e.key === 'Delete' && _ctx.selected !== null) {
+        _ctx.shapes.splice(_ctx.selected, 1);
+        _ctx.selected = null;
+        commit();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'Z'))) { e.preventDefault(); redo(); }
+
+    // Atajos de herramientas
+    const t = TOOLS_TOP.find(x => x.key.toLowerCase() === e.key.toLowerCase());
+    if (t) setTool(t.id);
+};
+
+const onKeyUp = e => {
+    if (!M.canvas.isConnected) { cleanup(); return; }
+    if (e.key === 'Shift') { _ctx.shiftDown = false; updateOrthoIndicator(); }
+    if (e.code === 'Space') {
+        _ctx.spaceDown = false;
+        if (_ctx.tool !== 'hand') M.canvas.style.cursor = _ctx.tool === 'select' ? 'default' : 'crosshair';
+    }
+};
+
+// Cerrar dropdowns al click fuera (se registra más abajo, con la toolbar)
+const onClickFuera = e => {
+    if (!M.canvas.isConnected) { cleanup(); return; }
+    if (!e.target.closest('.bp-tool') && !e.target.closest('.bp-dropdown')) {
+        closeDropdowns();
+    }
+};
+
+const cleanup = () => {
+    document.removeEventListener('keydown', onKeyDown);
+    document.removeEventListener('keyup', onKeyUp);
+    document.removeEventListener('click', onClickFuera);
+    M.ro.disconnect();
+    if (_limpiarMotor === cleanup) _limpiarMotor = null;
+};
+
+// Colors
+const updateStrokeUI = () => {
+    document.querySelectorAll('#bp-stroke-colors .bp-color[data-c]').forEach(b => {
+        b.classList.toggle('active', b.dataset.c === _ctx.strokeColor);
+    });
+};
+
+const fillUI = () => {
+    document.querySelectorAll('#bp-fill-colors .bp-color').forEach(b => {
+        b.classList.toggle('active', b.dataset.c === _ctx.fillColor);
+    });
+};
+
+function applyColorToSelected() {
+    if (_ctx.selected === null) return;
+    const sh = _ctx.shapes[_ctx.selected];
+    sh.stroke = _ctx.strokeColor;
+    if (sh.type === 'text') sh.color = _ctx.strokeColor;
+    commit();
+}
+
+function applyFillToSelected() {
+    if (_ctx.selected === null) return;
+    const sh = _ctx.shapes[_ctx.selected];
+    if (['rect', 'circle', 'ellipse', 'triangle', 'polygon'].includes(sh.type)) {
+        sh.fill = _ctx.fillEnabled ? _ctx.fillColor : null;
+        commit();
+    }
+}
+
+// ── Funciones internas que dependen del scope ──
+function setTool(id) {
+    _ctx.tool = id;
+    _ctx.selected = null;
+    _ctx.creating = null;
+    _ctx.lineChain = null;
+    hideFloatingMeasure(); hideMeasureCell();
+    if (_ctx.polylineChain) commitPolyline(false);
+    document.querySelectorAll('.bp-tool[data-tool]').forEach(b => {
+        b.classList.toggle('active', b.dataset.tool === id);
+    });
+    const toolName = (() => {
+        if (id === 'shape') {
+            const v = SHAPES.find(s => s.id === _ctx.shapeVariant);
+            return v ? `Forma: ${v.name}` : 'Forma';
+        }
+        if (id === 'symbol') {
+            const v = SYMBOLS.find(s => s.id === _ctx.symbolVariant);
+            return v ? `Símbolo: ${v.name}` : 'Símbolo';
+        }
+        return TOOLS_TOP.find(t => t.id === id)?.name || id;
+    })();
+    document.getElementById('bp-tool-name').textContent = toolName;
+    M.canvas.style.cursor = id === 'select' ? 'default' : id === 'hand' ? 'grab' : 'crosshair';
+    draw();
+}
+
+function updateShapeIcon() {
+    const btn = document.querySelector('.bp-tool[data-tool="shape"] svg');
+    if (!btn) return;
+    const v = SHAPES.find(s => s.id === _ctx.shapeVariant);
+    if (v) btn.innerHTML = v.icon;
+}
+
+function toggleDropdown(name, anchor) {
+    const dd = document.getElementById('bp-dropdown-' + name);
+    const isOpen = dd.classList.contains('open');
+    closeDropdowns();
+    if (!isOpen) {
+        const rect = anchor.getBoundingClientRect();
+        dd.style.left = (rect.right + 8) + 'px';
+        dd.style.top = rect.top + 'px';
+        dd.classList.add('open');
+    }
+}
+
+function closeDropdowns() {
+    document.querySelectorAll('.bp-dropdown.open').forEach(d => d.classList.remove('open'));
+}
+
+function toggleFullscreen() {
+    _ctx.fullscreen = !_ctx.fullscreen;
+
+    if (_ctx.fullscreen) {
+        // PORTAL → mover el editor a <body> para escapar cualquier
+        // contenedor con transform/filter/overflow que rompa position:fixed.
+        // Dejamos un placeholder para poder regresarlo a su lugar.
+        let placeholder = document.getElementById('bp-fs-placeholder');
+        if (placeholder) placeholder.remove();
+        placeholder = document.createElement('div');
+        placeholder.id = 'bp-fs-placeholder';
+        placeholder.style.display = 'none';
+        if (M.editorRoot.parentNode) {
+            M.editorRoot.parentNode.insertBefore(placeholder, M.editorRoot);
+        }
+        document.body.appendChild(M.editorRoot);
+        M.editorRoot.classList.add('bp-fs');
+    } else {
+        M.editorRoot.classList.remove('bp-fs');
+        const placeholder = document.getElementById('bp-fs-placeholder');
+        if (placeholder && placeholder.parentNode) {
+            placeholder.parentNode.insertBefore(M.editorRoot, placeholder);
+            placeholder.remove();
+        }
+    }
+    document.body.classList.toggle('bp-fs-body', _ctx.fullscreen);
+    // Múltiples resizes para asegurar que el canvas se ajusta
+    // después del cambio de layout y reparenting.
+    requestAnimationFrame(() => {
+        resize();
+        setTimeout(resize, 100);
+        setTimeout(resize, 300);
+    });
+}
+
+function toggleRulers() {
+    M.rulerX.style.display = _ctx.showRulers ? '' : 'none';
+    M.rulerY.style.display = _ctx.showRulers ? '' : 'none';
+    document.querySelector('.bp-ruler-corner').style.display = _ctx.showRulers ? '' : 'none';
+    document.querySelector('.bp-canvas-area').classList.toggle('no-rulers', !_ctx.showRulers);
+}
+
+function zoomBy(factor) {
+    const cx = M.canvas.clientWidth / 2;
+    const cy = M.canvas.clientHeight / 2;
+    const before = screenToWorld(cx, cy);
+    _ctx.view.zoom = Math.max(0.2, Math.min(8, _ctx.view.zoom * factor));
+    const after = screenToWorld(cx, cy);
+    _ctx.view.x += (after.x - before.x) * _ctx.view.zoom;
+    _ctx.view.y += (after.y - before.y) * _ctx.view.zoom;
+    document.getElementById('bp-zoom-val').textContent = Math.round(_ctx.view.zoom * 100) + '%';
+    draw();
+}
+
+function zoomFit() {
+    const b = boundsAll(_ctx.shapes);
+    if (!b) { _ctx.view = { x: 0, y: 0, zoom: 1 }; document.getElementById('bp-zoom-val').textContent = '100%'; draw(); return; }
+    const padding = 80;
+    const cw = M.canvas.clientWidth - padding * 2;
+    const ch = M.canvas.clientHeight - padding * 2;
+    const z = Math.min(cw / (b.w || 1), ch / (b.h || 1), 4);
+    _ctx.view.zoom = Math.max(0.2, z);
+    _ctx.view.x = padding - b.x * _ctx.view.zoom + (cw - b.w * _ctx.view.zoom) / 2;
+    _ctx.view.y = padding - b.y * _ctx.view.zoom + (ch - b.h * _ctx.view.zoom) / 2;
+    document.getElementById('bp-zoom-val').textContent = Math.round(_ctx.view.zoom * 100) + '%';
+    draw();
+}
+
+function findShapeAt(x, y) {
+    for (let i = _ctx.shapes.length - 1; i >= 0; i--) {
+        if (shapeHit(_ctx.shapes[i], x, y)) return i;
+    }
+    return -1;
+}
+
+function commit() {
+    const snapJSON = JSON.stringify(_ctx.shapes);
+    _ctx.history = _ctx.history.slice(0, _ctx.historyIdx + 1);
+    _ctx.history.push(snapJSON);
+    if (_ctx.history.length > 80) _ctx.history.shift();
+    _ctx.historyIdx = _ctx.history.length - 1;
+    persistDrawing();
+    draw();
+    document.getElementById('bp-count').textContent = _ctx.shapes.length;
+}
+
+function undo() {
+    if (_ctx.historyIdx > 0) {
+        _ctx.historyIdx--;
+        _ctx.shapes = JSON.parse(_ctx.history[_ctx.historyIdx]);
+        _ctx.selected = null;
+        persistDrawing(); draw();
+        document.getElementById('bp-count').textContent = _ctx.shapes.length;
+    }
+}
+
+function redo() {
+    if (_ctx.historyIdx < _ctx.history.length - 1) {
+        _ctx.historyIdx++;
+        _ctx.shapes = JSON.parse(_ctx.history[_ctx.historyIdx]);
+        _ctx.selected = null;
+        persistDrawing(); draw();
+        document.getElementById('bp-count').textContent = _ctx.shapes.length;
+    }
+}
+
+function persistDrawing() {
+    const status = document.getElementById('bp-save-status');
+    if (status) status.innerHTML = '<span class="bp-status-dot saving"></span> Guardando…';
+    clearTimeout(persistDrawing._t);
+    persistDrawing._t = setTimeout(() => {
+        updateDrawing(_ctx.activeDrawingId, {
+            data: { shapes: _ctx.shapes, gridSize: _ctx.gridSize, showGrid: _ctx.showGrid },
+            thumbnail: makeThumbnail()
+        });
+        if (status) status.innerHTML = '<span class="bp-status-dot"></span> Sincronizado';
+        renderList();
+    }, 500);
+}
+
+function makeThumbnail() {
+    try {
+        const tmp = document.createElement('canvas');
+        tmp.width = 120; tmp.height = 80;
+        const tctx = tmp.getContext('2d');
+        tctx.fillStyle = '#fef7e8';
+        tctx.fillRect(0, 0, 120, 80);
+        const b = boundsAll(_ctx.shapes);
+        if (!b) return null;
+        const pad = 8;
+        const sx = (120 - pad * 2) / (b.w || 1);
+        const sy = (80 - pad * 2) / (b.h || 1);
+        const s = Math.min(sx, sy);
+        tctx.save();
+        tctx.translate(pad - b.x * s, pad - b.y * s);
+        tctx.scale(s, s);
+        renderShapes(tctx, _ctx.shapes, null);
+        tctx.restore();
+        return tmp.toDataURL('image/png');
+    } catch { return null; }
+}
+
+function updateOrthoIndicator() {
+    const el = document.getElementById('bp-ortho-mode');
+    const state = el?.querySelector('.bp-status-state');
+    if (state) {
+        state.textContent = _ctx.shiftDown ? 'ON' : 'OFF';
+        el.classList.toggle('active', _ctx.shiftDown);
+    }
+}
+
+// ════════════════════════════════════════════════════════
+//  RENDER
+// ════════════════════════════════════════════════════════
+function draw() {
+    const cw = M.canvas.width / M.dpr;
+    const ch = M.canvas.height / M.dpr;
+    M.ctx.fillStyle = '#fefcf7';
+    M.ctx.fillRect(0, 0, cw, ch);
+    if (_ctx.showGrid) drawGrid(M.ctx, cw, ch);
+
+    M.ctx.save();
+    M.ctx.translate(_ctx.view.x, _ctx.view.y);
+    M.ctx.scale(_ctx.view.zoom, _ctx.view.zoom);
+
+    renderShapes(M.ctx, _ctx.shapes, _ctx.selected);
+
+    // Shape en construcción
+    if (_ctx.creating) {
+        M.ctx.save();
+        M.ctx.globalAlpha = 0.78;
+        renderShapes(M.ctx, [_ctx.creating], null);
+        M.ctx.restore();
+    }
+
+    // Línea AutoCAD en construcción: preview del próximo segmento + arco de ángulo
+    if (_ctx.lineChain && _ctx.lineChain.preview) {
+        const last = _ctx.lineChain.last;
+        const cur = _ctx.lineChain.preview;
+        M.ctx.save();
+        M.ctx.strokeStyle = _ctx.strokeColor;
+        M.ctx.lineWidth = _ctx.strokeWidth;
+        M.ctx.setLineDash([6 / _ctx.view.zoom, 4 / _ctx.view.zoom]);
+        M.ctx.globalAlpha = 0.7;
+        M.ctx.beginPath();
+        M.ctx.moveTo(last.x, last.y);
+        M.ctx.lineTo(cur.x, cur.y);
+        M.ctx.stroke();
+        M.ctx.setLineDash([]);
+        M.ctx.globalAlpha = 1;
+        // Marcador del punto de partida
+        M.ctx.fillStyle = _ctx.strokeColor;
+        M.ctx.beginPath();
+        M.ctx.arc(last.x, last.y, 4 / _ctx.view.zoom, 0, Math.PI * 2);
+        M.ctx.fill();
+        M.ctx.restore();
+
+        // ── Arco del ángulo en la esquina (estilo trigonometría) ──
+        // Si el último punto coincide con el extremo de una línea existente,
+        // dibujamos el arco entre ambas direcciones.
+        const prevDir = findIncomingLineDirection(last);
+        const curDir = Math.atan2(cur.y - last.y, cur.x - last.x);
+        if (prevDir !== null && Math.hypot(cur.x - last.x, cur.y - last.y) > 5) {
+            // prevDir apunta HACIA el vértice; lo invertimos para "salir" del vértice
+            const fromAngle = prevDir + Math.PI;
+            drawAngleArc(M.ctx, last, fromAngle, curDir);
+        } else if (Math.hypot(cur.x - last.x, cur.y - last.y) > 5) {
+            // Primer segmento: ángulo desde la horizontal
+            drawAngleArc(M.ctx, last, 0, curDir);
+        }
+    }
+
+    // Polilínea en construcción
+    if (_ctx.polylineChain) {
+        const c = _ctx.polylineChain;
+        M.ctx.save();
+        M.ctx.strokeStyle = c.stroke;
+        M.ctx.lineWidth = c.strokeWidth;
+        M.ctx.lineCap = 'round'; M.ctx.lineJoin = 'round';
+
+        // Segmentos firmes
+        M.ctx.beginPath();
+        M.ctx.moveTo(c.points[0].x, c.points[0].y);
+        for (let i = 1; i < c.points.length; i++) M.ctx.lineTo(c.points[i].x, c.points[i].y);
+        M.ctx.stroke();
+
+        // Segmento preview (línea punteada al cursor)
+        if (c.cur) {
+            M.ctx.save();
+            M.ctx.globalAlpha = 0.65;
+            M.ctx.setLineDash([6 / _ctx.view.zoom, 4 / _ctx.view.zoom]);
+            M.ctx.beginPath();
+            const last = c.points[c.points.length - 1];
+            M.ctx.moveTo(last.x, last.y);
+            M.ctx.lineTo(c.cur.x, c.cur.y);
+            M.ctx.stroke();
+            M.ctx.restore();
+        }
+
+        // Marker en cada vértice
+        M.ctx.fillStyle = c.stroke;
+        c.points.forEach((p, i) => {
+            const r = (i === 0 ? 5 : 3) / _ctx.view.zoom;
+            M.ctx.beginPath(); M.ctx.arc(p.x, p.y, r, 0, Math.PI * 2); M.ctx.fill();
+        });
+
+        // Indicador de cierre cerca del primer punto
+        if (c.nearStart && c.points.length >= 2) {
+            M.ctx.save();
+            M.ctx.strokeStyle = '#10b981';
+            M.ctx.lineWidth = 2 / _ctx.view.zoom;
+            M.ctx.beginPath();
+            M.ctx.arc(c.points[0].x, c.points[0].y, 8 / _ctx.view.zoom, 0, Math.PI * 2);
+            M.ctx.stroke();
+            M.ctx.restore();
+        }
+        M.ctx.restore();
+    }
+
+    M.ctx.restore();
+}
+
+function drawGrid(ctx, w, h) {
+    const gs = _ctx.gridSize * _ctx.view.zoom;
+    if (gs < 4) return;
+    const ox = _ctx.view.x % gs;
+    const oy = _ctx.view.y % gs;
+
+    ctx.strokeStyle = 'rgba(15, 23, 42, 0.05)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let x = ox; x < w; x += gs) { ctx.moveTo(Math.round(x) + 0.5, 0); ctx.lineTo(Math.round(x) + 0.5, h); }
+    for (let y = oy; y < h; y += gs) { ctx.moveTo(0, Math.round(y) + 0.5); ctx.lineTo(w, Math.round(y) + 0.5); }
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(15, 23, 42, 0.13)';
+    ctx.beginPath();
+    for (let x = ox; x < w; x += gs * 5) { ctx.moveTo(Math.round(x) + 0.5, 0); ctx.lineTo(Math.round(x) + 0.5, h); }
+    for (let y = oy; y < h; y += gs * 5) { ctx.moveTo(0, Math.round(y) + 0.5); ctx.lineTo(w, Math.round(y) + 0.5); }
+    ctx.stroke();
+
+    // Ejes
+    ctx.strokeStyle = 'rgba(59, 130, 246, 0.35)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    const ax = _ctx.view.x;
+    const ay = _ctx.view.y;
+    if (ax >= 0 && ax <= w) { ctx.moveTo(Math.round(ax) + 0.5, 0); ctx.lineTo(Math.round(ax) + 0.5, h); }
+    if (ay >= 0 && ay <= h) { ctx.moveTo(0, Math.round(ay) + 0.5); ctx.lineTo(w, Math.round(ay) + 0.5); }
+    ctx.stroke();
+}
+
+function updateRulers() {
+    if (!M.rulerX || !M.rulerY || M.rulerX.style.display === 'none') return;
+    const rxctx = M.rulerX.getContext('2d');
+    const ryctx = M.rulerY.getContext('2d');
+    const rxw = M.rulerX.width / M.dpr;
+    const ryh = M.rulerY.height / M.dpr;
+    const gs = _ctx.gridSize * _ctx.view.zoom;
+
+    rxctx.fillStyle = '#1e293b';
+    rxctx.fillRect(0, 0, rxw, RULER_SIZE);
+    rxctx.strokeStyle = '#334155';
+    rxctx.fillStyle = '#94a3b8';
+    rxctx.font = '9px "JetBrains Mono", monospace';
+
+    if (gs > 3) {
+        const ox = _ctx.view.x % gs;
+        for (let x = ox; x < rxw; x += gs) {
+            rxctx.beginPath();
+            rxctx.moveTo(Math.round(x) + 0.5, RULER_SIZE - 4);
+            rxctx.lineTo(Math.round(x) + 0.5, RULER_SIZE);
+            rxctx.stroke();
+        }
+        const oxL = _ctx.view.x % (gs * 5);
+        for (let x = oxL; x < rxw; x += gs * 5) {
+            const worldX = Math.round((x - _ctx.view.x) / _ctx.view.zoom);
+            rxctx.beginPath();
+            rxctx.moveTo(Math.round(x) + 0.5, RULER_SIZE - 8);
+            rxctx.lineTo(Math.round(x) + 0.5, RULER_SIZE);
+            rxctx.stroke();
+            rxctx.fillText(String(worldX), x + 2, 10);
+        }
+    }
+    if (_ctx.cursor.inside) {
+        rxctx.fillStyle = '#3b82f6';
+        rxctx.fillRect(_ctx.cursor.sx - 1, 0, 2, RULER_SIZE);
+    }
+
+    ryctx.fillStyle = '#1e293b';
+    ryctx.fillRect(0, 0, RULER_SIZE, ryh);
+    ryctx.strokeStyle = '#334155';
+    ryctx.fillStyle = '#94a3b8';
+    ryctx.font = '9px "JetBrains Mono", monospace';
+    if (gs > 3) {
+        const oy = _ctx.view.y % gs;
+        for (let y = oy; y < ryh; y += gs) {
+            ryctx.beginPath();
+            ryctx.moveTo(RULER_SIZE - 4, Math.round(y) + 0.5);
+            ryctx.lineTo(RULER_SIZE, Math.round(y) + 0.5);
+            ryctx.stroke();
+        }
+        const oyL = _ctx.view.y % (gs * 5);
+        for (let y = oyL; y < ryh; y += gs * 5) {
+            const worldY = Math.round((y - _ctx.view.y) / _ctx.view.zoom);
+            ryctx.beginPath();
+            ryctx.moveTo(RULER_SIZE - 8, Math.round(y) + 0.5);
+            ryctx.lineTo(RULER_SIZE, Math.round(y) + 0.5);
+            ryctx.stroke();
+            ryctx.save();
+            ryctx.translate(10, y - 2);
+            ryctx.rotate(-Math.PI / 2);
+            ryctx.fillText(String(worldY), 0, 0);
+            ryctx.restore();
+        }
+    }
+    if (_ctx.cursor.inside) {
+        ryctx.fillStyle = '#3b82f6';
+        ryctx.fillRect(0, _ctx.cursor.sy - 1, RULER_SIZE, 2);
+    }
+}
+
+function renderShapes(ctx, shapes, selectedIdx) {
+    shapes.forEach((s, i) => {
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = s.stroke || '#0f172a';
+        ctx.lineWidth = s.strokeWidth || 2;
+        ctx.fillStyle = s.fill || 'transparent';
+
+        if (s.type === 'line') {
+            ctx.beginPath();
+            ctx.moveTo(s.x1, s.y1);
+            ctx.lineTo(s.x2, s.y2);
+            ctx.stroke();
+        } else if (s.type === 'rect') {
+            ctx.beginPath(); ctx.rect(s.x, s.y, s.w, s.h);
+            if (s.fill) ctx.fill();
+            ctx.stroke();
+        } else if (s.type === 'circle') {
+            ctx.beginPath(); ctx.arc(s.cx, s.cy, s.r, 0, Math.PI * 2);
+            if (s.fill) ctx.fill();
+            ctx.stroke();
+        } else if (s.type === 'ellipse') {
+            ctx.beginPath(); ctx.ellipse(s.cx, s.cy, s.rx, s.ry, 0, 0, Math.PI * 2);
+            if (s.fill) ctx.fill();
+            ctx.stroke();
+        } else if (s.type === 'triangle') {
+            ctx.beginPath();
+            ctx.moveTo(s.x + s.w / 2, s.y);
+            ctx.lineTo(s.x + s.w, s.y + s.h);
+            ctx.lineTo(s.x, s.y + s.h);
+            ctx.closePath();
+            if (s.fill) ctx.fill();
+            ctx.stroke();
+        } else if (s.type === 'arrow') {
+            drawArrow(ctx, s.x1, s.y1, s.x2, s.y2, s.strokeWidth || 2);
+        } else if (s.type === 'polyline' || s.type === 'polygon') {
+            if (!s.points?.length) return;
+            ctx.beginPath();
+            ctx.moveTo(s.points[0].x, s.points[0].y);
+            for (let j = 1; j < s.points.length; j++) ctx.lineTo(s.points[j].x, s.points[j].y);
+            if (s.closed) ctx.closePath();
+            if (s.fill && s.closed) ctx.fill();
+            ctx.stroke();
+        } else if (s.type === 'pen') {
+            if (!s.points?.length) return;
+            ctx.beginPath();
+            ctx.moveTo(s.points[0].x, s.points[0].y);
+            for (let j = 1; j < s.points.length; j++) ctx.lineTo(s.points[j].x, s.points[j].y);
+            ctx.stroke();
+        } else if (s.type === 'text') {
+            ctx.fillStyle = s.color || '#0f172a';
+            ctx.font = `${s.size || 14}px 'DM Sans', sans-serif`;
+            ctx.textBaseline = 'top';
+            ctx.fillText(s.text, s.x, s.y);
+        } else if (s.type === 'symbol') {
+            drawSymbol(ctx, s.symbolId, s.x, s.y, s.w, s.h, s.stroke || '#0f172a');
+            if (s.label) {
+                ctx.fillStyle = s.stroke || '#0f172a';
+                ctx.font = `${Math.max(10, s.h * 0.18)}px 'DM Sans', sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.fillText(s.label, s.x + s.w / 2, s.y + s.h + 4);
+                ctx.textAlign = 'left';
+            }
+        }
+
+        if (i === selectedIdx) {
+            drawSelection(ctx, s);
+        }
+    });
+}
+
+function drawSelection(ctx, s) {
+    const b = shapeBounds(s);
+    if (!b) return;
+    ctx.save();
+    // Bounding box
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 1.5 / _ctx.view.zoom;
+    ctx.setLineDash([6 / _ctx.view.zoom, 4 / _ctx.view.zoom]);
+    ctx.strokeRect(b.x - 4, b.y - 4, b.w + 8, b.h + 8);
+    ctx.setLineDash([]);
+
+    // Handles (grips) en los puntos relevantes
+    const handles = getHandles(s);
+    const hs = HANDLE_SIZE / _ctx.view.zoom;
+    handles.forEach(h => {
+        ctx.fillStyle = '#fff';
         ctx.strokeStyle = '#3b82f6';
         ctx.lineWidth = 1.5 / _ctx.view.zoom;
-        ctx.setLineDash([6 / _ctx.view.zoom, 4 / _ctx.view.zoom]);
-        ctx.strokeRect(b.x - 4, b.y - 4, b.w + 8, b.h + 8);
-        ctx.setLineDash([]);
-
-        // Handles (grips) en los puntos relevantes
-        const handles = getHandles(s);
-        const hs = HANDLE_SIZE / _ctx.view.zoom;
-        handles.forEach(h => {
-            ctx.fillStyle = '#fff';
-            ctx.strokeStyle = '#3b82f6';
-            ctx.lineWidth = 1.5 / _ctx.view.zoom;
-            ctx.beginPath();
-            ctx.rect(h.x - hs / 2, h.y - hs / 2, hs, hs);
-            ctx.fill();
-            ctx.stroke();
-        });
-        ctx.restore();
-    }
+        ctx.beginPath();
+        ctx.rect(h.x - hs / 2, h.y - hs / 2, hs, hs);
+        ctx.fill();
+        ctx.stroke();
+    });
+    ctx.restore();
 }
 
 // ────────────────────────────────────────────────────────────────
